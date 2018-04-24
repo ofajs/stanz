@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="../src/stanz.js"></script>
+</head>
+
+<body>
+</body>
+<script>
+    let a = {
+        a: "aaaaaa",
+        b: "bbbbbbbb",
+        c: {
+            val: "I am c"
+        },
+        d: ['11', '222', '3333']
+    };
+
+    let a2 = stanz(a);
+
+    a2.change('b', (val, beforeVal) => {
+        console.log(`val =>${val} , beforeVal =>${beforeVal}`);
+    });
+
+    console.log(a);
+    console.log(a2);
+
+    a2.b = "change b le";
+
+    a2.offchange('b');
+
+
+    a2.b = "change b 2222";
+</script>
+
+</html>

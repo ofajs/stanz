@@ -23,7 +23,7 @@
 
     let a2 = stanz(a);
 
-    a2.change('b', (val, beforeVal) => {
+    a2.watch('b', (val, beforeVal) => {
         console.log(`val =>${val} , beforeVal =>${beforeVal}`);
     });
 
@@ -32,7 +32,7 @@
 
     a2.b = "change b le";
 
-    a2.offchange('b');
+    a2.unwatch('b');
 
 
     a2.b = "change b 2222";

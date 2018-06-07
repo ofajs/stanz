@@ -10,17 +10,17 @@
 
     const getChangeArr = (_this, key) => {
         let {
-            _s
+            __s
         } = _this;
 
-        return _s[key] || (_s[key] = []);
+        return __s[key] || (__s[key] = []);
     }
 
     // base class
     // 特殊对象
     var StanzObject = function (obj) {
         let sObj = {};
-        defineProperty(this, "_s", {
+        defineProperty(this, "__s", {
             get: () => sObj
         });
         for (let k in obj) {
@@ -62,11 +62,11 @@
             return val;
         },
         // 监听改动
-        change(key, func) {
+        watch(key, func) {
             getChangeArr(this, key).push(func)
         },
         // 取消监听
-        offchange(key, func) {
+        unwatch(key, func) {
             let changeArr = getChangeArr(this, key);
             if (func) {
                 // 移除相应函数

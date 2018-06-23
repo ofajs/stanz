@@ -23,6 +23,7 @@
         defineProperty(this, "__s", {
             get: () => sObj
         });
+        
         for (let k in obj) {
             this.set(k, obj[k]);
         }
@@ -54,7 +55,7 @@
                     let beforeVal = val
                     val = v;
                     changeArr.forEach(func => {
-                        func(v, beforeVal);
+                        func(v, beforeVal, v);
                     });
                 }
             });

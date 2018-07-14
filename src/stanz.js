@@ -12,34 +12,66 @@
 
     // function
     // 触发watch改动函数
-    let emitWatch = (data, key, val, oldVal) => {
+    let emitWatch = (data, key, val, e) => {
         let watchArr = data._watch[key];
         if (watchArr) {
             watchArr.forEach(func => {
-                func(val, oldVal);
+                func(val, e);
             });
         }
     }
 
     // 触发改动
     let emitChange = (data, key, val, oldVal, type = "update") => {
-        emitWatch(data, key, val, oldVal);
+        emitWatch(data, key, val, {
+            oldVal,
+            type
+        });
 
         data._obs.forEach(func => {
             func({
+                target: data,
                 type,
                 key,
-                val: d,
+                val,
                 oldVal
             });
+        });
+
+        let {
+            _host
+        } = data;
+
+        _host && emitChange(_host.target, _host.key, data, data, "updateHost");
+    }
+
+    // 删除xdata
+    let removeXData = (data) => {
+        // 删除 root 上的备份
+        delete data._root._cache[data._id];
+
+        // 删除宿主上的备份
+        let {
+            _host
+        } = data;
+        let id = _host.target._keys.indexOf(_host.key);
+        _host.target._keys.splice(id, 1);
+        delete _host.target[_host.key];
+
+        // 判断是否有子XData
+        data._keys.forEach(k => {
+            let tar = data[k];
+            if (tar instanceof XData) {
+                removeXData(tar);
+            }
         });
     }
 
     // class
-    function XData(obj, root, host) {
+    function XData(obj, root, host, key) {
         defineProperties(this, {
             '_id': {
-                value: getRandomId()
+                value: root ? getRandomId() : "0"
             },
             '_keys': {
                 value: []
@@ -57,7 +89,10 @@
                 value: root
             });
             defineProperty(this, '_host', {
-                value: host
+                value: {
+                    target: host,
+                    key
+                }
             });
         } else {
             defineProperty(this, '_cache', {
@@ -94,7 +129,7 @@
             _keys.push(key);
 
             if (getType(value) == "object") {
-                value = new XData(value, this._root || this, this);
+                value = new XData(value, this._root || this, this, key);
 
                 // 注册_cache
                 value._root._cache[value._id] = value;
@@ -104,6 +139,7 @@
 
             defineProperty(this, key, {
                 enumerable: true,
+                configurable: true,
                 get() {
                     return oriData;
                 },
@@ -121,7 +157,11 @@
         },
         // 覆盖旧的值
         cover(obj) {
-
+            for (let k in obj) {
+                if (this._keys.indexOf(k) > -1) {
+                    this.set(k, obj[k]);
+                }
+            }
         },
         // 完全重建值
         reset() {
@@ -129,22 +169,30 @@
         },
         // 删除值
         remove(key) {
-
+            if (key) {
+                let oldVal = this[key];
+                if (oldVal instanceof XData) {
+                    removeXData(oldVal);
+                } else {
+                    delete this[key];
+                }
+                emitChange(this, key, undefined, oldVal, 'delete');
+            }
         },
         // 监听
         watch(key, func) {
-            let watchArr = data._watch[key] || (data._watch[key] = []);
-            watchArr.push(func);
+            let watchArr = this._watch[key] || (this._watch[key] = []);
+            func && watchArr.push(func);
         },
         // 取消监听
         unwatch(key, func) {
-            let watchArr = data._watch[key] || (data._watch[key] = []);
+            let watchArr = this._watch[key] || (this._watch[key] = []);
             let id = watchArr.indexOf(func);
             id > -1 && watchArr.splice(id, 1);
         },
         // 触发watch监听
         emit(key) {
-            emitChange(this, key, this[key], this[key], "emit");
+            key && emitChange(this, key, this[key], this[key], "emit");
         },
         // 同步数据
         sync(key, func) {
@@ -156,7 +204,7 @@
         },
         // 视奸
         observe(func) {
-            this._obs.push(func);
+            func && this._obs.push(func);
         },
         unobserve(func) {
             let id = this._obs.indexOf(func);
@@ -164,6 +212,7 @@
         }
     };
 
+    // 设置在 prototype 上
     for (let k in XDataFn) {
         defineProperty(XData.prototype, k, {
             value: XDataFn[k]

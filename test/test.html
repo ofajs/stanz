@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>treeData test</title>
+    <title>stanz test</title>
     <script src="ok.js"></script>
     <script src="../src/stanz.js"></script>
 </head>
@@ -13,47 +13,6 @@
 <body>
 </body>
 <script>
-    let haha;
-    let obj = {
-        a: "aaa",
-        d() {
-            debugger
-        },
-        get haha() {
-            return obj;
-        }
-    };
-    var pobj = new Proxy(obj, {
-        get: function (target, key, receiver) {
-            console.log(`getting ${key}!`);
-            return Reflect.get(target, key, receiver);
-        },
-        set: function (target, key, value, receiver) {
-            console.log(`setting ${key}!`);
-            return Reflect.set(target, key, value, receiver);
-        },
-        deleteProperty(...args) {
-            debugger
-        }
-    });
-
-    let arr = [1, 2, 3, 4, 5];
-
-    let parr = new Proxy(arr, {
-        set: function (target, key, value, receiver) {
-            console.log(`setting ${key}!`, target, key, value);
-            return Reflect.set(target, key, value, receiver);
-        },
-        deleteProperty(...args) {
-            debugger
-        }
-        // set(...args) {
-        //     let [target, key, value] = args;
-        //     target[key] = value;
-        //     console.log('args=>', args);
-        //     return key;
-        // }
-    });
 </script>
 <script src="base_test.js"></script>
 <script src="observe_test.js"></script>

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(5, '基础测试 (watch)');
+    let tester = expect(7, '基础测试 (watch)');
 
     let tdata = stanz({
         a: "aaaa",
@@ -25,11 +25,11 @@
     });
 
     // 修改a
-    tdata.set("a", "change a");
+    tdata.a = "change a";
 
     // 注销后不再触发
     tdata.unwatch('a', aFunc);
-    tdata.set("a", "change a2");
+    tdata.a = "change a2";
 
     tdata.watch('b', (d, e) => {
         tester.ok(d.val === "change b.val", 'watch ok 5');
@@ -39,6 +39,15 @@
         tester.ok(e.oldVal === "I am b", 'watch ok4');
     });
 
-    tdata.b.set('val', "change b.val");
+    tdata.b.val = "change b.val";
+
+    // 确认数量正确
+    tester.ok(Object.keys(tdata._cache).length === 4, "_cache ok 1");
+
+    // 删除
+    delete tdata.c;
+
+    // 删除后的数量也正确
+    tester.ok(Object.keys(tdata._cache).length === 1, "_cache ok 2");
 
 })();

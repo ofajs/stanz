@@ -1,5 +1,5 @@
-// 树形数据库
 ((glo) => {
+    // public function
     // 获取随机id
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
@@ -7,10 +7,10 @@
 
     let {
         defineProperty,
-        defineProperties
+        defineProperties,
+        assign
     } = Object
 
-    // function
     // 触发watch改动函数
     let emitWatch = (data, key, val, e) => {
         let watchArr = data._watch[key];
@@ -23,12 +23,16 @@
 
     // 触发改动
     let emitChange = (data, key, val, oldVal, type = "update") => {
+        if (!data._canEmitWatch) {
+            return;
+        }
+
         emitWatch(data, key, val, {
             oldVal,
             type
         });
 
-        data._obs.forEach(func => {
+        data['_obs'].forEach(func => {
             func({
                 target: data,
                 type,
@@ -42,45 +46,75 @@
             _host
         } = data;
 
-        _host && emitChange(_host.target, _host.key, data, data, "updateHost");
+        _host && emitChange(_host.target, _host.key, data, data, "uphost");
     }
 
     // 删除xdata
-    let removeXData = (data) => {
+    let removeRootCache = (data) => {
         // 删除 root 上的备份
         delete data._root._cache[data._id];
 
-        // 删除宿主上的备份
-        let {
-            _host
-        } = data;
-        let id = _host.target._keys.indexOf(_host.key);
-        _host.target._keys.splice(id, 1);
-        delete _host.target[_host.key];
-
-        // 判断是否有子XData
-        data._keys.forEach(k => {
+        for (let k in data) {
             let tar = data[k];
-            if (tar instanceof XData) {
-                removeXData(tar);
+
+            if (tar instanceof XObject) {
+                removeRootCache(tar);
             }
-        });
+        }
     }
 
-    // class
-    function XData(obj, root, host, key) {
+    // 代理对象
+    let XObjectHandler = {
+        set: function (target, key, value, receiver) {
+            // 获取旧值
+            let oldVal = target[key];
+
+            let type = target.hasOwnProperty(key) ? "update" : "new";
+
+            // 判断value是否object
+            value = createXData(value, target._root || target, target, key);
+
+            // 继承行为
+            let reValue = Reflect.set(target, key, value, receiver);
+
+            // 触发改动事件
+            emitChange(target, key, value, oldVal, type);
+
+            // 返回行为值
+            return reValue;
+        },
+        deleteProperty(target, key) {
+            // 获取旧值
+            let oldVal = target[key];
+
+            // 删除 root 上的备份
+            removeRootCache(target[key]);
+
+            // 默认行为
+            let reValue = Reflect.deleteProperty(target, key);
+
+            // 触发改动事件
+            emitChange(target, key, undefined, oldVal, "delete");
+
+            return reValue;
+        }
+    }
+
+    // 主体xObject
+    let XObject = function (root, host, key) {
         defineProperties(this, {
             '_id': {
                 value: root ? getRandomId() : "0"
-            },
-            '_keys': {
-                value: []
             },
             '_obs': {
                 value: []
             },
             '_watch': {
                 value: {}
+            },
+            '_canEmitWatch': {
+                writable: !0,
+                value: 0
             }
         });
 
@@ -94,91 +128,17 @@
                     key
                 }
             });
+            root._cache[this._id] = this;
         } else {
             defineProperty(this, '_cache', {
                 value: {}
             });
         }
 
-        obj && this.set(obj);
+        // this._canEmitWatch = 0;
     }
 
-    let XDataFn = {
-        // 设置
-        set(key, value) {
-            switch (getType(key)) {
-                case "object":
-                    for (let i in key) {
-                        this.set(i, key[i]);
-                    }
-                    return;
-                case "array":
-                    key.forEach(k => this.set(k));
-                    return;
-            }
-
-            let {
-                _keys
-            } = this;
-
-            if (_keys.indexOf(key) > -1) {
-                this[key] = value;
-                return;
-            }
-
-            _keys.push(key);
-
-            if (getType(value) == "object") {
-                value = new XData(value, this._root || this, this, key);
-
-                // 注册_cache
-                value._root._cache[value._id] = value;
-            }
-
-            let oriData = value;
-
-            defineProperty(this, key, {
-                enumerable: true,
-                configurable: true,
-                get() {
-                    return oriData;
-                },
-                set(d) {
-                    let oldVal = oriData;
-                    oriData = d;
-
-                    if (oldVal !== d) {
-                        emitChange(this, key, d, oldVal);
-                    }
-                }
-            });
-
-            emitChange(this, key, value, undefined, "new");
-        },
-        // 覆盖旧的值
-        cover(obj) {
-            for (let k in obj) {
-                if (this._keys.indexOf(k) > -1) {
-                    this.set(k, obj[k]);
-                }
-            }
-        },
-        // 完全重建值
-        reset() {
-
-        },
-        // 删除值
-        remove(key) {
-            if (key) {
-                let oldVal = this[key];
-                if (oldVal instanceof XData) {
-                    removeXData(oldVal);
-                } else {
-                    delete this[key];
-                }
-                emitChange(this, key, undefined, oldVal, 'delete');
-            }
-        },
+    let XObjectFn = {
         // 监听
         watch(key, func) {
             let watchArr = this._watch[key] || (this._watch[key] = []);
@@ -190,39 +150,53 @@
             let id = watchArr.indexOf(func);
             id > -1 && watchArr.splice(id, 1);
         },
-        // 触发watch监听
-        emit(key) {
-            key && emitChange(this, key, this[key], this[key], "emit");
-        },
-        // 同步数据
-        sync(key, func) {
-            
-        },
-        // 取消同步
-        unSync(key, func) {
-
-        },
         // 视奸
         observe(func) {
-            func && this._obs.push(func);
+            func && this['_obs'].push(func);
         },
+        // 注销
         unobserve(func) {
-            let id = this._obs.indexOf(func);
-            (id > -1) && this._obs.splice(id, 1);
+            let id = this['_obs'].indexOf(func);
+            (id > -1) && this['_obs'].splice(id, 1);
         }
     };
 
     // 设置在 prototype 上
-    for (let k in XDataFn) {
-        defineProperty(XData.prototype, k, {
-            value: XDataFn[k]
+    for (let k in XObjectFn) {
+        defineProperty(XObject.prototype, k, {
+            value: XObjectFn[k]
         });
     }
 
-    // init
-    let stanz = (obj) => {
-        return new XData(obj);
+    // 生成对象
+    let createXObject = (obj, root, host, key) => {
+        // 转换对象数据
+        let xobj = new XObject(root, host, key);
+
+        let reObj = new Proxy(xobj, XObjectHandler)
+
+        // 合并数据
+        assign(reObj, obj);
+
+        // 打开阀门
+        xobj._canEmitWatch = 1;
+
+        // 返回代理对象
+        return reObj;
     }
 
-    glo.stanz = stanz;
+    let createXData = (obj, root, host, key) => {
+        switch (getType(obj)) {
+            case "object":
+                return createXObject(obj, root, host, key);
+            case "array":
+                break;
+        }
+        return obj;
+    }
+
+    // init
+    glo.stanz = (obj) => {
+        return createXData(obj);
+    }
 })(window);

@@ -196,7 +196,7 @@
         },
         // 同步数据
         sync(key, func) {
-
+            
         },
         // 取消同步
         unSync(key, func) {

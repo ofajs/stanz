@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>stanz test</title>
+    <script src="../src/stanz2.js"></script>
+</head>
+
+<body>
+</body>
+<script>
+    let sobj = stanz({
+        a: "I am a",
+        b: {
+            val: "I am b"
+        }
+    });
+
+    console.log(sobj);
+
+    sobj.observe(e => {
+        debugger
+    });
+
+    sobj.watch('a', (value, e) => {
+        debugger
+    });
+
+    sobj.a = "change a";
+
+    sobj.c = {
+        c_val: "I am c",
+        c_val2: "I am c2",
+        c_inObj: {
+            val: "I am c_inObj"
+        }
+    }
+</script>
+
+</html>

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, '基础测试 (watch)');
+    let tester = expect(8, '基础测试 (watch)');
 
     let tdata = stanz({
         a: "aaaa",
@@ -49,5 +49,16 @@
 
     // 删除后的数量也正确
     tester.ok(Object.keys(tdata._cache).length === 1, "_cache ok 2");
+
+    // 再设定
+    tdata.c = {
+        backup: {
+            val: "I am c.backup"
+        },
+        val: "I am new c"
+    };
+
+    // 再设定后数量正确
+    tester.ok(Object.keys(tdata._cache).length === 3, "_cache ok 3");
 
 })();

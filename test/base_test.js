@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, '基础测试 (watch)');
+    let tester = expect(7, '基础测试 (watch)');
 
     let tdata = stanz({
         a: "aaaa",
@@ -42,14 +42,21 @@
     tdata.b.val = "change b.val";
     tdata.unwatch('b', watch_bfunc);
 
-    // 确认数量正确
-    tester.ok(Object.keys(tdata._cache).length === 4, "_cache ok 1");
+    let id = 0;
+    tdata.watch('c', (val, e) => {
+        switch (id) {
+            case 0:
+                tester.ok(e.type == "delete", "delete type ok");
+                break;
+            case 1:
+                tester.ok(e.type == "new", "add value type ok");
+                break
+        }
+        id++;
+    });
 
     // 删除
     delete tdata.c;
-
-    // 删除后的数量也正确
-    tester.ok(Object.keys(tdata._cache).length === 1, "_cache ok 2");
 
     // 再设定
     tdata.c = {
@@ -58,18 +65,4 @@
         },
         val: "I am new c"
     };
-
-    // 再设定后数量正确
-    tester.ok(Object.keys(tdata._cache).length === 3, "_cache ok 3");
-
-    // 替换对象测试
-    tdata.b = {
-        val_2: "change b",
-        bobj: {
-            val: "I am b obj"
-        }
-    };
-
-    tester.ok(Object.keys(tdata._cache).length === 4, "replace object ok");
-
 })();

@@ -51,24 +51,6 @@
         _host && emitChange(_host.target, _host.key, data, data, "uphost");
     }
 
-    // 删除xdata
-    let removeRootCache = (data) => {
-        if (!isXData(data)) {
-            return;
-        }
-
-        // 删除 root 上的备份
-        delete data._root._cache[data._id];
-
-        for (let k in data) {
-            let tar = data[k];
-
-            if (isXData(tar)) {
-                removeRootCache(tar);
-            }
-        }
-    }
-
     // 代理对象
     let XObjectHandler = {
         set(target, key, value, receiver) {
@@ -84,11 +66,6 @@
                 // 继承行为
                 let reValue = Reflect.set(target, key, value, receiver);
 
-                // 如果是XData先移除
-                if (isXData(oldVal)) {
-                    removeRootCache(oldVal);
-                }
-
                 // 触发改动事件
                 emitChange(target, key, value, oldVal, type);
 
@@ -102,9 +79,6 @@
             if (!/^_.+/.test(key)) {
                 // 获取旧值
                 let oldVal = target[key];
-
-                // 删除 root 上的备份
-                removeRootCache(target[key]);
 
                 // 默认行为
                 let reValue = Reflect.deleteProperty(target, key);
@@ -147,7 +121,6 @@
                     key
                 }
             });
-            root._cache[this._id] = this;
         } else {
             defineProperty(this, '_cache', {
                 value: {}
@@ -213,17 +186,6 @@
             value: XObjectFn[k]
         });
     }
-
-    // 监听主要函数
-    ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].forEach(funcName => {
-        let oriFunc = XArrayFn[funcName];
-        oriFunc && defineProperty(XArrayFn, funcName, {
-            value(...args) {
-                console.log('监听到变化');
-                return oriFunc.apply(this, args);
-            }
-        });
-    });
 
     XArray.prototype = XArrayFn;
 

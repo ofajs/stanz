@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(3, 'array test');
+    let tester = expect(1, 'array test');
 
     let tdata = stanz({
         a: "aaaa",
@@ -10,7 +10,7 @@
 
     window.tdata = tdata;
 
-    tester.ok(Object.keys(tdata._cache).length == 1, 'add array _cache ok 1')
+    // tester.ok(Object.keys(tdata._cache).length == 1, 'add array _cache ok 1')
 
     let obsFucn;
     tdata.observe(obsFucn = e => {
@@ -21,7 +21,7 @@
         val: "I am arr1 number3"
     }];
 
-    tester.ok(Object.keys(tdata._cache).length == 3, 'add array _cache ok 2')
+    // tester.ok(Object.keys(tdata._cache).length == 3, 'add array _cache ok 2')
 
     tdata.unobserve(obsFucn);
 
@@ -34,9 +34,6 @@
         debugger
     });
 
-    // tdata.arr.push({
-    //     aaa: "aaaa"
-    // });
     tdata.arr.splice(1, 1, {
         aaa: "aaaaa"
     });

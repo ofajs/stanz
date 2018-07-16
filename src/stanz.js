@@ -11,6 +11,8 @@
         assign
     } = Object
 
+    let isXData = (obj) => (obj instanceof XObject) || (obj instanceof XArray);
+
     // 触发watch改动函数
     let emitWatch = (data, key, val, e) => {
         let watchArr = data._watch[key];
@@ -51,13 +53,17 @@
 
     // 删除xdata
     let removeRootCache = (data) => {
+        if (!isXData(data)) {
+            return;
+        }
+
         // 删除 root 上的备份
         delete data._root._cache[data._id];
 
         for (let k in data) {
             let tar = data[k];
 
-            if (tar instanceof XObject) {
+            if (isXData(tar)) {
                 removeRootCache(tar);
             }
         }
@@ -65,43 +71,56 @@
 
     // 代理对象
     let XObjectHandler = {
-        set: function (target, key, value, receiver) {
-            // 获取旧值
-            let oldVal = target[key];
+        set(target, key, value, receiver) {
+            if (!/^_.+/.test(key)) {
+                // 获取旧值
+                let oldVal = target[key];
 
-            let type = target.hasOwnProperty(key) ? "update" : "new";
+                let type = target.hasOwnProperty(key) ? "update" : "new";
 
-            // 判断value是否object
-            value = createXData(value, target._root || target, target, key);
+                // 判断value是否object
+                value = createXData(value, target._root || target, target, key);
 
-            // 继承行为
-            let reValue = Reflect.set(target, key, value, receiver);
+                // 继承行为
+                let reValue = Reflect.set(target, key, value, receiver);
 
-            // 触发改动事件
-            emitChange(target, key, value, oldVal, type);
+                // 如果是XData先移除
+                if (isXData(oldVal)) {
+                    removeRootCache(oldVal);
+                }
 
-            // 返回行为值
-            return reValue;
+                // 触发改动事件
+                emitChange(target, key, value, oldVal, type);
+
+                // 返回行为值
+                return reValue;
+            } else {
+                return Reflect.set(target, key, value, receiver);
+            }
         },
         deleteProperty(target, key) {
-            // 获取旧值
-            let oldVal = target[key];
+            if (!/^_.+/.test(key)) {
+                // 获取旧值
+                let oldVal = target[key];
 
-            // 删除 root 上的备份
-            removeRootCache(target[key]);
+                // 删除 root 上的备份
+                removeRootCache(target[key]);
 
-            // 默认行为
-            let reValue = Reflect.deleteProperty(target, key);
+                // 默认行为
+                let reValue = Reflect.deleteProperty(target, key);
 
-            // 触发改动事件
-            emitChange(target, key, undefined, oldVal, "delete");
+                // 触发改动事件
+                emitChange(target, key, undefined, oldVal, "delete");
 
-            return reValue;
+                return reValue;
+            } else {
+                return Reflect.deleteProperty(target, key);
+            }
         }
     }
 
     // 主体xObject
-    let XObject = function (root, host, key) {
+    function XObject(root, host, key) {
         defineProperties(this, {
             '_id': {
                 value: root ? getRandomId() : "0"
@@ -134,8 +153,6 @@
                 value: {}
             });
         }
-
-        // this._canEmitWatch = 0;
     }
 
     let XObjectFn = {
@@ -185,12 +202,53 @@
         return reObj;
     }
 
+    function XArray(...args) {
+        XObject.apply(this, args);
+    }
+
+    let XArrayFn = Object.create(Array.prototype);
+
+    for (let k in XObjectFn) {
+        defineProperty(XArrayFn, k, {
+            value: XObjectFn[k]
+        });
+    }
+
+    XArray.prototype = XArrayFn;
+
+    let XArrayHandler = {
+        set(target, key, value, receiver) {
+            // let reValue = Reflect.set(target, key, value, receiver);
+
+            // debugger
+
+            // return reValue;
+
+            return XObjectHandler.set.apply(this, arguments);
+        }
+    };
+
+    // 生成数组型对象
+    let createXArray = (arr, root, host, key) => {
+        let xarr = new XArray(root, host, key);
+
+        let reObj = new Proxy(xarr, XObjectHandler);
+
+        // 合并数据
+        reObj.splice(0, 0, ...arr);
+
+        // 打开阀门
+        xarr._canEmitWatch = 1;
+
+        return reObj;
+    }
+
     let createXData = (obj, root, host, key) => {
         switch (getType(obj)) {
             case "object":
                 return createXObject(obj, root, host, key);
             case "array":
-                break;
+                return createXArray(obj, root, host, key);
         }
         return obj;
     }

@@ -214,17 +214,27 @@
         });
     }
 
+    // 监听主要函数
+    ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].forEach(funcName => {
+        let oriFunc = XArrayFn[funcName];
+        oriFunc && defineProperty(XArrayFn, funcName, {
+            value(...args) {
+                console.log('监听到变化');
+                return oriFunc.apply(this, args);
+            }
+        });
+    });
+
     XArray.prototype = XArrayFn;
 
     let XArrayHandler = {
         set(target, key, value, receiver) {
-            // let reValue = Reflect.set(target, key, value, receiver);
-
             // debugger
-
-            // return reValue;
-
             return XObjectHandler.set.apply(this, arguments);
+        },
+        deleteProperty(target, key) {
+            debugger
+            return XObjectHandler.deleteProperty.apply(this, arguments);
         }
     };
 
@@ -232,7 +242,7 @@
     let createXArray = (arr, root, host, key) => {
         let xarr = new XArray(root, host, key);
 
-        let reObj = new Proxy(xarr, XObjectHandler);
+        let reObj = new Proxy(xarr, XArrayHandler);
 
         // 合并数据
         reObj.splice(0, 0, ...arr);

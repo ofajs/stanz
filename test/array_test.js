@@ -25,4 +25,20 @@
 
     tdata.unobserve(obsFucn);
 
+    tdata.observe(obsFucn = e => {
+        // tester.ok(e.type == "new", 'observe type ok ');
+        debugger
+    });
+
+    tdata.watch('arr', (val, e) => {
+        debugger
+    });
+
+    // tdata.arr.push({
+    //     aaa: "aaaa"
+    // });
+    tdata.arr.splice(1, 1, {
+        aaa: "aaaaa"
+    });
+
 })();

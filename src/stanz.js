@@ -13,6 +13,32 @@
 
     let isXData = (obj) => (obj instanceof XObject) || (obj instanceof XArray);
 
+    // 将xdata转换成字符串
+    let XDataToObject = (xdata) => {
+        let reObj;
+        if (xdata instanceof Array) {
+            reObj = [];
+            xdata.forEach(e => {
+                if (isXData(e)) {
+                    reObj.push(XDataToObject(e));
+                } else {
+                    reObj.push(e);
+                }
+            });
+        } else {
+            reObj = {};
+            for (let k in xdata) {
+                let tar = xdata[k];
+                if (isXData(tar)) {
+                    reObj[k] = XDataToObject(tar);
+                } else {
+                    reObj[k] = tar;
+                }
+            }
+        }
+        return reObj;
+    }
+
     // 触发watch改动函数
     let emitWatch = (data, key, val, e) => {
         let watchArr = data._watch[key];
@@ -25,7 +51,13 @@
 
     // 触发改动
     let emitChange = (data, key, val, oldVal, type = "update") => {
+        // 判断能否触发
         if (!data._canEmitWatch) {
+            return;
+        }
+
+        // 判断值是否相等
+        if (type !== "uphost" && val === oldVal) {
             return;
         }
 
@@ -49,6 +81,23 @@
         } = data;
 
         _host && emitChange(_host.target, _host.key, data, data, "uphost");
+
+        // 触发变动参数监听
+        if (type !== "uphost") {
+            let {
+                _trend
+            } = data;
+
+            _trend.forEach(func => {
+                func({
+                    id: data._id,
+                    key,
+                    val,
+                    oldVal,
+                    type
+                });
+            });
+        }
     }
 
     // 代理对象
@@ -102,6 +151,9 @@
             '_obs': {
                 value: []
             },
+            '_trend': {
+                value: []
+            },
             '_watch': {
                 value: {}
             },
@@ -148,6 +200,43 @@
         unobserve(func) {
             let id = this['_obs'].indexOf(func);
             (id > -1) && this['_obs'].splice(id, 1);
+        },
+        // 完全重置对象（为了使用同一个内存对象）
+        reset(value, options) {
+
+        },
+        // 监听数据变动字符串流
+        trend(func) {
+            func && this['_trend'].push(func);
+        },
+        // 流入变动字符串流数据
+        entrend(trendString) {
+
+        },
+        // 取消数据变动字符串流监听
+        untrend(func) {
+            let id = this['_trend'].indexOf(func);
+            (id > -1) && this['_trend'].splice(id, 1);
+        },
+        // 单项同步
+        syncTo(xdata) {
+
+        },
+        // 同步数据
+        syncData(xdata) {
+
+        },
+        // 转换成普通对象
+        toObject() {
+            let reObj = XDataToObject(this);
+            return reObj;
+        },
+        // 转换成json字符串
+        // 会保留数组数据
+        stringify() {
+            let obj = XDataToObject(this);
+            let reObj = JSON.stringify(obj);
+            return reObj;
         }
     };
 
@@ -189,22 +278,11 @@
 
     XArray.prototype = XArrayFn;
 
-    let XArrayHandler = {
-        set(target, key, value, receiver) {
-            // debugger
-            return XObjectHandler.set.apply(this, arguments);
-        },
-        deleteProperty(target, key) {
-            debugger
-            return XObjectHandler.deleteProperty.apply(this, arguments);
-        }
-    };
-
     // 生成数组型对象
     let createXArray = (arr, root, host, key) => {
         let xarr = new XArray(root, host, key);
 
-        let reObj = new Proxy(xarr, XArrayHandler);
+        let reObj = new Proxy(xarr, XObjectHandler);
 
         // 合并数据
         reObj.splice(0, 0, ...arr);

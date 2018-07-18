@@ -1,4 +1,5 @@
 ((glo) => {
+    "use strict";
     // public function
     // 获取随机id
     const getRandomId = () => Math.random().toString(32).substr(2);
@@ -15,7 +16,7 @@
 
     // 将xdata转换成字符串
     let XDataToObject = (xdata) => {
-        let reObj;
+        let reObj = xdata;
         if (xdata instanceof Array) {
             reObj = [];
             xdata.forEach(e => {
@@ -25,7 +26,7 @@
                     reObj.push(e);
                 }
             });
-        } else {
+        } else if (xdata instanceof Object) {
             reObj = {};
             for (let k in xdata) {
                 let tar = xdata[k];
@@ -37,6 +38,124 @@
             }
         }
         return reObj;
+    }
+
+    // 同步数据的方法
+    const syncData = (xdata1, xdata2, options) => {
+        let type = getType(options)
+        let func1, func2;
+
+        // 数据同步
+        switch (type) {
+            case "string":
+                func1 = e => {
+                    let key = e.key[0];
+                    if (options === key) {
+                        xdata2.entrend(e);
+                    }
+                }
+                func2 = e => {
+                    let key = e.key[0];
+                    if (options === key) {
+                        xdata1.entrend(e);
+                    }
+                }
+                break;
+            case "array":
+                func1 = e => {
+                    let key = e.key[0];
+                    if (options.indexOf(key) > -1) {
+                        xdata2.entrend(e);
+                    }
+                }
+                func2 = e => {
+                    let key = e.key[0];
+                    if (options.indexOf(key) > -1) {
+                        xdata1.entrend(e);
+                    }
+                }
+                break;
+            case "object":
+                let keys1 = Object.keys(options),
+                    keys2 = Object.values(options);
+                func1 = e => {
+                    // 获取对应key
+                    let key = e.key[0];
+
+                    if (keys1.indexOf(key) > -1) {
+                        // 深复制
+                        e = Object.assign({}, e);
+
+                        // 修正keyname
+                        e.key[0] = keys2[keys1.indexOf(key)];
+
+                        xdata2.entrend(e);
+                    }
+                }
+                func2 = e => {
+                    // 获取对应key
+                    let key = e.key[0];
+
+                    if (keys2.indexOf(key) > -1) {
+                        // 深复制
+                        e = Object.assign({}, e);
+
+                        // 修正keyname
+                        e.key[0] = keys1[keys2.indexOf(key)];
+
+                        xdata1.entrend(e);
+                    }
+                }
+                break;
+            default:
+                func1 = e => xdata2.entrend(e);
+                func2 = e => xdata1.entrend(e);
+        }
+
+        // 数据绑定逻辑
+        xdata1.trend(func1);
+        xdata2.trend(func2);
+
+        // 行动id
+        let behaviorId = getRandomId();
+
+        xdata1._syncs.push({
+            bid: behaviorId,
+            type,
+            func: func1,
+            opp: xdata2,
+        });
+        xdata2._syncs.push({
+            bid: behaviorId,
+            type,
+            func: func2,
+            opp: xdata1,
+        });
+    }
+
+    const unSyncData = (xdata1, xdata2, options) => {
+        let type = getType(options);
+
+        // 获取相应的对象
+        let tar = xdata1._syncs.find(e => e.opp === xdata2 && e.type === type);
+
+        // 有目标，取出相应id的对象
+        if (tar) {
+            let {
+                bid
+            } = tar;
+
+            let id_1 = xdata1._syncs.find(e => e.bid == bid);
+            let id_2 = xdata2._syncs.find(e => e.bid == bid);
+
+            xdata1._syncs.splice(id_1, 1);
+
+            let tar2 = xdata2._syncs.splice(id_2, 1);
+            tar2 = tar2[0]
+
+            xdata1.untrend(tar.func);
+            xdata2.untrend(tar2.func);
+        }
     }
 
     // 触发watch改动函数
@@ -84,19 +203,38 @@
 
         // 触发变动参数监听
         if (type !== "uphost") {
+            // 只有根节点才有权trend
             let {
-                _trend
+                _trend,
+                _host
             } = data;
 
-            _trend.forEach(func => {
-                func({
-                    id: data._id,
-                    key,
-                    val,
-                    oldVal,
-                    type
+            // key数组
+            let trendKeys = [];
+
+            let aKey = key;
+
+            while (_trend) {
+                // 加入key
+                trendKeys.unshift(aKey);
+
+                _trend.forEach(func => {
+                    func({
+                        key: trendKeys,
+                        val: XDataToObject(val),
+                        oldVal: XDataToObject(oldVal),
+                        type
+                    });
                 });
-            });
+
+                if (_host) {
+                    _trend = _host.target._trend;
+                    aKey = _host.key;
+                    _host = _host.target._host;
+                } else {
+                    _trend = null
+                }
+            }
         }
     }
 
@@ -154,6 +292,9 @@
             '_trend': {
                 value: []
             },
+            '_syncs': {
+                value: []
+            },
             '_watch': {
                 value: {}
             },
@@ -185,46 +326,91 @@
         watch(key, func) {
             let watchArr = this._watch[key] || (this._watch[key] = []);
             func && watchArr.push(func);
+            return this;
         },
         // 取消监听
         unwatch(key, func) {
             let watchArr = this._watch[key] || (this._watch[key] = []);
             let id = watchArr.indexOf(func);
             id > -1 && watchArr.splice(id, 1);
+            return this;
         },
         // 视奸
         observe(func) {
             func && this['_obs'].push(func);
+            return this;
         },
         // 注销
         unobserve(func) {
             let id = this['_obs'].indexOf(func);
             (id > -1) && this['_obs'].splice(id, 1);
+            return this;
         },
         // 完全重置对象（为了使用同一个内存对象）
         reset(value, options) {
+            if (options) {
+                // 清空选项
+                if (options.watch) {
+                    for (let k in this._watch) {
+                        delete this._watch[k];
+                    }
+                }
+                if (options.obs) {
+                    this._obs.length = 0;
+                }
+                if (options.trend) {
+                    this._trend.length = 0;
+                }
+                if (sync) {
+                    this._syncs.length = 0;
+                }
+            }
 
+            // 删除后重新设置
+            for (let k in this) {
+                delete this[k];
+            }
+            assign(this, value);
         },
         // 监听数据变动字符串流
         trend(func) {
             func && this['_trend'].push(func);
+            return this;
         },
         // 流入变动字符串流数据
-        entrend(trendString) {
+        entrend(trendData) {
+            let tar = this;
+            let lastId = trendData.key.length - 1;
+            trendData.key.forEach((key, i) => {
+                // 没有对象就别再执行了
+                if (tar instanceof Object && i <= lastId) {
 
+                    // 最后那个才设置
+                    if (i == lastId) {
+                        tar[key] = trendData.val;
+                    }
+
+                    // 修正对象
+                    tar = tar[key];
+                }
+            });
+            return this;
         },
         // 取消数据变动字符串流监听
         untrend(func) {
             let id = this['_trend'].indexOf(func);
             (id > -1) && this['_trend'].splice(id, 1);
-        },
-        // 单项同步
-        syncTo(xdata) {
-
+            return this;
         },
         // 同步数据
-        syncData(xdata) {
-
+        sync(xdata, options) {
+            syncData(this, xdata, options);
+            return this;
+        },
+        // 取消数据绑定
+        unsync(xdata, options) {
+            unSyncData(this, xdata, options);
+            return this;
         },
         // 转换成普通对象
         toObject() {

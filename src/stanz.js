@@ -247,6 +247,11 @@
 
                 let type = target.hasOwnProperty(key) ? "update" : "new";
 
+                // 不能设置xdata
+                if (isXData(value)) {
+                    throw `cann't set xdata`;
+                }
+
                 // 判断value是否object
                 value = createXData(value, target._root || target, target, key);
 
@@ -284,7 +289,7 @@
     function XObject(root, host, key) {
         defineProperties(this, {
             '_id': {
-                value: root ? getRandomId() : "0"
+                value: getRandomId()
             },
             '_obs': {
                 value: []
@@ -301,6 +306,9 @@
             '_canEmitWatch': {
                 writable: !0,
                 value: 0
+            },
+            'isRoot': {
+                value: !!root
             }
         });
 
@@ -387,7 +395,11 @@
 
                     // 最后那个才设置
                     if (i == lastId) {
-                        tar[key] = trendData.val;
+                        if (trendData.type == "delete") {
+                            delete tar[key];
+                        } else {
+                            tar[key] = trendData.val;
+                        }
                     }
 
                     // 修正对象

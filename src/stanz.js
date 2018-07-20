@@ -251,16 +251,21 @@
                 value = createXData(value, target._root || target, target, key);
 
                 // 继承行为
-                let reValue = Reflect.set(target, key, value, receiver);
+                let reValue = !0;
 
                 if (target._exkeys) {
                     if (target._exkeys.indexOf(key) > -1) {
+                        // 只修改准入值
                         target[key] = value;
 
                         // 触发改动事件
                         emitChange(target, key, value, oldVal, type);
+                    } else {
+                        reValue = Reflect.set(target, key, value, receiver);
                     }
                 } else {
+                    reValue = Reflect.set(target, key, value, receiver);
+
                     // 触发改动事件
                     emitChange(target, key, value, oldVal, type);
                 }
@@ -424,6 +429,7 @@
         },
         // 同步数据
         sync(xdata, options) {
+            xdata.reset(this.toObject());
             syncData(this, xdata, options);
             return this;
         },
@@ -431,6 +437,46 @@
         unsync(xdata, options) {
             unSyncData(this, xdata, options);
             return this;
+        },
+        // 转换数据
+        transData(options) {
+            let defaults = {
+                // 自身key监听
+                key: "",
+                // 目标数据对象
+                target: "",
+                // 目标key
+                targetKey: "",
+                // 数据对接对象
+                // trans: {}
+            };
+            assign(defaults, options);
+
+            let {
+                key,
+                target,
+                targetKey,
+                trans
+            } = defaults;
+
+            // 判断是否有trans
+            if (defaults.trans) {
+                // 生成翻转对象
+                let resverObj = {};
+                for (let k in trans) {
+                    resverObj[trans[k]] = k;
+                }
+
+                // 监听
+                this.watch(key, d => {
+                    d = trans[d];
+                    target[targetKey] = d;
+                });
+                target.watch(targetKey, d => {
+                    d = resverObj[d];
+                    this[key] = d;
+                });
+            }
         },
         // 转换成普通对象
         toObject() {

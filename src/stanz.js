@@ -158,16 +158,6 @@
         }
     }
 
-    // 触发watch改动函数
-    let emitWatch = (data, key, val, e) => {
-        let watchArr = data._watch[key];
-        if (watchArr) {
-            watchArr.forEach(func => {
-                func(val, e);
-            });
-        }
-    }
-
     // 触发改动
     let emitChange = (data, key, val, oldVal, type = "update") => {
         // 判断能否触发
@@ -180,10 +170,15 @@
             return;
         }
 
-        emitWatch(data, key, val, {
-            oldVal,
-            type
-        });
+        let watchArr = data._watch[key];
+        if (watchArr) {
+            watchArr.forEach(func => {
+                func(val, {
+                    oldVal,
+                    type
+                });
+            });
+        }
 
         data['_obs'].forEach(func => {
             func({
@@ -258,8 +253,17 @@
                 // 继承行为
                 let reValue = Reflect.set(target, key, value, receiver);
 
-                // 触发改动事件
-                emitChange(target, key, value, oldVal, type);
+                if (target._exkeys) {
+                    if (target._exkeys.indexOf(key) > -1) {
+                        target[key] = value;
+
+                        // 触发改动事件
+                        emitChange(target, key, value, oldVal, type);
+                    }
+                } else {
+                    // 触发改动事件
+                    emitChange(target, key, value, oldVal, type);
+                }
 
                 // 返回行为值
                 return reValue;
@@ -300,6 +304,10 @@
             '_syncs': {
                 value: []
             },
+            // 可以特殊绕过的key
+            // '_exkeys': {
+            //     value: []
+            // },
             '_watch': {
                 value: {}
             },

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(3, 'array test');
+    let tester = expect(4, 'array test');
 
     let tdata = stanz({
         a: "aaaa",
@@ -8,6 +8,8 @@
         }
     });
 
+    let tdata2 = stanz(tdata.toObject());
+    tdata2.sync(tdata);
 
     let obsFucn;
     tdata.observe(obsFucn = e => {
@@ -32,4 +34,5 @@
         aaa: "aaaaa"
     });
 
+    tester.ok(tdata2.arr.length == 3, 'sync array ok');
 })();

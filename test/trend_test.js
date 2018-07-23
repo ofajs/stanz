@@ -19,11 +19,8 @@
             val: "d_val"
         }]
     });
-    window.tdata = tdata;
 
     let tdata_2 = stanz(tdata.toObject());
-
-    window.tdata_2 = tdata_2;
 
     // 数据修正
     tdata.sync(tdata_2);
@@ -53,7 +50,6 @@
 
     let tdata_3 = stanz(tdata_2.toObject());
 
-    window.tdata_3 = tdata_3;
 
     // 数据绑定
     tdata_3.sync(tdata_2);

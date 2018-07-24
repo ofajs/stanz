@@ -693,4 +693,5 @@
     glo.stanz = (obj) => {
         return createXData(obj);
     }
+    glo.stanz.detrend = detrend;
 })(window);

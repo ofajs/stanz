@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(5, 'array test');
+    let tester = expect(9, 'array and seek test');
 
     let tdata = stanz({
         a: "aaaa",
@@ -22,7 +22,8 @@
     });
 
     tdata.arr = ['111', '222', {
-        val: "I am arr1 number3"
+        val: "I am arr1 number3",
+        aa: "aaaaa"
     }];
 
     tdata.unobserve(obsFucn);
@@ -38,7 +39,8 @@
     });
 
     tdata.arr.splice(1, 1, {
-        aaa: "aaaaa"
+        aa: "aaaaa",
+        b: "bbb"
     });
 
     tester.ok(tdata.arr.length == 3, 'data array ok');
@@ -46,6 +48,14 @@
     tester.ok(tdata2.arr.length == 3, 'sync array ok');
 
     tdata.unobserve(obsFucn);
+
+    tester.ok(tdata.seek(tdata.arr[1]._id) === tdata.arr[1], "seek id ok");
+
+    tester.ok(tdata.seek('[val]').length == 2, 'seek data ok 1');
+
+    tester.ok(tdata.seek('[aa=aaaaa]').length == 2, 'seek data ok 2');
+
+    tester.ok(tdata.seek('[aa=aaaaa][b=bbb]').length == 1, 'seek data ok 3');
 
     // tdata.arr.splice(1, 0, {
     //     val: "I am new arr element"

@@ -49,11 +49,16 @@
 
     tdata.unobserve(obsFucn);
 
+    tdata.c.arr.splice(1, 1, {
+        aa: "aaaaa",
+        carr: "I am c arr"
+    });
+
     tester.ok(tdata.seek(tdata.arr[1]._id) === tdata.arr[1], "seek id ok");
 
     tester.ok(tdata.seek('[val]').length == 2, 'seek data ok 1');
 
-    tester.ok(tdata.seek('[aa=aaaaa]').length == 2, 'seek data ok 2');
+    tester.ok(tdata.seek('[aa=aaaaa]').length == 3, 'seek data ok 2');
 
     tester.ok(tdata.seek('[aa=aaaaa][b=bbb]').length == 1, 'seek data ok 3');
 

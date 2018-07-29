@@ -393,7 +393,7 @@
         return [reTar, reKey];
     }
 
-    const seekByProp = (tarObj, value, prop) => {
+    const seekByProp = (tarObj, value, prop = "_id") => {
         let reobj = [];
 
         if (isXData(tarObj)) {
@@ -638,12 +638,12 @@
                         let props = e.match(/\[(.+?)=(.+?)\]/);
                         let key = props[1],
                             value = props[2];
-                        let tempArr = seekData(this, value, key);
+                        let tempArr = seekByProp(this, value, key);
 
                         temFunc(i, tempArr);
                     } else {
                         let key = e.replace('[', "").replace(']', "").replace('=', "");
-                        let tempArr = seekData(this, undefined, key);
+                        let tempArr = seekByProp(this, undefined, key);
 
                         temFunc(i, tempArr);
                     }
@@ -651,7 +651,7 @@
 
                 temFunc = null;
             } else {
-                reData = seekData(this, prop)[0];
+                reData = seekByProp(this, prop)[0];
             }
             return reData;
         }

@@ -1,7 +1,7 @@
 (() => {
     let tester = expect(9, 'array and seek test');
 
-    let tdata = stanz({
+    let obj = {
         a: "aaaa",
         b: {
             val: "I am b"
@@ -9,7 +9,9 @@
         c: {
             arr: [1, 22, 333, 4444]
         }
-    });
+    }
+
+    let tdata = stanz(obj);
 
     window.tdata = tdata;
 

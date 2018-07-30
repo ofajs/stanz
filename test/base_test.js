@@ -1,7 +1,7 @@
 (() => {
-    let tester = expect(7, '基础测试 (watch)');
+    let tester = expect(8, '基础测试 (watch)');
 
-    let tdata = stanz({
+    let obj = {
         a: "aaaa",
         b: {
             val: "I am b"
@@ -14,7 +14,11 @@
                 val: "c2 222222"
             }
         }
-    });
+    }
+
+    let tdata = stanz(obj);
+
+    tester.ok(tdata._id === obj._id, 'id ok');
 
     let aFunc;
     tdata.watch('a', aFunc = (val, e) => {

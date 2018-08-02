@@ -13,6 +13,7 @@
     } = Object
 
     let isXData = (obj) => (obj instanceof XObject) || (obj instanceof XArray);
+    let deepClone = obj => obj && JSON.parse(JSON.stringify(obj));
 
     // 将xdata转换成字符串
     let XDataToObject = (xdata, options) => {
@@ -85,7 +86,7 @@
                     if (keys1.indexOf(key) > -1) {
                         // 深复制
                         // e = Object.assign({}, e);
-                        e = JSON.parse(JSON.stringify(e));
+                        e = deepClone(e);
 
                         // 修正keyname
                         e.key[0] = keys2[keys1.indexOf(key)];
@@ -100,7 +101,7 @@
                     if (keys2.indexOf(key) > -1) {
                         // 深复制
                         // e = Object.assign({}, e);
-                        e = JSON.parse(JSON.stringify(e));
+                        e = deepClone(e);
 
                         // 修正keyname
                         e.key[0] = keys1[keys2.indexOf(key)];
@@ -184,7 +185,9 @@
                     oldVal,
                     type
                 }
-                watchOptions.uphost = assign({}, eOption);
+                // watchOptions.uphost = assign({}, eOption);
+                watchOptions.uphost = deepClone(eOption);
+
                 func(val, watchOptions);
             });
         }
@@ -197,7 +200,8 @@
                 val,
                 oldVal
             };
-            obsOption.uphost = assign({}, eOption);
+            // obsOption.uphost = assign({}, eOption);
+            obsOption.uphost = deepClone(eOption);
             func(obsOption);
         });
 
@@ -231,7 +235,7 @@
                 };
 
                 _trend.forEach(func => {
-                    func(assign({}, options));
+                    func(deepClone(options));
                 });
 
                 if (_host) {

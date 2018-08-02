@@ -13,6 +13,7 @@
 <body>
 </body>
 <script>
+    let temA;
     aaa = {
         name: "a1",
         childs: [{
@@ -28,6 +29,12 @@
         }],
         get selectedData() {
             return this.seek('[selected=1]');
+        },
+        set tempA(val) {
+            temA = val
+        },
+        get tempA() {
+            return temA;
         }
     }
     bbb = stanz(aaa);

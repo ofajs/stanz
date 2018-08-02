@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(8, '基础测试 (watch)');
+    let tester = expect(9, '基础测试 (watch)');
 
     let obj = {
         a: "aaaa",
@@ -17,6 +17,25 @@
     }
 
     let tdata = stanz(obj);
+    window.tdata = tdata;
+
+    let tdata2 = stanz({
+        otherA: "i tdata2"
+    });
+    window.tdata2 = tdata2;
+
+    tdata.sync(tdata2, {
+        a: 'otherA'
+    });
+
+    let tdata3 = stanz({
+        value: "tdata3"
+    });
+    window.tdata3 = tdata3;
+
+    tdata.sync(tdata3, {
+        a: "value"
+    });
 
     tester.ok(tdata._id === obj._id, 'id ok');
 
@@ -32,6 +51,9 @@
     // 注销后不再触发
     tdata.unwatch('a', aFunc);
     tdata.a = "change a2";
+
+
+    tester.ok(tdata3.value === "change a2", 'sync data ok');
 
     let watch_bfunc;
     tdata.watch('b', watch_bfunc = (d, e) => {

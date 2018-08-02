@@ -84,7 +84,8 @@
 
                     if (keys1.indexOf(key) > -1) {
                         // 深复制
-                        e = Object.assign({}, e);
+                        // e = Object.assign({}, e);
+                        e = JSON.parse(JSON.stringify(e));
 
                         // 修正keyname
                         e.key[0] = keys2[keys1.indexOf(key)];
@@ -98,7 +99,8 @@
 
                     if (keys2.indexOf(key) > -1) {
                         // 深复制
-                        e = Object.assign({}, e);
+                        // e = Object.assign({}, e);
+                        e = JSON.parse(JSON.stringify(e));
 
                         // 修正keyname
                         e.key[0] = keys1[keys2.indexOf(key)];
@@ -538,7 +540,7 @@
         },
         // 同步数据
         sync(xdata, options) {
-            xdata.reset(this.toObject());
+            // xdata.reset(this.toObject());
             syncData(this, xdata, options);
             return this;
         },

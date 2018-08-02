@@ -13,7 +13,7 @@
 
     let tdata = stanz(obj);
 
-    window.tdata = tdata;
+    // window.tdata = tdata;
 
     let tdata2 = stanz(tdata.toObject());
     tdata2.sync(tdata);

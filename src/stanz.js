@@ -530,8 +530,15 @@
                     delete tar[key];
                     break;
                 default:
-                    //默认update和new
-                    tar[key] = trendData.val;
+                    // 同属对象类型
+                    if (isXData(tar[key]) && trendData.val instanceof Object) {
+                        if (tar[key].stringify() !== JSON.stringify(trendData.val)) {
+                            tar[key] = trendData.val;
+                        }
+                    } else if (tar[key] !== trendData.val) {
+                        //默认update和new
+                        tar[key] = trendData.val;
+                    }
             }
 
             return this;

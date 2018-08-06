@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'array and seek test');
+    let tester = expect(10, 'array and seek test');
 
     let obj = {
         a: "aaaa",
@@ -8,7 +8,8 @@
         },
         c: {
             arr: [1, 22, 333, 4444]
-        }
+        },
+        obj1: true
     }
 
     let tdata = stanz(obj);
@@ -16,6 +17,7 @@
     // window.tdata = tdata;
 
     let tdata2 = stanz(tdata.toObject());
+    tdata2.iam = "I am tdata2";
     tdata2.sync(tdata);
 
     let obsFucn;
@@ -51,10 +53,13 @@
 
     tdata.unobserve(obsFucn);
 
-    tdata.c.arr.splice(1, 1, {
+    let obj2 = {
         aa: "aaaaa",
         carr: "I am c arr"
-    });
+    };
+    tdata.c.arr.splice(1, 1, obj2);
+
+    tester.ok(tdata.c.arr[1]._id === obj2._id, "id ok");
 
     tester.ok(tdata.seek(tdata.arr[1]._id) === tdata.arr[1], "seek id ok");
 

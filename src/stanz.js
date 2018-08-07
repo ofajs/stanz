@@ -746,7 +746,9 @@
         }
         if (!isXData(obj) && (valueType == "object" || valueType == "array")) {
             // 把id暴露出去
-            obj._id = reobj._id;
+            defineProperty(obj, '_id', {
+                value: reobj._id
+            });
         }
         return reobj;
     }

@@ -346,7 +346,7 @@
                 value: 0
             },
             'isRoot': {
-                value: !!root
+                value: !root
             }
         });
 

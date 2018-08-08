@@ -148,8 +148,8 @@
                 bid
             } = tar;
 
-            let id_1 = xdata1._syncs.find(e => e.bid == bid);
-            let id_2 = xdata2._syncs.find(e => e.bid == bid);
+            let id_1 = xdata1._syncs.findIndex(e => e.bid == bid);
+            let id_2 = xdata2._syncs.findIndex(e => e.bid == bid);
 
             xdata1._syncs.splice(id_1, 1);
 
@@ -509,10 +509,15 @@
                 }
             }
 
-            // 删除后重新设置
-            for (let k in this) {
-                delete this[k];
-            }
+            let valueKeys = Object.keys(value);
+
+            // 删除本身不存在的key
+            Object.keys(this).forEach(k => {
+                if (valueKeys.indexOf(k) === -1) {
+                    delete this[k];
+                }
+            });
+
             assign(this, value);
         },
         // 监听数据变动字符串流

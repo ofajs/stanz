@@ -50,7 +50,6 @@
 
     let tdata_3 = stanz(tdata_2.toObject());
 
-
     // 数据绑定
     tdata_3.sync(tdata_2);
 

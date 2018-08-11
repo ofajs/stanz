@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(6, 'observe test');
+    let tester = expect(10, 'observe test');
 
     let tdata = stanz({
         a: "aaaa",
@@ -13,6 +13,10 @@
             c2: {
                 val: "c2 222222"
             }
+        },
+        d: {
+            val: "I am d",
+            selected: 1
         }
     });
 
@@ -54,5 +58,30 @@
     });
 
     delete tdata.c;
+
+    tdata.unobserve(obsFun3);
+
+    let obsFunc4;
+    tdata.listen(obsFunc4 = data => {
+        // 和observe不同，只会异步触发一次
+        tester.ok(tdata === data, 'listen ok');
+    });
+    tdata.a1 = "a1";
+    tdata.a2 = "a2";
+    tdata.unlisten(obsFunc4);
+
+    // 监听selected=1的对象是否发生变化
+    tdata.listen('[selected=1]', obsFunc4 = (d, e) => {
+        // 和observe不同，只会异步触发一次
+        tester.ok(tdata === d, 'selected change ok1');
+        tester.ok(e.oldTarget[0] === tdata.d, 'selected change ok2');
+        tester.ok(e.target[0] === tdata.b, 'selected change ok3');
+    });
+
+    // 删除旧的
+    delete tdata.d.selected
+
+    // 变成新的
+    tdata.b.selected = 1;
 
 })();

@@ -664,6 +664,56 @@
                 reData = seekByProp(this, prop)[0];
             }
             return reData;
+        },
+        // 直接监听变动
+        listen(expr, callback, reduceTime = 10) {
+            let arg1Type = getType(expr);
+
+            // 修正参数
+            if (arg1Type.search('function') > -1) {
+                callback = expr
+                expr = "";
+            }
+
+            // 定时器寄宿
+            let timer, oldObjs;
+
+            if (expr) {
+                oldObjs = this.seek(expr);
+            }
+
+            // 回调函数
+            let listenFun;
+
+            // 监听
+            this.observe(listenFun = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    if (expr) {
+                        // 查找新数据
+                        let tars = this.seek(expr);
+
+                        // 判断是否改动
+                        if (JSON.stringify(tars.map(e => e._id)) != JSON.stringify(oldObjs.map(e => e._id))) {
+                            callback(this, {
+                                oldTarget: oldObjs,
+                                target: tars
+                            });
+                        }
+                    } else {
+                        callback(this);
+                    }
+                }, reduceTime);
+            });
+
+            // 挂载主体函数
+            callback._listenFun = listenFun;
+        },
+        // 取消监听
+        unlisten(callback) {
+            let listenFun = callback._listenFun;
+            delete callback._listenFun;
+            this.unobserve(listenFun);
         }
     };
 

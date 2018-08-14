@@ -16,6 +16,12 @@
     let obj = {
         a: "aaa",
         b: "bbbb",
+        c: {
+            val: "I am c",
+            c_c: {
+                val: "I am cc"
+            }
+        },
         0: {
             aaa: "aasdadas"
         },
@@ -23,6 +29,14 @@
     };
 
     let xd = stanz(obj);
+
+    xd.watch('a', (value, e) => {
+        debugger
+    });
+
+    xd.watch((e) => {
+        debugger
+    });
 </script>
 
 </html>

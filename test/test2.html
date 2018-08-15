@@ -6,37 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>stanz2</title>
+    <script src="ok.js"></script>
     <script src="../src/stanz2.js"></script>
 </head>
 
 <body>
 
 </body>
-<script>
-    let obj = {
-        a: "aaa",
-        b: "bbbb",
-        c: {
-            val: "I am c",
-            c_c: {
-                val: "I am cc"
-            }
-        },
-        0: {
-            aaa: "aasdadas"
-        },
-        length: 1
-    };
-
-    let xd = stanz(obj);
-
-    xd.watch('a', (value, e) => {
-        debugger
-    });
-
-    xd.watch((e) => {
-        debugger
-    });
-</script>
+<script src="watch-test.js"></script>
 
 </html>

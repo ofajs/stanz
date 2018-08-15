@@ -1,5 +1,5 @@
 // (() => {
-let tester = expect(4, 'watch test');
+let tester = expect(10, 'watch test');
 let obj = {
     a: "aaa",
     b: "bbbb",
@@ -34,12 +34,16 @@ let xd3 = xd.clone();
 xd.sync(xd2);
 xd2.sync(xd3);
 
-xd.watch('a', (value, e) => {
+let f;
+xd.watch('a', f = (value, e) => {
+    tester.ok(e.type === "update", "type update ok");
     tester.ok(value === "change a", "watch [a] ok");
 });
 
 // 改动
 xd.a = "change a";
+
+xd.unwatch('a', f);
 
 tester.ok(xd.a === "change a", "value [a] ok1");
 tester.ok(xd2.a === "change a", "value [a] ok2");
@@ -53,4 +57,23 @@ xd.watch((e) => {
 xd.sort((a, b) => {
     return a.val > b.val;
 });
+
+// 检查排序
+tester.ok(xd[0].val === 50 && xd[1].val === 100 && xd[2].val === 150, "sort ok1");
+tester.ok(xd2.string === xd.string, "sync sort ok1");
+tester.ok(xd3.string === xd.string, "sync sort ok2");
+
+// 换成对象
+xd.watch('a', f = (value, e) => {
+    tester.ok(e.type === "update", "type update ok");
+    tester.ok(value === "change a", "watch [a] ok");
+    debugger
+});
+
+xd.a = {
+    val: "I am a"
+};
+
+xd.unwatch('a', f);
+
 // })();

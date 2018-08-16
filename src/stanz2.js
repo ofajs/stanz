@@ -46,7 +46,7 @@
     })();
     // business function
     // trend清理器
-    let trendClear = (tar, tid) => {
+    const trendClear = (tar, tid) => {
         tar[XDATATRENDIDS].push(tid);
         if (!tar._trendClear) {
             tar._trendClear = 1;
@@ -55,6 +55,38 @@
                 tar._trendClear = 0;
             });
         }
+    }
+
+    // 设置_inMethod属性
+    const setInMethod = (obj, value) => defineProperty(obj, "_inMethod", {
+        configurable: true,
+        value
+    });
+
+    // 查找数据
+    const seekData = (data, key, kVal) => {
+        let arr = [];
+
+        Object.keys(data).forEach(k => {
+            let val = data[k];
+            if (data instanceof Object) {
+                if (kVal === undefined) {
+                    if (key == k) {
+                        arr.push(data);
+                    }
+                } else if (data[key] == kVal) {
+                    arr.push(data);
+                }
+                let sData = seekData(val, key, kVal);
+                sData.forEach(e => {
+                    if (arr.indexOf(e) === -1) {
+                        arr.push(e);
+                    }
+                });
+            }
+        });
+
+        return arr;
     }
 
     // 获取事件寄宿对象
@@ -246,7 +278,7 @@
             switch (trendData.type) {
                 case "sort":
                     // 禁止事件驱动 type:排序
-                    this._inMethod = "sort";
+                    setInMethod(this, "sort");
 
                     // 修正顺序
                     trendData.order.forEach((e, i) => {
@@ -254,10 +286,14 @@
                     });
                     break;
                 case "delete":
+                    // 禁止事件驱动 type:设置值
+                    setInMethod(this, "delete");
+
+                    delete tar[key];
                     break;
                 default:
                     // 禁止事件驱动 type:设置值
-                    this._inMethod = "default";
+                    setInMethod(this, "default");
 
                     // 最终设置
                     tar[key] = deepClone(trendData.val);
@@ -333,7 +369,25 @@
             }
         },
         // 超找数据
-        seek() {},
+        seek(expr) {
+            let reData;
+            let propMatch = expr.match(/\[.+?\]/g);
+            if (!propMatch) {
+                // 查找_id
+                reData = seekData(this, "_id", expr)[0];
+            } else {
+                switch (propMatch.length) {
+                    case 1:
+                        // 查找单个属性
+                        // 获取key 和 value
+                        let [key, value] = propMatch[0].replace(/[\[]|[\]]/g, "").split("=");
+                        reData = seekData(this, key, value);
+                        break;
+                    default:
+                }
+            }
+            return reData;
+        },
         // 异步监听数据变动
         listen() {},
         // 取消监听数据变动
@@ -351,7 +405,7 @@
         // 更新后的数组方法
         sort(...args) {
             // 设定禁止事件驱动
-            this._inMethod = "sort";
+            setInMethod(this, "sort");
 
             // 记录id顺序
             let ids = this.map(e => e._id);
@@ -445,11 +499,7 @@
                 val: {
                     value: val,
                     enumerable: true
-                },
-                // oldVal: {
-                //     value: oldVal,
-                //     enumerable: true
-                // }
+                }
             });
         }
 
@@ -485,8 +535,19 @@
                 // 赋值
                 Reflect.set(target, key, reValue, receiver);
 
+                // 分开来写，不然这条判断语句太长了不好维护
+                let canEmit = 1;
+                if (value instanceof Object && oldVal instanceof Object && JSON.stringify(value) == JSON.stringify(oldVal)) {
+                    // object类型，判断结构值是否全等
+                    canEmit = 0;
+                } else if (value === oldVal || target._inMethod) {
+                    // 普通类型是否相等
+                    // 在数组处理函数内禁止触发
+                    canEmit = 0;
+                }
+
                 // 触发改动
-                (value !== oldVal && !target._inMethod) && emitChange(target, key, value, oldVal, type);
+                canEmit && emitChange(target, key, value, oldVal, type);
 
                 return true;
             }
@@ -501,7 +562,7 @@
                 let reValue = Reflect.deleteProperty(target, key);
 
                 // 触发改动事件
-                emitChange(target, key, undefined, oldVal, "delete");
+                (!target._inMethod) && emitChange(target, key, undefined, oldVal, "delete");
 
                 return reValue;
             } else {
@@ -509,7 +570,6 @@
             }
         }
     };
-
 
     // main
     const createXData = (obj, host, hostkey) => {

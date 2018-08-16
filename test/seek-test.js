@@ -1,4 +1,4 @@
-let tester = expect(6, 'seek test');
+let tester = expect(8, 'seek test');
 let obj = {
     a: "aaa",
     b: "bbbb",
@@ -7,7 +7,8 @@ let obj = {
         selected: "1",
         c_c: {
             selected: 1,
-            val: "I am cc"
+            a: 100,
+            val: "I am cc",
         }
     },
     d: {
@@ -19,11 +20,13 @@ let obj = {
         val: 100
     },
     1: {
+        aa: 1,
         val: 150
     },
     2: {
         val: 50,
         haha: {
+            a: "100",
             selected: 1
         }
     },
@@ -43,3 +46,14 @@ tester.ok(selectedArr[1].selected == 1, "seek attr ok 2");
 tester.ok(selectedArr[2].selected == 1, "seek attr ok 3");
 
 tester.ok(xd.seek('[selected]').length === 5, "seek attr ok 4");
+
+tester.ok(xd.seek('[selected][a=100]').length === 2, "seek attr ok 5");
+
+xd.listen('[selected=2]', (val, e) => {
+    let tar = val[0];
+    tester.ok(tar.val == "I am d", 'listen ok');
+});
+
+// 修改两个select=2的相关数据
+xd[0].selected = 3;
+xd['d'].selected = 2;

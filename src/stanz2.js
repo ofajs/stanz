@@ -19,6 +19,8 @@
     const XDATASYNCS = "_syncs_" + getRandomId();
     // 数据entrend id记录
     const XDATATRENDIDS = "_trend_" + getRandomId();
+    // listen 记录
+    const LISTEN = "_listen_" + getRandomId();
 
     // function
     let isXData = (obj) => obj instanceof XData;
@@ -64,20 +66,21 @@
     });
 
     // 查找数据
-    const seekData = (data, key, kVal) => {
+    const seekData = (data, key, sVal) => {
         let arr = [];
+
+        if (sVal === undefined) {
+            if (data.hasOwnProperty(key)) {
+                arr.push(data);
+            }
+        } else if (data[key] == sVal) {
+            arr.push(data);
+        }
 
         Object.keys(data).forEach(k => {
             let val = data[k];
-            if (data instanceof Object) {
-                if (kVal === undefined) {
-                    if (key == k) {
-                        arr.push(data);
-                    }
-                } else if (data[key] == kVal) {
-                    arr.push(data);
-                }
-                let sData = seekData(val, key, kVal);
+            if (val instanceof Object) {
+                let sData = seekData(val, key, sVal);
                 sData.forEach(e => {
                     if (arr.indexOf(e) === -1) {
                         arr.push(e);
@@ -128,6 +131,10 @@
             },
             // entrend id 记录
             [XDATATRENDIDS]: {
+                value: []
+            },
+            // listen 记录
+            [LISTEN]: {
                 value: []
             },
             // 是否开启trend清洁
@@ -376,22 +383,78 @@
                 // 查找_id
                 reData = seekData(this, "_id", expr)[0];
             } else {
-                switch (propMatch.length) {
-                    case 1:
-                        // 查找单个属性
-                        // 获取key 和 value
-                        let [key, value] = propMatch[0].replace(/[\[]|[\]]/g, "").split("=");
-                        reData = seekData(this, key, value);
-                        break;
-                    default:
-                }
+                propMatch.forEach((expr, i) => {
+                    let [key, value] = expr.replace(/[\[]|[\]]/g, "").split("=");
+                    let tempData = seekData(this, key, value);
+                    if (i === 0) {
+                        reData = tempData;
+                    } else {
+                        // 取代返回值得数组
+                        let replaceData = [];
+
+                        // 从新组合交集
+                        tempData.forEach(e => {
+                            if (reData.indexOf(e) > -1) {
+                                replaceData.push(e);
+                            }
+                        });
+
+                        // 替代旧的
+                        reData = replaceData;
+                    }
+                });
             }
             return reData;
         },
         // 异步监听数据变动
-        listen() {},
+        listen(expr, callback, reduceTime = 10) {
+            let watchFunc;
+            if (expr) {
+                // 先记录一次值
+                let data = JSON.stringify(this.seek(expr).map(e => e._id));
+
+                let timer;
+
+                this.watch(watchFunc = e => {
+                    let tempData = this.seek(expr);
+                    let tempId = tempData.map(e => e._id);
+
+                    if (JSON.stringify(tempId) !== data) {
+                        clearTimeout(timer);
+                        timer = setTimeout(() => {
+                            callback(tempData);
+                        }, reduceTime);
+                    }
+                });
+            } else {
+                let timer;
+
+                this.watch(watchFunc = e => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        callback(tempData);
+                    }, reduceTime);
+                });
+            }
+
+            this[LISTEN].push({
+                expr,
+                callback,
+                watchFunc
+            });
+        },
         // 取消监听数据变动
-        unlisten() {},
+        unlisten(expr, callback) {
+            this[LISTEN].forEach(o => {
+                if (o.expr === expr && o.callback === callback) {
+                    let {
+                        watchFunc
+                    } = o;
+
+                    this.unwatch(watchFunc);
+                }
+            });
+        },
         // 删除自己
         removeSelf() {
             if (this.host) {

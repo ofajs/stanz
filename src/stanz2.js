@@ -333,10 +333,50 @@
             let func1, func2;
             switch (getType(options)) {
                 case "object":
+                    let reverseOptions = {};
+                    for (let k in options) {
+                        reverseOptions[options[k]] = k;
+                    }
+                    func1 = e => {
+                        let trendData = deepClone(e.trend);
+                        let replaceKey = reverseOptions[e.key];
+                        if (replaceKey !== undefined) {
+                            trendData.keys[0] = replaceKey;
+                            this.entrend(trendData);
+                        }
+                    }
+                    func2 = e => {
+                        let trendData = deepClone(e.trend);
+                        let replaceKey = options[e.key];
+                        if (replaceKey !== undefined) {
+                            trendData.keys[0] = replaceKey;
+                            target.entrend(trendData);
+                        }
+                    }
                     break;
                 case "array":
+                    func1 = e => {
+                        if (options.includes(e.key)) {
+                            this.entrend(e.trend);
+                        }
+                    }
+                    func2 = e => {
+                        if (options.includes(e.key)) {
+                            target.entrend(e.trend);
+                        }
+                    }
                     break;
                 case "string":
+                    func1 = e => {
+                        if (e.key === options) {
+                            this.entrend(e.trend);
+                        }
+                    }
+                    func2 = e => {
+                        if (e.key === options) {
+                            target.entrend(e.trend);
+                        }
+                    }
                     break;
                 default:
                     // undefined
@@ -471,10 +511,60 @@
             });
             return this;
         },
-        // 删除自己
-        removeSelf() {
-            if (this.host) {
-                delete this.host[this.hostkey];
+        // 转换数据
+        transData(options) {
+            let defaults = {
+                // 自身key监听
+                key: "",
+                // 目标数据对象
+                target: "",
+                // 目标key
+                targetKey: "",
+                // 数据对接对象
+                // trans: {}
+            };
+            assign(defaults, options);
+
+            let {
+                key,
+                target,
+                targetKey,
+                trans
+            } = defaults;
+
+            // 判断是否有trans
+            if (defaults.trans) {
+                // 生成翻转对象
+                let resverObj = {};
+                for (let k in trans) {
+                    resverObj[trans[k]] = k;
+                }
+
+                // 监听
+                this.watch(key, d => {
+                    d = trans[d];
+                    target[targetKey] = d;
+                });
+                target.watch(targetKey, d => {
+                    d = resverObj[d];
+                    this[key] = d;
+                });
+            }
+        },
+        // 删除自己或子元素
+        remove(...args) {
+            let [keyName] = args;
+            if (0 in args) {
+                if (getType(keyName) === "number") {
+                    // 删除数组内相应index的数据
+                    this.splice(keyName, 1);
+                } else {
+                    delete this[keyName];
+                }
+            } else {
+                if (this.host) {
+                    delete this.host[this.hostkey];
+                }
             }
         },
         // 克隆对象，为了更好理解，还是做成方法获取
@@ -482,7 +572,7 @@
             return createXData(this.object);
         },
         // 排序方法
-        // 需要特别处理，因为可能是函数参数
+        // 需要特别处理，因为参数可能是函数
         sort(...args) {
             // 设定禁止事件驱动
             setInMethod(this, "sort");
@@ -531,7 +621,7 @@
     });
 
     // 更新数组方法
-    // 不会出现函数参数的方法
+    // 参数不会出现函数的方法
     ['splice', 'shift', 'unshfit', 'push', 'pop', 'copyWithin', 'fill', 'reverse'].forEach(k => {
         let oldFunc = Array.prototype[k];
         oldFunc && defineProperty(XDataFn, k, {
@@ -628,14 +718,24 @@
                 let oldVal = target[key];
                 let type = target.hasOwnProperty(key) ? "update" : "new";
 
-                let reValue = createXData(value, receiver, key);
-
-                // 执行默认操作
-                // 赋值
-                Reflect.set(target, key, reValue, receiver);
+                let newValue = createXData(value, receiver, key);
 
                 // 分开来写，不然这条判断语句太长了不好维护
                 let canEmit = 1;
+
+                if (target._exkeys) {
+                    if (target._exkeys.includes(key)) {
+                        // 只修改准入值
+                        target[key] = newValue;
+                    } else {
+                        canEmit = 0;
+                    }
+                } else {
+                    // 执行默认操作
+                    // 赋值
+                    Reflect.set(target, key, newValue, receiver);
+                }
+
                 if (value instanceof Object && oldVal instanceof Object && JSON.stringify(value) == JSON.stringify(oldVal)) {
                     // object类型，判断结构值是否全等
                     canEmit = 0;

@@ -1,5 +1,5 @@
 // (() => {
-let tester = expect(16, 'watch test');
+let tester = expect(18, 'watch test');
 let obj = {
     a: "aaa",
     b: "bbbb",
@@ -29,6 +29,12 @@ let xd = stanz(obj);
 let xd2 = xd.clone();
 
 let xd3 = xd.clone();
+
+let xd4 = stanz({});
+
+xd.sync(xd4, {
+    "a": "aaa"
+});
 
 // 数据绑定
 xd.sync(xd2);
@@ -87,10 +93,15 @@ xd.watch('a', f = (value, e) => {
     tester.ok(!value, "watch [a] ok");
 });
 
+// 确认xd4
+tester.ok(xd4.aaa.string === `{"val":"I am a"}`, "sync object ok3");
+
+
 // 删除操作
 delete xd.a;
 
 tester.ok(xd2.a === undefined, "delete object ok1");
 tester.ok(xd3.a === undefined, "delete object ok2");
+tester.ok(xd4.aaa === undefined, "delete object sync ok");
 
 // })();

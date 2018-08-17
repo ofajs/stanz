@@ -82,7 +82,7 @@
             if (val instanceof Object) {
                 let sData = seekData(val, key, sVal);
                 sData.forEach(e => {
-                    if (arr.indexOf(e) === -1) {
+                    if (!arr.includes(e)) {
                         arr.push(e);
                     }
                 });
@@ -245,7 +245,7 @@
 
             // 删除本身不存在的key
             Object.keys(this).forEach(k => {
-                if (valueKeys.indexOf(k) === -1) {
+                if (!valueKeys.includes(k)) {
                     delete this[k];
                 }
             });
@@ -259,7 +259,7 @@
             if (!trendData.tid) {
                 throw "trendData invalid";
             }
-            if (this[XDATATRENDIDS].indexOf(trendData.tid) > -1) {
+            if (this[XDATATRENDIDS].includes(trendData.tid)) {
                 return;
             }
 
@@ -298,6 +298,17 @@
 
                     delete tar[key];
                     break;
+                case "array-method":
+                    let {
+                        methodName,
+                        args
+                    } = trendData;
+                    // 禁止事件驱动 type:设置值
+                    setInMethod(this, "array-" + methodName);
+
+                    // 继承方法
+                    Array.prototype[methodName].apply(tar, args);
+                    break;
                 default:
                     // 禁止事件驱动 type:设置值
                     setInMethod(this, "default");
@@ -315,6 +326,7 @@
                     trend: trendData
                 });
             });
+            return this;
         },
         // 同步数据
         sync(target, options) {
@@ -351,6 +363,7 @@
                 opp: target,
                 func: func2
             });
+            return this;
         },
         // 取消数据同步
         unsync(target, options) {
@@ -374,6 +387,7 @@
             } else {
                 console.log('not found =>', target);
             }
+            return this;
         },
         // 超找数据
         seek(expr) {
@@ -394,7 +408,7 @@
 
                         // 从新组合交集
                         tempData.forEach(e => {
-                            if (reData.indexOf(e) > -1) {
+                            if (reData.includes(e)) {
                                 replaceData.push(e);
                             }
                         });
@@ -442,6 +456,7 @@
                 callback,
                 watchFunc
             });
+            return this;
         },
         // 取消监听数据变动
         unlisten(expr, callback) {
@@ -454,6 +469,7 @@
                     this.unwatch(watchFunc);
                 }
             });
+            return this;
         },
         // 删除自己
         removeSelf() {
@@ -465,7 +481,8 @@
         clone() {
             return createXData(this.object);
         },
-        // 更新后的数组方法
+        // 排序方法
+        // 需要特别处理，因为可能是函数参数
         sort(...args) {
             // 设定禁止事件驱动
             setInMethod(this, "sort");
@@ -514,18 +531,37 @@
     });
 
     // 更新数组方法
-    // ['splice'].forEach(k => {
-    //     let oldFunc = Array.prototype[k];
-    //     defineProperty(XDataFn, k, {
-    //         value(...args) {
-    //             // 设定禁止触发
-    //             this._inMethod = 1;
-    //             let reValue = oldFunc.apply(this, args);
-    //             delete this._inMethod;
-    //             return reValue
-    //         }
-    //     });
-    // });
+    // 不会出现函数参数的方法
+    ['splice', 'shift', 'unshfit', 'push', 'pop', 'copyWithin', 'fill', 'reverse'].forEach(k => {
+        let oldFunc = Array.prototype[k];
+        oldFunc && defineProperty(XDataFn, k, {
+            value(...args) {
+                // 设定禁止事件驱动
+                setInMethod(this, "array-" + k);
+
+                // 继承旧的方法
+                let reValue = oldFunc.apply(this, args);
+
+                // 手动触发事件
+                let tid = getRandomId();
+
+                // 自身添加该tid
+                trendClear(this, tid);
+
+                // 触发事件
+                emitChange(this, undefined, this, this, "array-method", {
+                    tid,
+                    keys: [],
+                    type: "array-method",
+                    methodName: k,
+                    args
+                });
+
+                delete this._inMethod;
+                return reValue
+            }
+        });
+    });
 
     // 触发器
     const emitChange = (tar, key, val, oldVal, type, trend) => {

@@ -23,7 +23,6 @@
     const LISTEN = "_listen_" + getRandomId();
 
     // function
-    let isXData = (obj) => obj instanceof XData;
     let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
     // 异步执行的清理函数
     // 执行函数后，5000毫秒清理一次
@@ -46,6 +45,7 @@
             runing = 1;
         }
     })();
+
     // business function
     // trend清理器
     const trendClear = (tar, tid) => {
@@ -90,6 +90,22 @@
         });
 
         return arr;
+    }
+
+    // 解析 trend data 到最终对象
+    const detrend = (tar, trendData) => {
+        let key;
+
+        // 数组last id
+        let lastId = trendData.keys.length - 1;
+        trendData.keys.forEach((tKey, i) => {
+            if (i < lastId) {
+                tar = tar[tKey];
+            }
+            key = tKey;
+        });
+
+        return [tar, key];
     }
 
     // 获取事件寄宿对象
@@ -267,17 +283,7 @@
             trendClear(this, trendData.tid);
 
             // 获取目标和目标key
-            let tar = this;
-            let key;
-
-            // 数组last id
-            let lastId = trendData.keys.length - 1;
-            trendData.keys.forEach((tKey, i) => {
-                if (i < lastId) {
-                    tar = tar[tKey];
-                }
-                key = tKey;
-            });
+            let [tar, key] = detrend(this, trendData);
 
             // 临时数组
             let tempArr = tar.slice();
@@ -784,5 +790,6 @@
         let reObj = createXData(obj);
         return reObj;
     }
+    glo.stanz.detrend = detrend;
 
 })(window);

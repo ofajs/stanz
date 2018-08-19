@@ -5,43 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>stanz test</title>
+    <title>stanz2</title>
     <script src="ok.js"></script>
     <script src="../src/stanz.js"></script>
 </head>
 
 <body>
+
 </body>
-<script>
-    let temA;
-    aaa = {
-        name: "a1",
-        childs: [{
-            name: "a1_childs1"
-        }, {
-            name: "a1_childs2",
-            chlids: [{
-                name: "a1_childs2_childs1",
-                selected: 1
-            }]
-        }, {
-            name: "a1_childs3"
-        }],
-        get selectedData() {
-            return this.seek('[selected=1]');
-        },
-        set tempA(val) {
-            temA = val
-        },
-        get tempA() {
-            return temA;
-        }
-    }
-    bbb = stanz(aaa);
-</script>
-<script src="base_test.js"></script>
-<script src="observe_test.js"></script>
-<script src="array_test.js"></script>
-<script src="trend_test.js"></script>
+<script src="watch-test.js"></script>
+<script src="seek-test.js"></script>
 
 </html>

@@ -58,4 +58,6 @@
     // 修改两个select=2的相关数据
     xd[0].selected = 3;
     xd['d'].selected = 2;
+
+    window.aa = stanz([111,222,333]);
 })();

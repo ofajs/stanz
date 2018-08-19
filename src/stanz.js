@@ -77,9 +77,9 @@
             arr.push(data);
         }
 
-        Object.keys(data).forEach(k => {
+        for (let k in data) {
             let val = data[k];
-            if (val instanceof Object) {
+            if (val instanceof XData) {
                 let sData = seekData(val, key, sVal);
                 sData.forEach(e => {
                     if (!arr.includes(e)) {
@@ -87,7 +87,7 @@
                     }
                 });
             }
-        });
+        }
 
         return arr;
     }
@@ -184,7 +184,13 @@
             });
         }
 
-        Object.keys(obj).forEach(k => {
+        // 获取关键key数组
+        let keys = Object.keys(obj);
+        if (getType(obj) === "array") {
+            keys.push('length');
+        }
+
+        keys.forEach(k => {
             // 获取值，getter,setter
             let {
                 get,
@@ -735,6 +741,7 @@
                         target[key] = newValue;
                     } else {
                         canEmit = 0;
+                        Reflect.set(target, key, newValue, receiver);
                     }
                 } else {
                     // 执行默认操作
@@ -778,9 +785,14 @@
 
     // main
     const createXData = (obj, host, hostkey) => {
-        if (obj instanceof Object) {
-            let xdata = new XData(obj, host, hostkey);
-            return new Proxy(xdata, XDataHandler);
+        switch (getType(obj)) {
+            case "array":
+            case "object":
+                if (obj instanceof XData) {
+                    return obj;
+                }
+                let xdata = new XData(obj, host, hostkey);
+                return new Proxy(xdata, XDataHandler);
         }
         return obj;
     }

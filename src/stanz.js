@@ -139,19 +139,19 @@
             },
             // 事件寄宿对象
             [XDATAEVENTS]: {
-                value: {}
+                value: obj[XDATAEVENTS] || {}
             },
             // 数据绑定记录
             [XDATASYNCS]: {
-                value: []
+                value: obj[XDATASYNCS] || []
             },
             // entrend id 记录
             [XDATATRENDIDS]: {
-                value: []
+                value: obj[XDATATRENDIDS] || []
             },
             // listen 记录
             [LISTEN]: {
-                value: []
+                value: obj[LISTEN] || []
             },
             // 是否开启trend清洁
             "_trendClear": {
@@ -793,12 +793,7 @@
         switch (getType(obj)) {
             case "array":
             case "object":
-                if (obj instanceof XData) {
-                    return obj;
-                }
-                let xdata = new XData(obj, host, hostkey);
-                return xdata;
-                // return new Proxy(xdata, XDataHandler);
+                return new XData(obj, host, hostkey);
         }
         return obj;
     }

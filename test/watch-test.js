@@ -19,6 +19,13 @@ let obj = {
         val: 150
     },
     2: {
+        0: {
+            val: "I am zero"
+        },
+        1: {
+            val: "I am one"
+        },
+        length: 2,
         val: 50
     },
     length: 3

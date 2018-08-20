@@ -190,6 +190,9 @@
             keys.push('length');
         }
 
+        // 需要返回的值
+        let _this = new Proxy(this, XDataHandler);
+
         keys.forEach(k => {
             // 获取值，getter,setter
             let {
@@ -204,9 +207,11 @@
                     set
                 });
             } else {
-                this[k] = createXData(value, this, k);
+                this[k] = createXData(value, _this, k);
             }
         });
+
+        return _this;
     }
 
     // xdata的原型
@@ -792,7 +797,8 @@
                     return obj;
                 }
                 let xdata = new XData(obj, host, hostkey);
-                return new Proxy(xdata, XDataHandler);
+                return xdata;
+                // return new Proxy(xdata, XDataHandler);
         }
         return obj;
     }

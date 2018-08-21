@@ -670,7 +670,7 @@
     }
 
     // 特殊方法 copyWithin
-    let copyWithinFunc = defineProperty(XDataFn, 'copyWithin', {
+    defineProperty(XDataFn, 'copyWithin', {
         writable: true,
         value(...args) {
             // throw `can't use copyWithin`;

@@ -698,6 +698,10 @@
                 type
             };
 
+            if (oldVal instanceof XData) {
+                trend.oldId = oldVal._id;
+            }
+
             // 自身添加该tid
             trendClear(tar, tid);
 

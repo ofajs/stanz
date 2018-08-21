@@ -569,7 +569,7 @@
             }
         },
         // 删除自己或子元素
-        remove(...args) {
+        clear(...args) {
             let [keyName] = args;
             if (0 in args) {
                 if (getType(keyName) === "number") {

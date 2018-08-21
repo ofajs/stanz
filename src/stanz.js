@@ -324,6 +324,7 @@
                     setInMethod(this, "array-" + methodName);
 
                     // 继承方法
+                    // tar[methodName](...args);
                     Array.prototype[methodName].apply(tar, args);
                     break;
                 default:
@@ -627,21 +628,17 @@
             });
 
             return reValue
-        }
-    };
-
-    // 设置 XDataFn
-    Object.keys(XDataProto).forEach(k => {
-        defineProperty(XDataFn, k, {
-            value: XDataProto[k]
-        });
-    });
-
-    // 特殊方法 copyWithin
-    defineProperty(XDataFn, 'copyWithin', {
-        writable: true,
-        value(target, start, end) {
+        },
+        // 狗屎copyWithin特殊处理
+        copyWithin(...args) {
             // throw `can't use copyWithin`;
+
+            // 获取三个参数
+            let [target, start, end] = args;
+
+            // 设定禁止事件驱动
+            setInMethod(this, "copyWithin");
+
             // 范围内的数据
             let areaData = this.slice(start, end);
 
@@ -661,17 +658,42 @@
                         areaId++;
                     }
                 });
-                return this;
             } else {
                 // 没有XData的话，还是原生性能好点
-                return Array.prototype.copyWithin.call(this, target, start, end);
+                Array.prototype.copyWithin.call(this, target, start, end);
             }
+
+            // 开启事件驱动
+            delete this._inMethod;
+
+            // 手动触发事件
+            let tid = getRandomId();
+
+            // 自身添加该tid
+            trendClear(this, tid);
+
+            emitChange(this, undefined, this, this, "array-method", {
+                tid,
+                keys: [],
+                type: "array-method",
+                methodName: 'copyWithin',
+                args
+            });
+
+            return this;
         }
+    };
+
+    // 设置 XDataFn
+    Object.keys(XDataProto).forEach(k => {
+        defineProperty(XDataFn, k, {
+            value: XDataProto[k]
+        });
     });
 
     // 更新数组方法
     // 参数不会出现函数的方法
-    ['splice', 'shift', 'unshfit', 'push', 'pop', 'fill', , 'reverse', 'copyWithin'].forEach(k => {
+    ['splice', 'shift', 'unshfit', 'push', 'pop', 'fill', 'reverse'].forEach(k => {
         let oldFunc = XDataFn[k];
         oldFunc && defineProperty(XDataFn, k, {
             value(...args) {

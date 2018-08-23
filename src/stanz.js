@@ -320,7 +320,15 @@
                     // 禁止事件驱动 type:设置值
                     setInMethod(this, "delete");
 
+                    // 获取旧值
+                    let oldVal = tar[key];
+
                     delete tar[key];
+
+                    // 触发事件
+                    emitChange(tar, key, undefined, oldVal, trendData.type, 0, {
+                        tid: trendData.tid
+                    });
                     break;
                 case "array-method":
                     let {
@@ -341,9 +349,21 @@
                     // 禁止事件驱动 type:设置值
                     setInMethod(this, "default");
 
+                    // 获取旧值
+                    let oldVal = tar[key];
+
                     // 最终设置
                     tar[key] = deepClone(trendData.val);
+
+                    // 触发事件
+                    emitChange(tar, key, trendData.val, oldVal, trendData.type, 0, {
+                        tid: trendData.tid
+                    });
             }
+
+            // 重做trend 
+            let newTrend = deepClone(trendData);
+            newTrend.keys = [];
 
             // 开启事件驱动
             delete this._inMethod;
@@ -492,7 +512,7 @@
         // 异步监听数据变动
         listen(expr, callback, reduceTime = 10) {
             let watchFunc;
-            if (expr) {
+            if (callback) {
                 // 先记录一次值
                 let data = JSON.stringify(this.seek(expr).map(e => e._id));
 
@@ -509,7 +529,9 @@
                         }, reduceTime);
                     }
                 });
-            } else {
+            } else if (expr) {
+                callback = expr;
+
                 let timer;
 
                 this.watch(watchFunc = e => {
@@ -720,7 +742,7 @@
     });
 
     // 触发器
-    const emitChange = (tar, key, val, oldVal, type, trend) => {
+    const emitChange = (tar, key, val, oldVal, type, trend, otherOptions = {}) => {
         // watch option
         let watchOption = {
             oldVal,
@@ -739,7 +761,7 @@
             (key !== undefined) && trend.keys.unshift(key);
         } else {
             let keys = [key];
-            let tid = getRandomId();
+            let tid = otherOptions.tid || getRandomId();
             trend = {
                 // 行动id
                 tid,

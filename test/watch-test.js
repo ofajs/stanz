@@ -1,7 +1,7 @@
 // (() => {
-let tester = expect(18, 'watch test');
+let tester = expect(20, 'watch test');
 let obj = {
-    a: "aaa",
+    a: "i am a",
     b: "bbbb",
     c: {
         val: "I am c",
@@ -47,16 +47,21 @@ xd.sync(xd4, {
 xd.sync(xd2);
 xd2.sync(xd3);
 
-let f;
+let f, f2;
 xd.watch('a', f = (value, e) => {
-    tester.ok(e.type === "update", "type update ok");
-    tester.ok(value === "change a", "watch [a] ok");
+    tester.ok(e.type === "update", "xd type update ok");
+    tester.ok(value === "change a", "xd watch [a] ok");
+});
+xd2.watch('a', f2 = (value, e) => {
+    tester.ok(e.type === "update", "xd2 type update ok");
+    tester.ok(value === "change a", "xd2 watch [a] ok");
 });
 
 // 改动
 xd.a = "change a";
 
 xd.unwatch('a', f);
+xd2.unwatch('a', f2);
 
 tester.ok(xd.a === "change a", "value [a] ok1");
 tester.ok(xd2.a === "change a", "value [a] ok2");
@@ -99,7 +104,6 @@ xd.watch('a', f = (value, e) => {
     tester.ok(e.type === "delete", "type delete ok");
     tester.ok(!value, "watch [a] ok");
 });
-
 // 确认xd4
 tester.ok(xd4.aaa.string === `{"val":"I am a"}`, "sync object ok3");
 

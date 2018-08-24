@@ -289,16 +289,19 @@
         },
         // 传送器入口
         entrend(trendData) {
+            let {
+                tid
+            } = trendData;
             // 判断tid
-            if (!trendData.tid) {
+            if (!tid) {
                 throw "trendData invalid";
             }
-            if (this[XDATATRENDIDS].includes(trendData.tid)) {
+            if (this[XDATATRENDIDS].includes(tid)) {
                 return;
             }
 
             // tid记录器 和 定时清理 entrend 记录器
-            trendClear(this, trendData.tid);
+            trendClear(this, tid);
 
             // 获取目标和目标key
             let [tar, key] = detrend(this, trendData);
@@ -315,19 +318,27 @@
                     trendData.order.forEach((e, i) => {
                         tar[e] = tempArr[i];
                     });
+
+                    emitChange(tar, undefined, tar, tar, "sort", {
+                        tid,
+                        keys: [],
+                        type: "sort",
+                        order: trendData.order
+                    });
                     break;
                 case "delete":
                     // 禁止事件驱动 type:设置值
                     setInMethod(this, "delete");
 
                     // 获取旧值
-                    let oldVal = tar[key];
+                    var oldVal = tar[key];
 
                     delete tar[key];
 
                     // 触发事件
                     emitChange(tar, key, undefined, oldVal, trendData.type, 0, {
-                        tid: trendData.tid
+                        // 沿用tid
+                        tid
                     });
                     break;
                 case "array-method":
@@ -344,20 +355,31 @@
                     } else {
                         Array.prototype[methodName].apply(tar, args);
                     }
+
+                    // 触发事件
+                    emitChange(tar, undefined, tar, tar, "array-method", {
+                        tid,
+                        keys: [],
+                        type: "array-method",
+                        methodName,
+                        args
+                    });
                     break;
                 default:
                     // 禁止事件驱动 type:设置值
                     setInMethod(this, "default");
 
                     // 获取旧值
-                    let oldVal = tar[key];
+                    var oldVal = tar[key];
 
                     // 最终设置
-                    tar[key] = deepClone(trendData.val);
+                    tar[key] = trendData.val;
+                    // tar[key] = deepClone(trendData.val);
 
                     // 触发事件
                     emitChange(tar, key, trendData.val, oldVal, trendData.type, 0, {
-                        tid: trendData.tid
+                        // 沿用tid
+                        tid
                     });
             }
 

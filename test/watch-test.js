@@ -68,7 +68,13 @@ tester.ok(xd2.a === "change a", "value [a] ok2");
 tester.ok(xd3.a === "change a", "value [a] ok3");
 
 xd.watch((e) => {
-    console.log('watch self => ', e);
+    console.log('xd watch self => ', e);
+});
+xd2.watch(e => {
+    console.log('xd2 watch self => ', e);
+});
+xd3.watch(e => {
+    console.log('xd3 watch self => ', e);
 });
 
 // 排序

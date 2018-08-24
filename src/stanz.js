@@ -558,9 +558,7 @@
 
                 this.watch(watchFunc = e => {
                     clearTimeout(timer);
-                    timer = setTimeout(() => {
-                        callback(tempData);
-                    }, reduceTime);
+                    timer = setTimeout(callback, reduceTime);
                 });
             }
 

@@ -10,8 +10,8 @@
 
 由于 stanz2 沿用了 `emitChange` 机制，导致同步数据的 `entrend` 容易出现问题，所以重构；
 
-将 `entrend` 为所有的改动的入口，去除 `emitChange`；
+将 `entrend` 和 `setHandler` 公用一个修改入口；
 
-添加 `listkey`，方便从上寻源；
+添加 `keylist`，方便从上寻源；
 
 打算完全兼容 stanz 2，只是架构上大改，提升可维护性和扩展性；

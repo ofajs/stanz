@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>stanz3</title>
+    <script src="ok.js"></script>
+    <script src="../src/stanz3.js"></script>
+</head>
+
+<body>
+
+</body>
+<script>
+    let obj = {
+        a: "I am a",
+        b: {
+            val: "i am b"
+        },
+        0: {
+            val: "I am c",
+            c_c: {
+                val: "i am cc"
+            }
+        },
+        length: 1
+    };
+
+    let xd1 = stanz(obj);
+    let xd2 = xd1.clone();
+    let newData = stanz({
+        root: "i am root",
+        xd: xd1.object
+    });
+
+    // 修改xd1
+    xd1[0]['c_c']['haha'] = "i am haha";
+</script>
+
+</html>

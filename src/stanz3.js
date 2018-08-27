@@ -76,6 +76,22 @@
         }
     }
 
+    // 解析 trend data 到最终对象
+    const detrend = (tar, trendData) => {
+        let key;
+
+        // 数组last id
+        let lastId = trendData.keys.length - 1;
+        trendData.keys.forEach((tKey, i) => {
+            if (i < lastId) {
+                tar = tar[tKey];
+            }
+            key = tKey;
+        });
+
+        return [tar, key];
+    }
+
     // 触发冒泡事件
     const emitChange = (options) => {
         let {
@@ -173,6 +189,7 @@
         switch (type) {
             case "new":
             case "update":
+                debugger
                 if (xdata._exkeys && xdata._exkeys.includes(key)) {
                     // 只修改准入值
                     xdata[key] = newVal;
@@ -214,7 +231,7 @@
                 });
                 return true;
             }
-            return Reflect.set(target, key, value, receiver);
+            return Reflect.set(xdata, key, value, receiver);
         },
         deleteProperty(xdata, key) {
             if (!/^_.+/.test(key)) {
@@ -228,7 +245,7 @@
                 });
                 return true;
             }
-            return Reflect.deleteProperty(target, key);
+            return Reflect.deleteProperty(xdata, key);
         }
     };
 
@@ -236,7 +253,7 @@
     function XData(obj, host, key) {
         defineProperties(this, {
             // 唯一id
-            "_id": {
+            _id: {
                 value: obj._id || getRandomId()
             },
             // 事件寄宿对象
@@ -247,6 +264,11 @@
             [XDATATRENDIDS]: {
                 value: obj[XDATATRENDIDS] || []
             },
+            // 是否开启trend清洁
+            _trendClear: {
+                writable: true,
+                value: 0
+            }
         });
 
         // 设置id
@@ -345,19 +367,17 @@
     let XDataProto = {
         // 入口修改内部数据的方法
         entrend(trendData) {
-            let {
-                tid
-            } = trendData;
-            // 判断tid
-            if (!tid) {
-                throw "trendData invalid";
-            }
-            if (this[XDATATRENDIDS].includes(tid)) {
-                return;
-            }
+            // 解析出最终要修改的对象
+            let [tar, key] = detrend(this, trendData);
 
-            // tid记录器 和 定时清理 entrend 记录器
-            trendClear(this, tid);
+            setXData({
+                xdata: tar,
+                key,
+                value: trendData.val,
+                receiver: tar,
+                type: trendData.type,
+                tid: trendData.tid
+            });
 
             debugger
         },

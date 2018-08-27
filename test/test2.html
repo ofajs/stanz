@@ -37,7 +37,11 @@
 
 
     xd1.watch(e => {
+        xd2.entrend(e.trend);
         console.log(e);
+    });
+    xd1.watch("0", (d, e) => {
+        console.log(d, e);
     });
     // 修改xd1
     xd1[0]['c_c']['haha'] = "i am haha";

@@ -41,21 +41,28 @@
     const XDATATRENDIDS = "_trend_" + getRandomId();
 
     // business function
+    // 获取事件寄宿对象
+    const getEventObj = (tar, eventName) => tar[XDATAEVENTS][eventName] || (tar[XDATAEVENTS][eventName] = []);
+
     // 绑定事件
     const onXDataEvent = (tar, eventName, callback) => getEventObj(tar, eventName).push(callback);
 
-    // handler
-    const XDataHandler = {
-        set(target, key, value, receiver) {
-            // 获取 trendkey
-
-
-            debugger
-        },
-        deleteProperty(target, key) {
-            debugger
-        }
+    // 注销事件
+    const unXDataEvent = (tar, eventName, callback) => {
+        let eveArr = getEventObj(tar, eventName);
+        let id = eveArr.indexOf(callback);
+        eveArr.splice(id, 1);
     };
+
+    // 触发事件
+    const emitXDataEvent = (tar, eventName, args) => {
+        let eveArr = getEventObj(tar, eventName);
+
+        // 遍历事件对象
+        eveArr.forEach(callback => {
+            callback(...args);
+        });
+    }
 
     // trend清理器
     const trendClear = (tar, tid) => {
@@ -69,6 +76,162 @@
         }
     }
 
+    // 触发冒泡事件
+    const emitChange = (options) => {
+        let {
+            target,
+            key,
+            oldVal,
+            type,
+            trendData
+        } = options;
+
+        // 深克隆的 trendData
+        let cloneTrendData = deepClone(trendData);
+
+        // 添加key
+        cloneTrendData.keys.unshift(key);
+
+        // 触发事件
+        // watch处理
+        emitXDataEvent(target, "watch-" + key, [target[key], {
+            oldVal,
+            type,
+            trend: cloneTrendData
+        }]);
+        emitXDataEvent(target, "watch-", [{
+            key,
+            val: target[key],
+            type,
+            oldVal,
+            trend: cloneTrendData
+        }]);
+
+        let {
+            host,
+            hostkey
+        } = target;
+
+        // 冒泡
+        if (host) {
+            emitChange({
+                target: host,
+                key: hostkey,
+                value: target,
+                oldVal: target,
+                type: "update",
+                trendData: cloneTrendData
+            });
+        }
+    }
+
+    // 修改数据的函数
+    const setXData = (options) => {
+        // 获取参数
+        let {
+            xdata,
+            key,
+            value,
+            // proxy对象
+            receiver,
+            // 设置数据的状态类型
+            type,
+            // 设置动作的唯一id
+            tid
+        } = options;
+
+        // 修正tid
+        tid = tid || getRandomId();
+
+        if (xdata[XDATATRENDIDS].includes(tid)) {
+            return;
+        }
+
+        // 添加tid
+        trendClear(xdata, tid);
+
+        // 获取旧的值
+        let oldVal = xdata[key];
+
+        // 有改动才会向下走哈
+        if (oldVal == value) {
+            return;
+        }
+
+        // 更新类型
+        type = type || (xdata.hasOwnProperty(key) ? "update" : "new");
+
+        // 生成新的值
+        let newVal = createXData(value, receiver, key);
+        let trendData = {
+            tid,
+            type,
+            keys: []
+        };
+
+        // 根据类型更新
+        switch (type) {
+            case "new":
+            case "update":
+                if (xdata._exkeys && xdata._exkeys.includes(key)) {
+                    // 只修改准入值
+                    xdata[key] = newVal;
+                } else {
+                    Reflect.set(xdata, key, newVal, receiver);
+                }
+                trendData.val = value;
+                break;
+            case "delete":
+                debugger
+                break;
+            case "array-method":
+                debugger
+                break;
+        }
+
+        emitChange({
+            target: xdata,
+            key,
+            value,
+            oldVal,
+            type,
+            trendData
+        });
+
+        debugger
+    }
+
+    // handler
+    const XDataHandler = {
+        set(xdata, key, value, receiver) {
+            if (!/^_.+/.test(key) || xdata._jumpset) {
+                // 设置数据
+                setXData({
+                    xdata,
+                    key,
+                    value,
+                    receiver
+                });
+                return true;
+            }
+            return Reflect.set(target, key, value, receiver);
+        },
+        deleteProperty(xdata, key) {
+            if (!/^_.+/.test(key)) {
+                // 删除数据
+                setXData({
+                    xdata,
+                    key,
+                    value: undefined,
+                    receiver: xdata,
+                    type: "delete"
+                });
+                return true;
+            }
+            return Reflect.deleteProperty(target, key);
+        }
+    };
+
     // class
     function XData(obj, host, key) {
         defineProperties(this, {
@@ -78,7 +241,7 @@
             },
             // 事件寄宿对象
             [XDATAEVENTS]: {
-                value: {}
+                value: obj[XDATAEVENTS] || {}
             },
             // entrend id 记录
             [XDATATRENDIDS]: {
@@ -95,26 +258,16 @@
 
         // 判断是否有host
         if (host) {
-            // 准备keylist
-            // let keylist = host.keylist ? host.keylist.slice() : [];
-            // keylist.push(key);
-            // Object.freeze(keylist);
-
             defineProperties(this, {
-                // 根对象
-                "root": {
-                    value: host.root || host
-                },
                 // 父层对象
                 "host": {
+                    writable: true,
                     value: host
                 },
                 "hostkey": {
+                    writable: true,
                     value: key
-                },
-                // "keylist": {
-                //     value: keylist
-                // }
+                }
             });
         }
 
@@ -161,6 +314,17 @@
         "object": {
             get() {
                 return deepClone(this);
+            }
+        },
+        "root": {
+            get() {
+                let tempHost = this.host,
+                    root;
+                while (tempHost) {
+                    root = tempHost;
+                    tempHost = tempHost.host;
+                }
+                return root;
             }
         },
         // 从根目录上的属性专递key
@@ -245,6 +409,11 @@
 
     // main 
     const createXData = (obj, host, key) => {
+        if (obj instanceof XData) {
+            obj.host = host;
+            obj.hostkey = key;
+            return obj;
+        }
         switch (getType(obj)) {
             case "array":
             case "object":

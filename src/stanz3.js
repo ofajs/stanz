@@ -100,47 +100,87 @@
         };
     }
 
+    // 不触发emitChange运行xdata的方法
+    const runXDataMethod = (xdata, callback) => {
+        xdata._pausedEmit = 1;
+        callback();
+        delete xdata._pausedEmit;
+    }
+
     // 触发冒泡事件
     const emitChange = (options) => {
         let {
             target,
             key,
+            value,
             oldVal,
             type,
             trendData
         } = options;
 
+        // 判断没有禁止触发
+        if (target._pausedEmit) {
+            return;
+        }
+
         // 深克隆的 trendData
         let cloneTrendData = deepClone(trendData);
 
-        // 添加key
-        cloneTrendData.keys.unshift(key);
+        if (key !== undefined) {
+            // 属性数据变动
+            // 添加key
+            cloneTrendData.keys.unshift(key);
 
-        // 触发事件
-        // watch处理
-        emitXDataEvent(target, "watch-" + key, [target[key], {
-            oldVal,
-            type,
-            trend: cloneTrendData
-        }]);
-        emitXDataEvent(target, "watch-", [{
-            key,
-            val: target[key],
-            type,
-            oldVal,
-            trend: cloneTrendData
-        }]);
+            // 触发事件
+            // watch处理
+            emitXDataEvent(target, "watch-" + key, [value, {
+                oldVal,
+                type,
+                trend: cloneTrendData
+            }]);
+            emitXDataEvent(target, "watch-", [{
+                key,
+                val: value,
+                type,
+                oldVal,
+                trend: cloneTrendData
+            }]);
+        } else {
+            // 自身对象变动
+            // 运行数组的方法才会跑到这里
+            let watchOptions = {
+                type,
+                trend: cloneTrendData
+            };
+
+            switch (trendData.type) {
+                case "sort":
+                    assign(watchOptions, {
+                        sort: cloneTrendData.sort
+                    });
+                    break;
+                case "array-method":
+                    assign(watchOptions, {
+                        args: cloneTrendData.args,
+                        methodName: cloneTrendData.methodName
+                    });
+                    break;
+            }
+            // 触发事件
+            // watch处理
+            emitXDataEvent(target, "watch-", []);
+        }
 
         let {
-            host,
-            hostkey
+            _host,
+            _hostkey
         } = target;
 
         // 冒泡
-        if (host) {
+        if (_host) {
             emitChange({
-                target: host,
-                key: hostkey,
+                target: _host,
+                key: _hostkey,
                 value: target,
                 oldVal: target,
                 type: "update",
@@ -148,6 +188,9 @@
             });
         }
     }
+
+    // 数组原型对象
+    let arrayFn = Array.prototype;
 
     // 修改数据的函数
     const setXData = (options) => {
@@ -161,7 +204,15 @@
             // 设置数据的状态类型
             type,
             // 设置动作的唯一id
-            tid
+            tid,
+            // 排序数据
+            sort,
+            // 是否已经运行过
+            // isRunned,
+            // 参数数组
+            args,
+            // 数组方法名
+            methodName
         } = options;
 
         // 修正tid
@@ -174,29 +225,40 @@
         // 添加tid
         trendClear(xdata, tid);
 
-        // 获取旧的值
-        let oldVal = xdata[key];
-
-        // 有改动才会向下走哈
-        if (oldVal == value) {
-            return;
-        }
-
         // 更新类型
         type = type || (xdata.hasOwnProperty(key) ? "update" : "new");
 
-        // 生成新的值
-        let newVal = createXData(value, receiver, key);
+        // trend数据
         let trendData = {
             tid,
             type,
             keys: []
         };
 
+        // emitChange options
+        let emitOptions = {
+            target: receiver,
+            key,
+            // value: target[key],
+            // oldVal,
+            type,
+            trendData
+        };
+
         // 根据类型更新
         switch (type) {
             case "new":
             case "update":
+                // 获取旧的值
+                let oldVal = xdata[key];
+
+                // 有改动才会向下走哈
+                if (oldVal == value) {
+                    return;
+                }
+
+                // 生成新的值
+                let newVal = createXData(value, receiver, key);
                 if (xdata._exkeys && xdata._exkeys.includes(key)) {
                     // 只修改准入值
                     xdata[key] = newVal;
@@ -204,29 +266,51 @@
                     Reflect.set(xdata, key, newVal, receiver);
                 }
                 trendData.val = value;
+
+                // 设置当前值和旧值
+                assign(emitOptions, {
+                    value: xdata[key],
+                    oldVal
+                });
                 break;
             case "delete":
                 debugger
                 break;
+            case "sort":
+                // 判断没有排序过
+                // 排序处理
+                (!options.isRunned) && runXDataMethod(xdata, () => {
+                    // 克隆数组对象
+                    let cloneArr = xdata.slice();
+
+                    sort.forEach((e, i) => {
+                        receiver[i] = cloneArr[e];
+                    });
+                });
+
+                // 数组记录
+                trendData.sort = sort;
+                break;
             case "array-method":
-                debugger
+                // 数组方法运行
+                (!options.isRunned) && runXDataMethod(xdata, () => {
+                    arrayFn[methodName].apply(receiver, args);
+                });
+                assign(trendData, {
+                    args,
+                    methodName
+                });
                 break;
         }
 
-        emitChange({
-            target: xdata,
-            key,
-            value,
-            oldVal,
-            type,
-            trendData
-        });
+        // 触发事件
+        emitChange(emitOptions);
     }
 
     // handler
     const XDataHandler = {
         set(xdata, key, value, receiver) {
-            if (!/^_.+/.test(key) || xdata._jumpset) {
+            if (!/^_.+/.test(key)) {
                 // 设置数据
                 setXData({
                     xdata,
@@ -284,22 +368,15 @@
             }
         });
 
-        // 设置id
-        if (!obj._id) {
-            defineProperty(obj, "_id", {
-                value: this._id
-            });
-        }
-
         // 判断是否有host
         if (host) {
             defineProperties(this, {
                 // 父层对象
-                "host": {
+                _host: {
                     writable: true,
                     value: host
                 },
-                "hostkey": {
+                _hostkey: {
                     writable: true,
                     value: key
                 }
@@ -337,7 +414,7 @@
     }
 
     // xdata的原型
-    let XDataFn = Object.create(Array.prototype);
+    let XDataFn = Object.create(arrayFn);
     defineProperties(XDataFn, {
         // 直接获取字符串
         "string": {
@@ -353,11 +430,11 @@
         },
         "root": {
             get() {
-                let tempHost = this.host,
+                let tempHost = this._host,
                     root;
                 while (tempHost) {
                     root = tempHost;
-                    tempHost = tempHost.host;
+                    tempHost = tempHost._host;
                 }
                 return root;
             }
@@ -367,9 +444,9 @@
             get() {
                 let tar = this;
                 let reArr = [];
-                while (tar.host) {
-                    reArr.unshift(tar.hostkey);
-                    tar = tar.host;
+                while (tar._host) {
+                    reArr.unshift(tar._hostkey);
+                    tar = tar._host;
                 }
                 return reArr;
             }
@@ -378,22 +455,58 @@
 
     // 原型链上的方法
     let XDataProto = {
-        // 入口修改内部数据的方法
+        // trend入口修改内部数据的方法
         entrend(trendData) {
             // 解析出最终要修改的对象
             let {
                 target,
-                key
+                key,
+                value
             } = detrend(this, trendData);
 
-            setXData({
-                xdata: target[GETXDATA],
-                key,
-                value: trendData.val,
-                receiver: target,
-                type: trendData.type,
-                tid: trendData.tid
-            });
+            switch (trendData.type) {
+                case "new":
+                case "update":
+                    // 普通的更新数据
+                    setXData({
+                        xdata: target[GETXDATA],
+                        key,
+                        value: trendData.val,
+                        receiver: target,
+                        type: trendData.type,
+                        tid: trendData.tid
+                    });
+                    break;
+                case "sort":
+                    // value才是真正的target
+                    // 进行顺序设置
+                    setXData({
+                        xdata: value[GETXDATA],
+                        receiver: value,
+                        type: "sort",
+                        // 顺序数据
+                        sort: trendData.sort,
+                        tid: trendData.tid
+                    });
+                    break;
+                case "array-method":
+                    // value才是真正的target
+                    // 数组方法型的更新
+                    setXData({
+                        xdata: value[GETXDATA],
+                        receiver: value,
+                        type: "array-method",
+                        // 数组方法
+                        methodName: trendData.methodName,
+                        args: trendData.args,
+                        tid: trendData.tid
+                    });
+            }
+
+        },
+        // 解析trend数据
+        detrend(trendData) {
+            return detrend(this, trendData);
         },
         // 监听变化
         watch(key, callback) {
@@ -424,10 +537,6 @@
             }
             unXDataEvent(this, 'watch-' + key, callback);
             return this;
-        },
-        // 克隆对象，为了更好理解，还是做成方法获取
-        clone() {
-            return createXData(this.object);
         },
         // 同步数据
         sync(target, options) {
@@ -531,6 +640,48 @@
             }
             return this;
         },
+        // 克隆对象，为了更好理解，还是做成方法获取
+        clone() {
+            return createXData(this.object);
+        },
+        // 排序方法
+        // 需要特别处理，因为参数可能是函数
+        // 函数会有变数，不能带函数作为参数，故直接传送排序后的顺序
+        sort(...args) {
+            // 记录id顺序
+            let ids = this.map(e => e._id);
+            let xdata = this[GETXDATA];
+
+            // 执行默认方法
+            let reValue;
+            runXDataMethod(xdata, () => {
+                reValue = arrayFn.sort.apply(this, args);
+            });
+
+
+            // 记录新顺序
+            let new_ids = this.map(e => e._id);
+
+            // 记录顺序置换
+            let sort = [];
+            ids.forEach((e, index) => {
+                let newIndex = new_ids.indexOf(e);
+                sort[index] = newIndex;
+            });
+
+            // 进行顺序设置
+            setXData({
+                xdata: xdata,
+                receiver: this,
+                type: "sort",
+                // 顺序数据
+                sort,
+                // 已经排序过
+                isRunned: 1
+            });
+
+            return reValue;
+        }
     };
 
     // 设置 XDataFn
@@ -540,14 +691,32 @@
         });
     });
 
+    ['splice', 'shift', 'unshfit', 'push', 'pop', 'fill', 'reverse', 'copyWithin'].forEach(methodName => {
+        // 重构数组方法
+        XDataFn[methodName] && defineProperty(XDataFn, methodName, {
+            value(...args) {
+                // 数组方法
+                setXData({
+                    xdata: this[GETXDATA],
+                    receiver: this,
+                    type: "array-method",
+                    methodName,
+                    args
+                });
+
+                return 100;
+            }
+        });
+    });
+
     // 原型链衔接
     XData.prototype = XDataFn;
 
     // main 
     const createXData = (obj, host, key) => {
         if (obj instanceof XData) {
-            obj.host = host;
-            obj.hostkey = key;
+            obj._host = host;
+            obj._hostkey = key;
             return obj;
         }
         switch (getType(obj)) {

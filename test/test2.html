@@ -27,7 +27,10 @@
             2: {
                 num: 50
             },
-            length: 3
+            3: {
+                num: 80
+            },
+            length: 4
         },
         0: {
             val: "I am c",
@@ -51,38 +54,44 @@
         xd: xd1.object
     });
 
+    xd2.sync(newData.xd);
 
     xd1.watch(function (e) {
-        console.log(e);
+        // console.log(e.trend, e);
+        console.log(" xd1=> ", e);
+    });
+
+    xd2.watch(function (e) {
+        // console.log(e.trend, e);
+        console.log(" xd2 => ", e);
     });
 
 
-    xd2.watch(e => {
-        console.log(e);
-    });
-
-
-    xd3.watch(e => {
-        console.log(e);
-    });
-    // xd1.watch("0", (d, e) => {
-    //     console.log(d, e);
+    // xd2.watch(e => {
+    //     console.log(e);
     // });
 
-    let nobj = {
-        val: "i am haha"
-    }
 
-    // 修改xd1
-    xd1[0]['c_c']['haha'] = nobj;
-
-    console.log(xd1[0]['c_c']['haha']);
-    console.log(xd2[0]['c_c']['haha']);
-    console.log(xd3[0]['c_c']['haha']);
-
-    // xd1.b.sort((a, b) => {
-    //     return a.num > b.num;
+    // xd3.watch(e => {
+    //     console.log(e);
     // });
+
+    // // 修改xd1
+    // xd1[0]['c_c']['haha'] = {
+    //     val: "i am haha"
+    // };
+
+    // console.log(xd1[0]['c_c']['haha']);
+    // console.log(xd2[0]['c_c']['haha']);
+    // console.log(xd3[0]['c_c']['haha']);
+
+    xd1.b.sort((a, b) => {
+        return a.num > b.num;
+    });
+
+    xd1.b.push({
+        val: "hahahaha b"
+    });
 </script>
 
 </html>

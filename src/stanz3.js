@@ -93,15 +93,39 @@
             key = tKey;
         });
 
-        return {
-            target: tar,
-            key,
-            value: (lastId >= 0) ? tar[key] : undefined
-        };
+        let reObj, value = tar[key];
+
+        switch (trendData.type) {
+            case "new":
+            case "update":
+                reObj = {
+                    type: trendData.type,
+                    target: tar,
+                    key,
+                    value: (lastId >= 0) ? value : undefined
+                };
+                break;
+            case "sort":
+                reObj = {
+                    type: trendData.type,
+                    target: (lastId >= 0) ? value : tar,
+                    sort: trendData.sort
+                };
+                break;
+            case "array-method":
+                reObj = {
+                    type: trendData.type,
+                    target: (lastId >= 0) ? value : tar,
+                    args: trendData.args,
+                    methodName: trendData.methodName
+                };
+        }
+
+        return reObj;
     }
 
     // 不触发emitChange运行xdata的方法
-    const runXDataMethod = (xdata, callback) => {
+    const runXDataMethodNoEmit = (xdata, callback) => {
         xdata._pausedEmit = 1;
         callback();
         delete xdata._pausedEmit;
@@ -168,7 +192,7 @@
             }
             // 触发事件
             // watch处理
-            emitXDataEvent(target, "watch-", []);
+            emitXDataEvent(target, "watch-", [watchOptions]);
         }
 
         let {
@@ -279,7 +303,7 @@
             case "sort":
                 // 判断没有排序过
                 // 排序处理
-                (!options.isRunned) && runXDataMethod(xdata, () => {
+                (!options.isRunned) && runXDataMethodNoEmit(xdata, () => {
                     // 克隆数组对象
                     let cloneArr = xdata.slice();
 
@@ -293,7 +317,7 @@
                 break;
             case "array-method":
                 // 数组方法运行
-                (!options.isRunned) && runXDataMethod(xdata, () => {
+                (!options.isRunned) && runXDataMethodNoEmit(xdata, () => {
                     arrayFn[methodName].apply(receiver, args);
                 });
                 assign(trendData, {
@@ -461,7 +485,10 @@
             let {
                 target,
                 key,
-                value
+                value,
+                sort,
+                args,
+                methodName
             } = detrend(this, trendData);
 
             switch (trendData.type) {
@@ -481,11 +508,11 @@
                     // value才是真正的target
                     // 进行顺序设置
                     setXData({
-                        xdata: value[GETXDATA],
-                        receiver: value,
+                        xdata: target[GETXDATA],
+                        receiver: target,
                         type: "sort",
                         // 顺序数据
-                        sort: trendData.sort,
+                        sort,
                         tid: trendData.tid
                     });
                     break;
@@ -493,12 +520,12 @@
                     // value才是真正的target
                     // 数组方法型的更新
                     setXData({
-                        xdata: value[GETXDATA],
-                        receiver: value,
+                        xdata: target[GETXDATA],
+                        receiver: target,
                         type: "array-method",
                         // 数组方法
-                        methodName: trendData.methodName,
-                        args: trendData.args,
+                        methodName,
+                        args,
                         tid: trendData.tid
                     });
             }
@@ -654,10 +681,9 @@
 
             // 执行默认方法
             let reValue;
-            runXDataMethod(xdata, () => {
+            runXDataMethodNoEmit(xdata, () => {
                 reValue = arrayFn.sort.apply(this, args);
             });
-
 
             // 记录新顺序
             let new_ids = this.map(e => e._id);
@@ -695,16 +721,24 @@
         // 重构数组方法
         XDataFn[methodName] && defineProperty(XDataFn, methodName, {
             value(...args) {
+                // 执行默认方法
+                let reValue;
+                runXDataMethodNoEmit(this, () => {
+                    reValue = arrayFn[methodName].apply(this, args);
+                });
+
                 // 数组方法
                 setXData({
                     xdata: this[GETXDATA],
                     receiver: this,
                     type: "array-method",
                     methodName,
-                    args
+                    args,
+                    // 已执行过
+                    isRunned: 1
                 });
 
-                return 100;
+                return reValue;
             }
         });
     });

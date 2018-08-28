@@ -39,6 +39,10 @@
     const XDATAEVENTS = "_events_" + getRandomId();
     // 数据entrend id记录
     const XDATATRENDIDS = "_trend_" + getRandomId();
+    // 获取xdata元数据的方法名
+    const GETXDATA = "_getxdata_" + getRandomId();
+    // 数据绑定记录
+    const XDATASYNCS = "_syncs_" + getRandomId();
 
     // business function
     // 获取事件寄宿对象
@@ -60,7 +64,7 @@
 
         // 遍历事件对象
         eveArr.forEach(callback => {
-            callback(...args);
+            callback.apply(tar, args);
         });
     }
 
@@ -77,7 +81,7 @@
     }
 
     // 解析 trend data 到最终对象
-    const detrend = (tar, trendData) => {
+    let detrend = (tar, trendData) => {
         let key;
 
         // 数组last id
@@ -89,7 +93,11 @@
             key = tKey;
         });
 
-        return [tar, key];
+        return {
+            target: tar,
+            key,
+            value: (lastId >= 0) ? tar[key] : undefined
+        };
     }
 
     // 触发冒泡事件
@@ -189,7 +197,6 @@
         switch (type) {
             case "new":
             case "update":
-                debugger
                 if (xdata._exkeys && xdata._exkeys.includes(key)) {
                     // 只修改准入值
                     xdata[key] = newVal;
@@ -214,8 +221,6 @@
             type,
             trendData
         });
-
-        debugger
     }
 
     // handler
@@ -258,16 +263,24 @@
             },
             // 事件寄宿对象
             [XDATAEVENTS]: {
-                value: obj[XDATAEVENTS] || {}
+                value: {}
             },
             // entrend id 记录
             [XDATATRENDIDS]: {
-                value: obj[XDATATRENDIDS] || []
+                value: []
+            },
+            // 数据绑定记录
+            [XDATASYNCS]: {
+                value: []
             },
             // 是否开启trend清洁
             _trendClear: {
                 writable: true,
                 value: 0
+            },
+            // 获取xdata源对象
+            [GETXDATA]: {
+                get: () => this
             }
         });
 
@@ -299,7 +312,7 @@
             keys.push('length');
         }
 
-        let _this = new Proxy(this, XDataHandler);
+        let proxyThis = new Proxy(this, XDataHandler);
 
         keys.forEach(k => {
             // 获取值，getter,setter
@@ -316,11 +329,11 @@
                 });
             } else {
                 // 设置属性
-                this[k] = createXData(value, _this, k);
+                this[k] = createXData(value, proxyThis, k);
             }
         });
 
-        return _this;
+        return proxyThis;
     }
 
     // xdata的原型
@@ -368,18 +381,19 @@
         // 入口修改内部数据的方法
         entrend(trendData) {
             // 解析出最终要修改的对象
-            let [tar, key] = detrend(this, trendData);
+            let {
+                target,
+                key
+            } = detrend(this, trendData);
 
             setXData({
-                xdata: tar,
+                xdata: target[GETXDATA],
                 key,
                 value: trendData.val,
-                receiver: tar,
+                receiver: target,
                 type: trendData.type,
                 tid: trendData.tid
             });
-
-            debugger
         },
         // 监听变化
         watch(key, callback) {
@@ -415,6 +429,108 @@
         clone() {
             return createXData(this.object);
         },
+        // 同步数据
+        sync(target, options) {
+            let func1, func2;
+            switch (getType(options)) {
+                case "object":
+                    let reverseOptions = {};
+                    for (let k in options) {
+                        reverseOptions[options[k]] = k;
+                    }
+                    // 不需要保留trend的参数，所以直接深复制
+                    func1 = e => {
+                        let trendData = deepClone(e.trend);
+                        let replaceKey = reverseOptions[e.key];
+                        if (replaceKey !== undefined) {
+                            trendData.keys[0] = replaceKey;
+                            this.entrend(trendData);
+                        }
+                    }
+                    func2 = e => {
+                        let trendData = deepClone(e.trend);
+                        let replaceKey = options[e.key];
+                        if (replaceKey !== undefined) {
+                            trendData.keys[0] = replaceKey;
+                            target.entrend(trendData);
+                        }
+                    }
+                    break;
+                case "array":
+                    func1 = e => {
+                        if (options.includes(e.key)) {
+                            this.entrend(deepClone(e.trend));
+                        }
+                    }
+                    func2 = e => {
+                        if (options.includes(e.key)) {
+                            target.entrend(deepClone(e.trend));
+                        }
+                    }
+                    break;
+                case "string":
+                    func1 = e => {
+                        if (e.key === options) {
+                            this.entrend(deepClone(e.trend));
+                        }
+                    }
+                    func2 = e => {
+                        if (e.key === options) {
+                            target.entrend(deepClone(e.trend));
+                        }
+                    }
+                    break;
+                default:
+                    // undefined
+                    func1 = e => this.entrend(deepClone(e.trend));
+                    func2 = e => target.entrend(deepClone(e.trend));
+            }
+
+            // 绑定函数
+            target.watch(func1);
+            this.watch(func2);
+
+            let bid = getRandomId();
+
+            // 留下案底
+            target[XDATASYNCS].push({
+                bid,
+                options,
+                opp: this,
+                func: func1
+            });
+            this[XDATASYNCS].push({
+                bid,
+                options,
+                opp: target,
+                func: func2
+            });
+            return this;
+        },
+        // 取消数据同步
+        unsync(target, options) {
+            // 内存对象和行为id
+            let syncObjId = this[XDATASYNCS].findIndex(e => e.opp === target && e.options === options);
+
+            if (syncObjId > -1) {
+                let syncObj = this[XDATASYNCS][syncObjId];
+
+                // 查找target相应绑定的数据
+                let tarSyncObjId = target[XDATASYNCS].findIndex(e => e.bid === syncObj.bid);
+                let tarSyncObj = target[XDATASYNCS][tarSyncObjId];
+
+                // 取消绑定函数
+                this.unwatch(syncObj.func);
+                target.unwatch(tarSyncObj.func);
+
+                // 各自从数组删除
+                this[XDATASYNCS].splice(syncObjId, 1);
+                target[XDATASYNCS].splice(tarSyncObjId, 1);
+            } else {
+                console.log('not found =>', target);
+            }
+            return this;
+        },
     };
 
     // 设置 XDataFn
@@ -444,5 +560,6 @@
 
     // init
     glo.stanz = (obj, opts) => createXData(obj);
+    stanz.detrend = detrend;
 
 })(window);

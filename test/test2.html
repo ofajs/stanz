@@ -17,7 +17,17 @@
     let obj = {
         a: "I am a",
         b: {
-            val: "i am b"
+            val: "i am b",
+            0: {
+                num: 100
+            },
+            1: {
+                num: 150
+            },
+            2: {
+                num: 50
+            },
+            length: 3
         },
         0: {
             val: "I am c",
@@ -30,21 +40,49 @@
 
     let xd1 = stanz(obj);
     let xd2 = xd1.clone();
+    let xd3 = xd1.clone();
+
+    // 数据绑定
+    xd1.sync(xd2);
+    xd2.sync(xd3);
+
     let newData = stanz({
         root: "i am root",
         xd: xd1.object
     });
 
 
-    xd1.watch(e => {
-        xd2.entrend(e.trend);
+    xd1.watch(function (e) {
         console.log(e);
     });
-    xd1.watch("0", (d, e) => {
-        console.log(d, e);
+
+
+    xd2.watch(e => {
+        console.log(e);
     });
+
+
+    xd3.watch(e => {
+        console.log(e);
+    });
+    // xd1.watch("0", (d, e) => {
+    //     console.log(d, e);
+    // });
+
+    let nobj = {
+        val: "i am haha"
+    }
+
     // 修改xd1
-    xd1[0]['c_c']['haha'] = "i am haha";
+    xd1[0]['c_c']['haha'] = nobj;
+
+    console.log(xd1[0]['c_c']['haha']);
+    console.log(xd2[0]['c_c']['haha']);
+    console.log(xd3[0]['c_c']['haha']);
+
+    // xd1.b.sort((a, b) => {
+    //     return a.num > b.num;
+    // });
 </script>
 
 </html>

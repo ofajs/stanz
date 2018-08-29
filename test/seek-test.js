@@ -50,6 +50,10 @@
 
     tester.ok(xd.seek('[selected][a=100]').length === 2, "seek attr ok 5");
 
+    // xd.listen(e => {
+    //     debugger
+    // });
+
     xd.listen('[selected=2]', (val, e) => {
         let tar = val[0];
         tester.ok(tar.val == "I am d", 'listen ok');
@@ -59,5 +63,5 @@
     xd[0].selected = 3;
     xd['d'].selected = 2;
 
-    window.aa = stanz([111,222,333]);
+    window.aa = stanz([111, 222, 333]);
 })();

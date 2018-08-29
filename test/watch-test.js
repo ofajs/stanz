@@ -1,7 +1,7 @@
 // (() => {
-let tester = expect(18, 'watch test');
+let tester = expect(20, 'watch test');
 let obj = {
-    a: "aaa",
+    a: "i am a",
     b: "bbbb",
     c: {
         val: "I am c",
@@ -19,6 +19,13 @@ let obj = {
         val: 150
     },
     2: {
+        0: {
+            val: "I am zero"
+        },
+        1: {
+            val: "I am one"
+        },
+        length: 2,
         val: 50
     },
     length: 3
@@ -40,25 +47,35 @@ xd.sync(xd4, {
 xd.sync(xd2);
 xd2.sync(xd3);
 
-let f;
+let f, f2;
 xd.watch('a', f = (value, e) => {
-    tester.ok(e.type === "update", "type update ok");
-    tester.ok(value === "change a", "watch [a] ok");
+    tester.ok(e.type === "update", "xd type update ok");
+    tester.ok(value === "change a", "xd watch [a] ok");
+});
+xd2.watch('a', f2 = (value, e) => {
+    tester.ok(e.type === "update", "xd2 type update ok");
+    tester.ok(value === "change a", "xd2 watch [a] ok");
 });
 
 // 改动
 xd.a = "change a";
 
 xd.unwatch('a', f);
+xd2.unwatch('a', f2);
 
 tester.ok(xd.a === "change a", "value [a] ok1");
 tester.ok(xd2.a === "change a", "value [a] ok2");
 tester.ok(xd3.a === "change a", "value [a] ok3");
 
 xd.watch((e) => {
-    console.log('watch self => ', e);
+    console.log('xd watch self => ', e);
 });
-
+xd2.watch(e => {
+    console.log('xd2 watch self => ', e);
+});
+xd3.watch(e => {
+    console.log('xd3 watch self => ', e);
+});
 // 排序
 xd.sort((a, b) => {
     return a.val > b.val;
@@ -71,7 +88,7 @@ tester.ok(xd3.string === xd.string, "sync sort ok2");
 
 // 换成对象
 xd.watch('a', f = (value, e) => {
-    tester.ok(e.type === "update", "type update ok");
+    tester.ok(e.type === "update", "type update ok 2");
     tester.ok(value.string === `{"val":"I am a"}`, "watch [a] ok");
 });
 
@@ -85,14 +102,12 @@ tester.ok(xd3.a.string === `{"val":"I am a"}`, "sync object ok2");
 xd.a = {
     val: "I am a"
 };
-
 xd.unwatch('a', f);
 
 xd.watch('a', f = (value, e) => {
     tester.ok(e.type === "delete", "type delete ok");
     tester.ok(!value, "watch [a] ok");
 });
-
 // 确认xd4
 tester.ok(xd4.aaa.string === `{"val":"I am a"}`, "sync object ok3");
 

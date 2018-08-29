@@ -14,91 +14,91 @@
 
 </body>
 <script>
-    let obj = {
-        a: "I am a",
-        b: {
-            val: "i am b",
-            0: {
-                num: 100
-            },
-            1: {
-                num: 150
-            },
-            2: {
-                num: 50
-            },
-            3: {
-                num: 80
-            },
-            length: 4
-        },
-        0: {
-            val: "I am c",
-            c_c: {
-                val: "i am cc"
-            }
-        },
-        length: 1
-    };
-
-    let xd1 = stanz(obj);
-    let xd2 = xd1.clone();
-    let xd3 = xd1.clone();
-
-    // 数据绑定
-    xd1.sync(xd2);
-    xd2.sync(xd3);
-
-    let newData = stanz({
-        root: "i am root",
-        xd: xd1.object
-    });
-
-    xd1.listen('[num=50]', e => {
-        console.log('xd1 listen => ', e);
-    });
-
-    xd2.sync(newData.xd);
-
-    xd1.watch(function (e) {
-        // console.log(e.trend, e);
-        console.log(" xd1=> ", e);
-    });
-
-    xd2.watch(function (e) {
-        // console.log(e.trend, e);
-        console.log(" xd2 => ", e);
-    });
-
-
-    // xd2.watch(e => {
-    //     console.log(e);
-    // });
-
-    // xd3.watch(e => {
-    //     console.log(e);
-    // });
-
-    // // 修改xd1
-    // xd1[0]['c_c']['haha'] = {
-    //     val: "i am haha"
+    // let obj = {
+    //     a: "I am a",
+    //     b: {
+    //         val: "i am b",
+    //         0: {
+    //             num: 100
+    //         },
+    //         1: {
+    //             num: 150
+    //         },
+    //         2: {
+    //             num: 50
+    //         },
+    //         3: {
+    //             num: 80
+    //         },
+    //         length: 4
+    //     },
+    //     0: {
+    //         val: "I am c",
+    //         c_c: {
+    //             val: "i am cc"
+    //         }
+    //     },
+    //     length: 1
     // };
 
-    // console.log(xd1[0]['c_c']['haha']);
-    // console.log(xd2[0]['c_c']['haha']);
-    // console.log(xd3[0]['c_c']['haha']);
+    // let xd1 = stanz(obj);
+    // let xd2 = xd1.clone();
+    // let xd3 = xd1.clone();
 
-    xd1.b.sort((a, b) => {
-        return a.num > b.num;
-    });
+    // // 数据绑定
+    // xd1.sync(xd2);
+    // xd2.sync(xd3);
 
-    xd1.b.push({
-        val: "hahahaha b"
-    });
+    // let newData = stanz({
+    //     root: "i am root",
+    //     xd: xd1.object
+    // });
 
-    delete xd1.a;
+    // xd1.listen('[num=50]', e => {
+    //     console.log('xd1 listen => ', e);
+    // });
+
+    // xd2.sync(newData.xd);
+
+    // xd1.watch(function (e) {
+    //     // console.log(e.trend, e);
+    //     console.log(" xd1=> ", e);
+    // });
+
+    // xd2.watch(function (e) {
+    //     // console.log(e.trend, e);
+    //     console.log(" xd2 => ", e);
+    // });
+
+
+    // // xd2.watch(e => {
+    // //     console.log(e);
+    // // });
+
+    // // xd3.watch(e => {
+    // //     console.log(e);
+    // // });
+
+    // // // 修改xd1
+    // // xd1[0]['c_c']['haha'] = {
+    // //     val: "i am haha"
+    // // };
+
+    // // console.log(xd1[0]['c_c']['haha']);
+    // // console.log(xd2[0]['c_c']['haha']);
+    // // console.log(xd3[0]['c_c']['haha']);
+
+    // xd1.b.sort((a, b) => {
+    //     return a.num > b.num;
+    // });
+
+    // xd1.b.push({
+    //     val: "hahahaha b"
+    // });
+
+    // delete xd1.a;
 </script>
 
-<!-- <script src="watch-test.js"></script> -->
+<script src="watch-test.js"></script>
 <script src="seek-test.js"></script>
 </html>

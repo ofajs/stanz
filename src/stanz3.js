@@ -307,7 +307,12 @@
                 var oldVal = xdata[key];
 
                 // 有改动才会向下走哈
-                if (oldVal == value) {
+                if (oldVal === value) {
+                    return;
+                }
+
+                // 如果旧的值是对象，就要转换字符串
+                if (oldVal instanceof XData && oldVal.string === JSON.stringify(value)) {
                     return;
                 }
 
@@ -547,16 +552,6 @@
                         tid: trendData.tid
                     });
                     break;
-                    // case "delete":
-                    // debugger
-                    // setXData({
-                    //     xdata: target[GETXDATA],
-                    //     key,
-                    //     receiver: target,
-                    //     type: "delete",
-                    //     tid: trendData.tid
-                    // });
-                    // break;
                 case "sort":
                     // value才是真正的target
                     // 进行顺序设置

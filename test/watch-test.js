@@ -76,7 +76,6 @@ xd2.watch(e => {
 xd3.watch(e => {
     console.log('xd3 watch self => ', e);
 });
-debugger
 // 排序
 xd.sort((a, b) => {
     return a.val > b.val;
@@ -84,13 +83,12 @@ xd.sort((a, b) => {
 
 // 检查排序
 tester.ok(xd[0].val === 50 && xd[1].val === 100 && xd[2].val === 150, "sort ok1");
-debugger
 tester.ok(xd2.string === xd.string, "sync sort ok1");
 tester.ok(xd3.string === xd.string, "sync sort ok2");
 
 // 换成对象
 xd.watch('a', f = (value, e) => {
-    tester.ok(e.type === "update", "type update ok");
+    tester.ok(e.type === "update", "type update ok 2");
     tester.ok(value.string === `{"val":"I am a"}`, "watch [a] ok");
 });
 
@@ -104,7 +102,6 @@ tester.ok(xd3.a.string === `{"val":"I am a"}`, "sync object ok2");
 xd.a = {
     val: "I am a"
 };
-
 xd.unwatch('a', f);
 
 xd.watch('a', f = (value, e) => {

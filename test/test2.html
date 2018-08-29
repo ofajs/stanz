@@ -54,6 +54,10 @@
         xd: xd1.object
     });
 
+    xd1.listen('[num=50]', e => {
+        console.log('xd1 listen => ', e);
+    });
+
     xd2.sync(newData.xd);
 
     xd1.watch(function (e) {
@@ -70,7 +74,6 @@
     // xd2.watch(e => {
     //     console.log(e);
     // });
-
 
     // xd3.watch(e => {
     //     console.log(e);
@@ -92,6 +95,10 @@
     xd1.b.push({
         val: "hahahaha b"
     });
+
+    delete xd1.a;
 </script>
 
+<!-- <script src="watch-test.js"></script> -->
+<script src="seek-test.js"></script>
 </html>

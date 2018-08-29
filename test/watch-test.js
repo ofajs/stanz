@@ -76,7 +76,7 @@ xd2.watch(e => {
 xd3.watch(e => {
     console.log('xd3 watch self => ', e);
 });
-
+debugger
 // 排序
 xd.sort((a, b) => {
     return a.val > b.val;
@@ -84,6 +84,7 @@ xd.sort((a, b) => {
 
 // 检查排序
 tester.ok(xd[0].val === 50 && xd[1].val === 100 && xd[2].val === 150, "sort ok1");
+debugger
 tester.ok(xd2.string === xd.string, "sync sort ok1");
 tester.ok(xd3.string === xd.string, "sync sort ok2");
 

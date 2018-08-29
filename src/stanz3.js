@@ -43,6 +43,8 @@
     const GETXDATA = "_getxdata_" + getRandomId();
     // 数据绑定记录
     const XDATASYNCS = "_syncs_" + getRandomId();
+    // listen 记录
+    const LISTEN = "_listen_" + getRandomId();
 
     // business function
     // 获取事件寄宿对象
@@ -98,6 +100,7 @@
         switch (trendData.type) {
             case "new":
             case "update":
+            case "delete":
                 reObj = {
                     type: trendData.type,
                     target: tar,
@@ -129,6 +132,33 @@
         xdata._pausedEmit = 1;
         callback();
         delete xdata._pausedEmit;
+    }
+
+    // 查找数据
+    const seekData = (data, key, sVal) => {
+        let arr = [];
+
+        if (sVal === undefined) {
+            if (data.hasOwnProperty(key)) {
+                arr.push(data);
+            }
+        } else if (data[key] == sVal) {
+            arr.push(data);
+        }
+
+        for (let k in data) {
+            let val = data[k];
+            if (val instanceof XData) {
+                let sData = seekData(val, key, sVal);
+                sData.forEach(e => {
+                    if (!arr.includes(e)) {
+                        arr.push(e);
+                    }
+                });
+            }
+        }
+
+        return arr;
     }
 
     // 触发冒泡事件
@@ -274,7 +304,7 @@
             case "new":
             case "update":
                 // 获取旧的值
-                let oldVal = xdata[key];
+                var oldVal = xdata[key];
 
                 // 有改动才会向下走哈
                 if (oldVal == value) {
@@ -298,7 +328,15 @@
                 });
                 break;
             case "delete":
-                debugger
+                // 获取旧的值
+                var oldVal = xdata[key];
+
+                // 直接删除数据
+                delete xdata[key];
+
+                assign(emitOptions, {
+                    oldVal
+                });
                 break;
             case "sort":
                 // 判断没有排序过
@@ -308,7 +346,8 @@
                     let cloneArr = xdata.slice();
 
                     sort.forEach((e, i) => {
-                        receiver[i] = cloneArr[e];
+                        // receiver[i] = cloneArr[e];
+                        receiver[e] = cloneArr[i];
                     });
                 });
 
@@ -352,7 +391,6 @@
                 setXData({
                     xdata,
                     key,
-                    value: undefined,
                     receiver: xdata,
                     type: "delete"
                 });
@@ -381,14 +419,18 @@
             [XDATASYNCS]: {
                 value: []
             },
+            // 获取xdata源对象
+            [GETXDATA]: {
+                get: () => this
+            },
+            // listen 记录
+            [LISTEN]: {
+                value: []
+            },
             // 是否开启trend清洁
             _trendClear: {
                 writable: true,
                 value: 0
-            },
-            // 获取xdata源对象
-            [GETXDATA]: {
-                get: () => this
             }
         });
 
@@ -410,7 +452,7 @@
         // 获取关键key数组
         let keys = Object.keys(obj);
         if (getType(obj) === "array") {
-            keys.push('length');
+            !keys.includes('length') && keys.push('length');
         }
 
         let proxyThis = new Proxy(this, XDataHandler);
@@ -494,6 +536,7 @@
             switch (trendData.type) {
                 case "new":
                 case "update":
+                case "delete":
                     // 普通的更新数据
                     setXData({
                         xdata: target[GETXDATA],
@@ -504,6 +547,16 @@
                         tid: trendData.tid
                     });
                     break;
+                    // case "delete":
+                    // debugger
+                    // setXData({
+                    //     xdata: target[GETXDATA],
+                    //     key,
+                    //     receiver: target,
+                    //     type: "delete",
+                    //     tid: trendData.tid
+                    // });
+                    // break;
                 case "sort":
                     // value才是真正的target
                     // 进行顺序设置
@@ -665,6 +718,158 @@
             } else {
                 console.log('not found =>', target);
             }
+            return this;
+        },
+        // 超找数据
+        seek(expr) {
+            let reData;
+            let propMatch = expr.match(/\[.+?\]/g);
+            if (!propMatch) {
+                // 查找_id
+                reData = seekData(this, "_id", expr)[0];
+            } else {
+                propMatch.forEach((expr, i) => {
+                    let [key, value] = expr.replace(/[\[]|[\]]/g, "").split("=");
+                    let tempData = seekData(this, key, value);
+                    if (i === 0) {
+                        reData = tempData;
+                    } else {
+                        // 取代返回值得数组
+                        let replaceData = [];
+
+                        // 从新组合交集
+                        tempData.forEach(e => {
+                            if (reData.includes(e)) {
+                                replaceData.push(e);
+                            }
+                        });
+
+                        // 替代旧的
+                        reData = replaceData;
+                    }
+                });
+            }
+            return reData;
+        },
+        // 异步监听数据变动
+        listen(expr, callback, reduceTime = 10) {
+            let watchFunc;
+            if (callback) {
+                // 先记录一次值
+                let data = JSON.stringify(this.seek(expr).map(e => e._id));
+
+                let timer;
+
+                this.watch(watchFunc = e => {
+                    let tempData = this.seek(expr);
+                    let tempId = tempData.map(e => e._id);
+
+                    if (JSON.stringify(tempId) !== data) {
+                        clearTimeout(timer);
+                        timer = setTimeout(() => {
+                            callback(tempData);
+                        }, reduceTime);
+                    }
+                });
+            } else if (expr) {
+                callback = expr;
+
+                let timer;
+
+                this.watch(watchFunc = e => {
+                    clearTimeout(timer);
+                    timer = setTimeout(callback, reduceTime);
+                });
+            }
+
+            this[LISTEN].push({
+                expr,
+                callback,
+                watchFunc
+            });
+            return this;
+        },
+        // 取消监听数据变动
+        unlisten(expr, callback) {
+            this[LISTEN].forEach(o => {
+                if (o.expr === expr && o.callback === callback) {
+                    let {
+                        watchFunc
+                    } = o;
+
+                    this.unwatch(watchFunc);
+                }
+            });
+            return this;
+        },
+        // 转换数据
+        transData(options) {
+            let defaults = {
+                // 自身key监听
+                key: "",
+                // 目标数据对象
+                target: "",
+                // 目标key
+                targetKey: "",
+                // 数据对接对象
+                // trans: {}
+            };
+            assign(defaults, options);
+
+            let {
+                key,
+                target,
+                targetKey,
+                trans
+            } = defaults;
+
+            // 判断是否有trans
+            if (defaults.trans) {
+                // 生成翻转对象
+                let resverObj = {};
+                for (let k in trans) {
+                    resverObj[trans[k]] = k;
+                }
+
+                // 监听
+                this.watch(key, d => {
+                    d = trans[d];
+                    target[targetKey] = d;
+                });
+                target.watch(targetKey, d => {
+                    d = resverObj[d];
+                    this[key] = d;
+                });
+            }
+        },
+        // 删除自己或子元素
+        clear(...args) {
+            let [keyName] = args;
+            if (0 in args) {
+                if (getType(keyName) === "number") {
+                    // 删除数组内相应index的数据
+                    this.splice(keyName, 1);
+                } else {
+                    delete this[keyName];
+                }
+            } else {
+                if (this.host) {
+                    delete this.host[this.hostkey];
+                }
+            }
+        },
+        // 重置数据
+        reset(value) {
+            let valueKeys = Object.keys(value);
+
+            // 删除本身不存在的key
+            Object.keys(this).forEach(k => {
+                if (!valueKeys.includes(k)) {
+                    delete this[k];
+                }
+            });
+
+            assign(this, value);
             return this;
         },
         // 克隆对象，为了更好理解，还是做成方法获取

@@ -4,7 +4,24 @@
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
     const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
-    let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
+
+    let {
+        defineProperty,
+        defineProperties,
+        assign
+    } = Object
+
+    // COMMON
+    // 事件key
+    const XDATAEVENTS = "_events_" + getRandomId();
+    // 数据entrend id记录
+    const XDATATRENDIDS = "_trend_" + getRandomId();
+    // 获取xdata元数据的方法名
+    const GETXDATA = "_getxdata_" + getRandomId();
+    // 数据绑定记录
+    const XDATASYNCS = "_syncs_" + getRandomId();
+    // listen 记录
+    const LISTEN = "_listen_" + getRandomId();
 
     // 异步执行的清理函数
     // 执行函数后，5000毫秒清理一次
@@ -27,24 +44,8 @@
             runing = 1;
         }
     })();
-
-    let {
-        defineProperty,
-        defineProperties,
-        assign
-    } = Object
-
-    // COMMON
-    // 事件key
-    const XDATAEVENTS = "_events_" + getRandomId();
-    // 数据entrend id记录
-    const XDATATRENDIDS = "_trend_" + getRandomId();
-    // 获取xdata元数据的方法名
-    const GETXDATA = "_getxdata_" + getRandomId();
-    // 数据绑定记录
-    const XDATASYNCS = "_syncs_" + getRandomId();
-    // listen 记录
-    const LISTEN = "_listen_" + getRandomId();
+    
+    let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
 
     // business function
     // 获取事件寄宿对象

@@ -44,7 +44,7 @@
             runing = 1;
         }
     })();
-    
+
     let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
 
     // business function
@@ -170,7 +170,7 @@
             value,
             oldVal,
             type,
-            trendData
+            trendData,
         } = options;
 
         // 判断没有禁止触发
@@ -313,8 +313,12 @@
                 }
 
                 // 如果旧的值是对象，就要转换字符串
-                if (oldVal instanceof XData && oldVal.string === JSON.stringify(value)) {
-                    return;
+                if (oldVal instanceof XData) {
+                    if (oldVal.string === JSON.stringify(value)) {
+                        return;
+                    }
+                    // 设置oldId
+                    trendData.oldId = oldVal._id;
                 }
 
                 // 生成新的值
@@ -860,7 +864,7 @@
 
             // 删除本身不存在的key
             Object.keys(this).forEach(k => {
-                if (!valueKeys.includes(k)) {
+                if (!valueKeys.includes(k) && k !== "length") {
                     delete this[k];
                 }
             });

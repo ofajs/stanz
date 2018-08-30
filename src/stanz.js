@@ -47,6 +47,14 @@
 
     let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
 
+    const trendClone = trend => {
+        let newTrend = deepClone(trend);
+        if (trend.args) {
+            newTrend.args = trend.args.slice();
+        }
+        return newTrend;
+    }
+
     // business function
     // 获取事件寄宿对象
     const getEventObj = (tar, eventName) => tar[XDATAEVENTS][eventName] || (tar[XDATAEVENTS][eventName] = []);
@@ -179,7 +187,7 @@
         }
 
         // 深克隆的 trendData
-        let cloneTrendData = deepClone(trendData);
+        let cloneTrendData = trendClone(trendData);
 
         if (key !== undefined) {
             // 属性数据变动
@@ -443,6 +451,13 @@
                 value: 0
             }
         });
+
+        // 设置obj的id
+        if (!obj.hasOwnProperty("_id")) {
+            defineProperty(obj, '_id', {
+                value: this._id
+            });
+        }
 
         // 判断是否有host
         if (host) {

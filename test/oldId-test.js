@@ -1,5 +1,5 @@
 // (() => {
-let tester = expect(4, 'watch test2');
+let tester = expect(6, 'watch test2');
 let xd = stanz({
     a: {
         val: "I am a"
@@ -30,9 +30,11 @@ xd2.watch((e) => {
     tester.ok(e.trend.oldId == oldId2, "oldId ok4")
 });
 
-
-
-xd.a = {
+let obj = {
     val: "change a val"
 };
+xd.a = obj;
+
+tester.ok(obj !== xd.a, "object is different")
+tester.ok(obj._id == xd.a._id, "_id ok")
 // })();

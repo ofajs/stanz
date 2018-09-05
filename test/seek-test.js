@@ -36,6 +36,11 @@
 
     let xd = stanz(obj);
 
+    let xd2 = xd.clone();
+    xd.sync(xd2);
+    window.xd = xd;
+    window.xd2 = xd2;
+
     let cc = xd.c.c_c;
 
     tester.ok(cc === xd.seek(cc._id), "seek id ok");
@@ -50,9 +55,10 @@
 
     tester.ok(xd.seek('[selected][a=100]').length === 2, "seek attr ok 5");
 
-    // xd.listen(e => {
-    //     debugger
-    // });
+    xd.listen(e => {
+        debugger
+        console.log('listen data =>', e);
+    });
 
     xd.listen('[selected=2]', (val, e) => {
         let tar = val[0];
@@ -63,5 +69,8 @@
     xd[0].selected = 3;
     xd['d'].selected = 2;
 
-    window.aa = stanz([111, 222, 333]);
+    // 数组操作
+    xd.splice(1, 1, {
+        val: "I am new data"
+    });
 })();

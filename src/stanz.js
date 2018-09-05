@@ -45,13 +45,47 @@
         }
     })();
 
+    // 克隆对象
     let deepClone = obj => obj instanceof Object ? JSON.parse(JSON.stringify(obj)) : obj;
-
+    // 保留_id克隆对象
+    let keepIdClone = obj => {
+        let objType = getType(obj);
+        let redata = deepClone(obj);
+        switch (objType) {
+            case "array":
+                redata = [];
+                obj.forEach(e => {
+                    redata.push(keepIdClone(e));
+                });
+            case "object":
+                if (obj._id) {
+                    defineProperty(redata, "_id", {
+                        value: obj._id
+                    });
+                }
+                break;
+        }
+        return redata;
+    };
+    // trend克隆器
+    // 节约keepIdClone的性能
     const trendClone = trend => {
         let newTrend = deepClone(trend);
+        // args保留_id
         if (trend.args) {
             newTrend.args = trend.args.slice();
         }
+        // returnValue 保留_id
+        if (trend.returnValue) {
+            newTrend.returnValue = keepIdClone(trend.returnValue);
+        }
+        // oldVal保留
+        if (trend.oldVal !== undefined) {
+            defineProperty(newTrend, "oldVal", {
+                value: trend.oldVal
+            });
+        }
+
         return newTrend;
     }
 
@@ -116,6 +150,7 @@
                     key,
                     value: (lastId >= 0) ? value : undefined
                 };
+                (trendData.oldVal !== undefined) && (reObj.oldVal = trendData.oldVal);
                 break;
             case "sort":
                 reObj = {
@@ -129,7 +164,8 @@
                     type: trendData.type,
                     target: (lastId >= 0) ? value : tar,
                     args: trendData.args,
-                    methodName: trendData.methodName
+                    methodName: trendData.methodName,
+                    returnValue: trendData.returnValue
                 };
         }
 
@@ -178,7 +214,7 @@
             value,
             oldVal,
             type,
-            trendData,
+            trendData
         } = options;
 
         // 判断没有禁止触发
@@ -225,7 +261,8 @@
                 case "array-method":
                     assign(watchOptions, {
                         args: cloneTrendData.args,
-                        methodName: cloneTrendData.methodName
+                        methodName: cloneTrendData.methodName,
+                        returnValue: cloneTrendData.returnValue
                     });
                     break;
             }
@@ -308,6 +345,9 @@
             trendData
         };
 
+        // 返回的值
+        let returnValue = true;
+
         // 根据类型更新
         switch (type) {
             case "new":
@@ -337,7 +377,12 @@
                 } else {
                     Reflect.set(xdata, key, newVal, receiver);
                 }
+
+                // 设置 val 和 oldVal
                 trendData.val = value;
+                defineProperty(trendData, "oldVal", {
+                    value: oldVal
+                });
 
                 // 设置当前值和旧值
                 assign(emitOptions, {
@@ -364,7 +409,6 @@
                     let cloneArr = xdata.slice();
 
                     sort.forEach((e, i) => {
-                        // receiver[i] = cloneArr[e];
                         receiver[e] = cloneArr[i];
                     });
                 });
@@ -374,8 +418,8 @@
                 break;
             case "array-method":
                 // 数组方法运行
-                (!options.isRunned) && runXDataMethodNoEmit(xdata, () => {
-                    arrayFn[methodName].apply(receiver, args);
+                runXDataMethodNoEmit(xdata, () => {
+                    returnValue = trendData.returnValue = arrayFn[methodName].apply(receiver, args);
                 });
                 assign(trendData, {
                     args,
@@ -386,6 +430,8 @@
 
         // 触发事件
         emitChange(emitOptions);
+
+        return returnValue;
     }
 
     // handler
@@ -423,7 +469,8 @@
         defineProperties(this, {
             // 唯一id
             _id: {
-                value: obj._id || getRandomId()
+                value: getRandomId()
+                // value: obj._id || getRandomId()
             },
             // 事件寄宿对象
             [XDATAEVENTS]: {
@@ -558,45 +605,45 @@
                 methodName
             } = detrend(this, trendData);
 
+            // 设置数据的选项
+            let setXDataOptions = {
+                xdata: target[GETXDATA],
+                receiver: target,
+                type: trendData.type,
+                tid: trendData.tid
+            };
+
             switch (trendData.type) {
                 case "new":
                 case "update":
                 case "delete":
                     // 普通的更新数据
-                    setXData({
-                        xdata: target[GETXDATA],
+                    assign(setXDataOptions, {
                         key,
-                        value: trendData.val,
-                        receiver: target,
-                        type: trendData.type,
-                        tid: trendData.tid
+                        value: trendData.val
                     });
                     break;
                 case "sort":
                     // value才是真正的target
                     // 进行顺序设置
-                    setXData({
-                        xdata: target[GETXDATA],
-                        receiver: target,
-                        type: "sort",
+                    assign(setXDataOptions, {
                         // 顺序数据
-                        sort,
-                        tid: trendData.tid
+                        sort
                     });
                     break;
                 case "array-method":
                     // value才是真正的target
                     // 数组方法型的更新
-                    setXData({
-                        xdata: target[GETXDATA],
-                        receiver: target,
-                        type: "array-method",
-                        // 数组方法
+                    assign(setXDataOptions, {
+                        // 数组方法名
                         methodName,
-                        args,
-                        tid: trendData.tid
+                        // 运行数组方法参数数组
+                        args
                     });
             }
+
+            // 更新
+            setXData(setXDataOptions);
 
         },
         // 解析trend数据
@@ -791,9 +838,26 @@
 
                 let timer;
 
-                this.watch(watchFunc = e => {
+                // 新增和删除的
+                let addArr = [],
+                    removeArr = [];
+
+                this.watch(watchFunc = function (e) {
                     clearTimeout(timer);
-                    timer = setTimeout(callback, reduceTime);
+                    let trendData = this.detrend(e.trend);
+                    // debugger
+                    timer = setTimeout(() => {
+                        callback({
+                            // 新增的
+                            add: addArr,
+                            // 删除的
+                            remove: removeArr
+                        });
+
+                        // 数组清空
+                        addArr = [];
+                        removeArr = [];
+                    }, reduceTime);
                 });
             }
 
@@ -927,6 +991,10 @@
             });
 
             return reValue;
+        },
+        // 禁用copyWithin，这个方法会破坏XData结构
+        copyWithin() {
+            throw "can't use copyWithin";
         }
     };
 
@@ -937,28 +1005,18 @@
         });
     });
 
-    ['splice', 'shift', 'unshfit', 'push', 'pop', 'fill', 'reverse', 'copyWithin'].forEach(methodName => {
+    ['splice', 'shift', 'unshfit', 'push', 'pop', 'fill', 'reverse'].forEach(methodName => {
         // 重构数组方法
         XDataFn[methodName] && defineProperty(XDataFn, methodName, {
             value(...args) {
-                // 执行默认方法
-                let reValue;
-                runXDataMethodNoEmit(this, () => {
-                    reValue = arrayFn[methodName].apply(this, args);
-                });
-
                 // 数组方法
-                setXData({
+                return setXData({
                     xdata: this[GETXDATA],
                     receiver: this,
                     type: "array-method",
                     methodName,
-                    args,
-                    // 已执行过
-                    isRunned: 1
+                    args
                 });
-
-                return reValue;
             }
         });
     });

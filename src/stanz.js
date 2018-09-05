@@ -388,8 +388,6 @@
                     if (oldVal.string === JSON.stringify(value)) {
                         return;
                     }
-                    // 设置oldId
-                    trendData.oldId = oldVal._id;
                 }
 
                 // 生成新的值

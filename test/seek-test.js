@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(8, 'seek test');
+    let tester = expect(12, 'seek test');
     let obj = {
         a: "aaa",
         b: "bbbb",
@@ -15,6 +15,9 @@
         d: {
             selected: 0,
             val: "I am d"
+        },
+        e: {
+            val: "I am e"
         },
         0: {
             selected: 2,
@@ -39,7 +42,6 @@
     let xd2 = xd.clone();
     xd.sync(xd2);
     window.xd = xd;
-    window.xd2 = xd2;
 
     let cc = xd.c.c_c;
 
@@ -56,8 +58,20 @@
     tester.ok(xd.seek('[selected][a=100]').length === 2, "seek attr ok 5");
 
     xd.listen(e => {
-        debugger
-        console.log('listen data =>', e);
+        // 替换原来的e add+1 remove+1
+        // splice add+2 remove+1
+        console.log('xd listen data =>', e);
+        tester.ok(e.add.length == 3, 'xd listen add ok');
+        tester.ok(e.remove.length == 2, 'xd listen remove ok');
+    });
+
+    // 同步数据一样的待遇
+    xd2.listen(e => {
+        // 替换原来的e add+1 remove+1
+        // splice add+2 remove+1
+        console.log('xd2 listen data =>', e);
+        tester.ok(e.add.length == 3, 'xd2 listen add ok');
+        tester.ok(e.remove.length == 2, 'xd2 listen remove ok');
     });
 
     xd.listen('[selected=2]', (val, e) => {
@@ -69,8 +83,19 @@
     xd[0].selected = 3;
     xd['d'].selected = 2;
 
-    // 数组操作
+    // 替换原来的d
+    xd.e = {
+        selected: 4
+    };
+
     xd.splice(1, 1, {
-        val: "I am new data"
+        aa: 2
+    }, {
+        aa: 3
     });
+
+    // 数组操作
+    // xd.splice(1, 1, {
+    //     val: "I am new data"
+    // });
 })();

@@ -77,7 +77,10 @@
         }
         // returnValue 保留_id
         if (trend.returnValue) {
-            newTrend.returnValue = keepIdClone(trend.returnValue);
+            defineProperty(newTrend, "returnValue", {
+                value: trend.returnValue
+            });
+            // newTrend.returnValue = keepIdClone(trend.returnValue);
         }
         // oldVal保留
         if (trend.oldVal !== undefined) {
@@ -85,11 +88,20 @@
                 value: trend.oldVal
             });
         }
+        // 保留 add 和 remove
+        trend.add && defineProperty(newTrend, "add", {
+            value: trend.add
+        });
+        trend.remove && defineProperty(newTrend, "remove", {
+            value: trend.remove
+        });
 
         return newTrend;
     }
 
     // business function
+    const isXData = obj => obj instanceof XData;
+
     // 获取事件寄宿对象
     const getEventObj = (tar, eventName) => tar[XDATAEVENTS][eventName] || (tar[XDATAEVENTS][eventName] = []);
 
@@ -138,35 +150,37 @@
             key = tKey;
         });
 
-        let reObj, value = tar[key];
+        let reObj = {
+                type: trendData.type,
+                add: trendData.add,
+                remove: trendData.remove
+            },
+            value = tar[key];
 
         switch (trendData.type) {
             case "new":
             case "update":
             case "delete":
-                reObj = {
-                    type: trendData.type,
+                assign(reObj, {
                     target: tar,
                     key,
                     value: (lastId >= 0) ? value : undefined
-                };
+                });
                 (trendData.oldVal !== undefined) && (reObj.oldVal = trendData.oldVal);
                 break;
             case "sort":
-                reObj = {
-                    type: trendData.type,
+                assign(reObj, {
                     target: (lastId >= 0) ? value : tar,
                     sort: trendData.sort
-                };
+                });
                 break;
             case "array-method":
-                reObj = {
-                    type: trendData.type,
+                assign(reObj, {
                     target: (lastId >= 0) ? value : tar,
                     args: trendData.args,
                     methodName: trendData.methodName,
                     returnValue: trendData.returnValue
-                };
+                });
         }
 
         return reObj;
@@ -193,7 +207,7 @@
 
         for (let k in data) {
             let val = data[k];
-            if (val instanceof XData) {
+            if (isXData(val)) {
                 let sData = seekData(val, key, sVal);
                 sData.forEach(e => {
                     if (!arr.includes(e)) {
@@ -335,12 +349,21 @@
             keys: []
         };
 
+        defineProperties(trendData, {
+            // 新增的
+            add: {
+                value: []
+            },
+            // 移除的
+            remove: {
+                value: []
+            }
+        });
+
         // emitChange options
         let emitOptions = {
             target: receiver,
             key,
-            // value: target[key],
-            // oldVal,
             type,
             trendData
         };
@@ -361,7 +384,7 @@
                 }
 
                 // 如果旧的值是对象，就要转换字符串
-                if (oldVal instanceof XData) {
+                if (isXData(oldVal)) {
                     if (oldVal.string === JSON.stringify(value)) {
                         return;
                     }
@@ -384,6 +407,10 @@
                     value: oldVal
                 });
 
+                // 修正 trend 的 add 和 remove
+                isXData(oldVal) && (trendData.remove.push(oldVal));
+                isXData(newVal) && trendData.add.push(newVal);
+
                 // 设置当前值和旧值
                 assign(emitOptions, {
                     value: xdata[key],
@@ -393,6 +420,9 @@
             case "delete":
                 // 获取旧的值
                 var oldVal = xdata[key];
+
+                // 修正 trend 的 remove
+                isXData(oldVal) && (trendData.remove.push(oldVal));
 
                 // 直接删除数据
                 delete xdata[key];
@@ -419,7 +449,56 @@
             case "array-method":
                 // 数组方法运行
                 runXDataMethodNoEmit(xdata, () => {
-                    returnValue = trendData.returnValue = arrayFn[methodName].apply(receiver, args);
+                    // fill就是全没了
+                    let backupData;
+                    if (methodName === "fill") {
+                        backupData = receiver.slice();
+                    }
+
+                    // 获取 returnValue
+                    returnValue = arrayFn[methodName].apply(receiver, args);
+
+                    // 设置 returnValue
+                    defineProperty(trendData, "returnValue", {
+                        value: returnValue
+                    });
+
+                    // 根据方法不同修正 add remove
+                    switch (methodName) {
+                        case "splice":
+                            // 添加remove
+                            returnValue.forEach(e => {
+                                isXData(e) && (trendData.remove.push(e));
+                            });
+                            // 获取数据
+                            let [, , ...data] = args;
+                            data.forEach(e => {
+                                let tarData = receiver.seek(e._id);
+                                tarData && trendData.add.push(tarData);
+                            });
+                            break;
+                        case "pop":
+                        case "shift":
+                            // 添加remove
+                            isXData(returnValue) && trendData.remove.push(returnValue);
+                            break;
+                        case "unshift":
+                        case "push":
+                            args.forEach(e => {
+                                let tarData = receiver.seek(e._id);
+                                tarData && trendData.add.push(tarData);
+                            });
+                            break;
+                        case "fill":
+                            // 全都删了，只能提前记录
+                            backupData.forEach(e => {
+                                isXData(e) && (trendData.remove.push(e));
+                            });
+                            receiver.forEach(e => {
+                                isXData(e) && (trendData.add.push(e));
+                            });
+                            break;
+                    }
                 });
                 assign(trendData, {
                     args,
@@ -843,9 +922,17 @@
                     removeArr = [];
 
                 this.watch(watchFunc = function (e) {
+                    // 清除计时器
                     clearTimeout(timer);
+
+                    // 解析 trend 数据
                     let trendData = this.detrend(e.trend);
-                    // debugger
+
+                    // 新家新增和删除列表
+                    addArr.push(...trendData.add);
+                    removeArr.push(...trendData.remove);
+
+                    // 设置计时器
                     timer = setTimeout(() => {
                         callback({
                             // 新增的
@@ -1026,7 +1113,7 @@
 
     // main 
     const createXData = (obj, host, key) => {
-        if (obj instanceof XData) {
+        if (isXData(obj)) {
             obj._host = host;
             obj._hostkey = key;
             return obj;

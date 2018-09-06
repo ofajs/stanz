@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(12, 'seek test');
+    let tester = expect(15, 'seek test');
     let obj = {
         a: "aaa",
         b: "bbbb",
@@ -60,23 +60,40 @@
     xd.listen(e => {
         // 替换原来的e add+1 remove+1
         // splice add+2 remove+1
+        // 替换c.c_c add+1 remove+1
         console.log('xd listen data =>', e);
-        tester.ok(e.add.length == 3, 'xd listen add ok');
-        tester.ok(e.remove.length == 2, 'xd listen remove ok');
+        tester.ok(e.add.length == 4, 'xd listen add ok');
+        tester.ok(e.remove.length == 3, 'xd listen remove ok');
     });
 
     // 同步数据一样的待遇
     xd2.listen(e => {
         // 替换原来的e add+1 remove+1
         // splice add+2 remove+1
+        // 替换c.c_c add+1 remove+1
         console.log('xd2 listen data =>', e);
-        tester.ok(e.add.length == 3, 'xd2 listen add ok');
-        tester.ok(e.remove.length == 2, 'xd2 listen remove ok');
+        tester.ok(e.add.length == 4, 'xd2 listen add ok');
+        tester.ok(e.remove.length == 3, 'xd2 listen remove ok');
+    });
+
+    xd.listen('c', e => {
+        tester.ok(e.add.length == 1, 'xd.c listen add ok');
+        tester.ok(e.remove.length == 1, 'xd.c listen remove ok');
     });
 
     xd.listen('[selected=2]', (val, e) => {
         let tar = val[0];
         tester.ok(tar.val == "I am d", 'listen ok');
+    });
+
+    xd.listen('c', '[selected=3]', e => {
+        // 新增两个
+        tester.ok(e.length == 2, 'listen ok');
+    });
+
+    xd.listen('c', '[selected=2]', e => {
+        // 不存在selected=2
+        throw "not exit selected=2";
     });
 
     // 修改两个select=2的相关数据
@@ -95,7 +112,9 @@
     });
 
     // 数组操作
-    // xd.splice(1, 1, {
-    //     val: "I am new data"
-    // });
+    xd.c.selected = "3";
+    xd.c.c_c = {
+        selected: 3,
+        val: "I am cc",
+    };
 })();

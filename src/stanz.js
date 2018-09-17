@@ -379,7 +379,8 @@
                 var oldVal = xdata[key];
 
                 // 有改动才会向下走哈
-                if (oldVal === value) {
+                // 数字和字符串相等也不能通行
+                if (oldVal == value) {
                     return;
                 }
 

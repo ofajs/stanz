@@ -943,16 +943,18 @@
             let timer;
 
             // 判断是否有expr，存在的话先记录一次id
-            let backupData;
+            let backupData, exprData;
             // 新增和删除的
             let addArr = [],
                 removeArr = [];
             if (expr) {
                 if (prop) {
                     let tar = this[prop];
-                    isXData(tar) && (backupData = JSON.stringify(tar.seek(expr).map(e => e._id)));
+                    exprData = tar.seek(expr);
+                    isXData(tar) && (backupData = JSON.stringify(exprData.map(e => e._id)));
                 } else {
-                    backupData = JSON.stringify(this.seek(expr).map(e => e._id));
+                    exprData = this.seek(expr);
+                    backupData = JSON.stringify(exprData.map(e => e._id));
                 }
             }
 
@@ -1022,6 +1024,15 @@
                 callback,
                 watchFunc
             });
+
+            if (0 in exprData && expr) {
+                let backExData = exprData;
+                setTimeout(() => {
+                    callback(backExData);
+                    exprData = backExData = null;
+                }, 0);
+            }
+
             return this;
         },
         // 取消监听数据变动

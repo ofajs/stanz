@@ -1094,7 +1094,7 @@
                 } else {
                     let tar = this[keyName];
                     delete this[keyName];
-                    
+
                     if (isXData(tar)) {
                         clearXData(tar);
                     }
@@ -1102,6 +1102,9 @@
             } else {
                 if (this._host) {
                     this._host.clear(this._hostkey);
+                } else {
+                    // 没有父层，就清除自己的所有绑定数据
+                    clearXData(this);
                 }
             }
         },

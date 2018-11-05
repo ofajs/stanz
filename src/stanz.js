@@ -4,6 +4,7 @@
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
     const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
+    const isUndefined = val => val === undefined;
 
     let {
         defineProperty,
@@ -41,8 +42,11 @@
         };
     })();
 
+    // common
+    const EVES = "_eves_" + getRandomId();
+
     // business function
-    function XData(obj) {
+    function XData(obj, options = {}) {
         // 数组的长度
         let length = 0;
 
@@ -64,10 +68,20 @@
             this[k] = value;
         });
 
+        let opt = {
+            status: "root",
+            length,
+            // 事件寄宿对象
+            [EVES]: {}
+        };
+
+        if (options.parent) {
+            opt.status = "binding";
+            opt.parent = options.parent;
+        }
+
         // 设置数组长度
-        setNotEnumer(this, {
-            length
-        });
+        setNotEnumer(this, opt);
     }
     let XDataFn = {};
     XData.prototype = XDataFn;
@@ -99,13 +113,92 @@
         }
     });
 
+    // 获取事件数组
+    const getEvesArr = (tar, eventName) => tar[EVES][eventName] || (tar[EVES][eventName] = []);
+
     // 设置数组上的方法
     setNotEnumer(XDataFn, {
+        // 事件注册
+        on(eventName, callback, options = {}) {
+            let eves = getEvesArr(this, eventName);
+            eves.push({
+                callback,
+                eventId: options.id,
+                onData: options.data,
+                one: options.one
+            });
+            return this;
+        },
+        one(eventName, callback, options = {}) {
+            options.one = 1;
+            return this.on(eventName, callback, options);
+        },
+        off(eventName, callback, options = {}) {
+            let eves = getEvesArr(this, eventName);
+            eves.forEach((opt, index) => {
+                // 想等值得删除
+                if (opt.callback === callback && opt.eventId === options.id && opt.onData === options.data) {
+                    eves.splice(index, 1);
+                }
+            });
+            return this;
+        },
+        emit(eventName, emitData) {
+            let eves = getEvesArr(this, eventName);
+            eves.forEach(opt => {
+                let args = [{
+                    type: eventName,
+                }];
+
+                !isUndefined(opt.onData) && (args[0].data = opt.onData);
+                !isUndefined(opt.eventId) && (args[0].eventId = opt.eventId);
+                !isUndefined(opt.one) && (args[0].one = opt.one);
+                !isUndefined(emitData) && (args.push(emitData));
+
+                opt.callback.apply(this, args);
+            });
+
+            return this;
+        },
         // 设置值得方法
         set(key, value) {
 
+        },
+        // 插入trend数据
+        entrend(options) {
+
         }
     });
+
+    // handler
+    let XDataHandler = {
+        set(xdata, key, value, receiver) {
+            if (!/^_.+/.test(key)) {
+                // 设置数据
+                setXData({
+                    xdata,
+                    key,
+                    value,
+                    receiver
+                });
+                return true;
+            }
+            return Reflect.set(xdata, key, value, receiver);
+        },
+        deleteProperty(xdata, key) {
+            if (!/^_.+/.test(key)) {
+                // 删除数据
+                setXData({
+                    xdata,
+                    key,
+                    receiver: xdata,
+                    type: "delete"
+                });
+                return true;
+            }
+            return Reflect.deleteProperty(xdata, key);
+        }
+    };
 
     // main 
     const createXData = (obj) => new XData(obj);

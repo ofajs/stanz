@@ -16,7 +16,6 @@
         for (let k in obj) {
             defineProperty(tar, k, {
                 // enumerable: false,
-                writable: true,
                 value: obj[k]
             });
         }
@@ -43,33 +42,11 @@
 
     // business function
     function XData(obj) {
-        // 数组的长度
-        let length = 0;
-
-        // 非数组数据合并
-        Object.keys(obj).forEach(k => {
-            // 值
-            let value = obj[k];
-
-            if (!/\D/.test(k)) {
-                // 数字key
-                k = parseInt(k);
-
-                if (k >= length) {
-                    length = k + 1;
-                }
-            }
-
-            // 设置值
-            this[k] = value;
-        });
-
-        // 设置数组长度
-        setNotEnumer(this, {
-            length
-        });
+        assign(this, obj);
     }
-    let XDataFn = {};
+    let XDataFn = {
+        length: 0
+    };
     XData.prototype = XDataFn;
 
     // 数组通用方法
@@ -78,7 +55,6 @@
         let arrayFnFunc = Array.prototype[methodName];
         if (arrayFnFunc) {
             defineProperty(XDataFn, methodName, {
-                writable: true,
                 value(...args) {
                     return arrayFnFunc.apply(this, args);
                 }
@@ -86,25 +62,8 @@
         }
     });
 
-    // 会影响数组结构的方法
-    ['pop', 'push', 'reverse', 'sort', 'splice', 'shift', 'unshift'].forEach(methodName => {
-        let arrayFnFunc = Array.prototype[methodName];
-        if (arrayFnFunc) {
-            defineProperty(XDataFn, methodName, {
-                writable: true,
-                value(...args) {
-                    return arrayFnFunc.apply(this, args);
-                }
-            });
-        }
-    });
-
-    // 设置数组上的方法
     setNotEnumer(XDataFn, {
-        // 设置值得方法
-        set(key, value) {
-
-        }
+        push(...args) {}
     });
 
     // main 

@@ -46,7 +46,34 @@
     const EVES = "_eves_" + getRandomId();
 
     // business function
+    const createXData = (obj, options) => {
+        let redata = obj;
+        switch (getType(obj)) {
+            case "object":
+            case "array":
+                redata = new XData(obj, options);
+                break;
+        }
+
+        return redata;
+    };
+
+    // main class
+    function XDataEvent(type, target) {
+        assign(this, {
+            type,
+            keys: [],
+        });
+        setNotEnumer(this, {
+            target,
+            stopPropagated: false
+        });
+    }
+
     function XData(obj, options = {}) {
+        // 生成代理对象
+        let proxyThis = new Proxy(this, XDataHandler);
+
         // 数组的长度
         let length = 0;
 
@@ -65,11 +92,15 @@
             }
 
             // 设置值
-            this[k] = value;
+            this[k] = createXData(value, {
+                parent: proxyThis,
+                hostkey: k
+            });
         });
 
         let opt = {
             status: "root",
+            // 设置数组长度
             length,
             // 事件寄宿对象
             [EVES]: {}
@@ -78,13 +109,16 @@
         if (options.parent) {
             opt.status = "binding";
             opt.parent = options.parent;
+            opt.hostkey = options.hostkey;
         }
 
-        // 设置数组长度
+        // 设置不可枚举数据
         setNotEnumer(this, opt);
+
+        // 返回Proxy对象
+        return proxyThis;
     }
-    let XDataFn = {};
-    XData.prototype = XDataFn;
+    let XDataFn = XData.prototype = {};
 
     // 数组通用方法
     // 可运行的方法
@@ -121,12 +155,22 @@
         // 事件注册
         on(eventName, callback, options = {}) {
             let eves = getEvesArr(this, eventName);
-            eves.push({
+
+            // 判断是否相应id的事件绑定
+            let oid = options.id;
+            if (!isUndefined(oid)) {
+                let tarId = eves.findIndex(e => e.eventId == oid);
+                (tarId > -1) && eves.splice(tarId, 1);
+            }
+
+            // 事件数据记录
+            callback && eves.push({
                 callback,
                 eventId: options.id,
                 onData: options.data,
                 one: options.one
             });
+
             return this;
         },
         one(eventName, callback, options = {}) {
@@ -144,64 +188,109 @@
             return this;
         },
         emit(eventName, emitData) {
-            let eves = getEvesArr(this, eventName);
-            eves.forEach(opt => {
-                let args = [{
-                    type: eventName,
-                }];
+            let eves, eventObj;
 
-                !isUndefined(opt.onData) && (args[0].data = opt.onData);
-                !isUndefined(opt.eventId) && (args[0].eventId = opt.eventId);
-                !isUndefined(opt.one) && (args[0].one = opt.one);
-                !isUndefined(emitData) && (args.push(emitData));
+            if (eventName instanceof XDataEvent) {
+                eves = getEvesArr(this, eventName.type);
 
-                opt.callback.apply(this, args);
+                eventObj = eventName;
+            } else {
+                eves = getEvesArr(this, eventName);
+
+                // 生成emitEvent对象
+                eventObj = new XDataEvent(eventName, this);
+            }
+
+            // 事件数组触发
+            eves.forEach((opt, index) => {
+                // 触发callback
+                nextTick(() => {
+                    // 添加数据
+                    let args = [eventObj];
+                    !isUndefined(opt.onData) && (eventObj.data = opt.onData);
+                    !isUndefined(opt.eventId) && (eventObj.eventId = opt.eventId);
+                    !isUndefined(opt.one) && (eventObj.one = opt.one);
+                    !isUndefined(emitData) && (args.push(emitData));
+
+                    opt.callback.apply(this, args);
+
+                    // 删除多余数据
+                    delete eventObj.data;
+                    delete eventObj.eventId;
+                    delete eventObj.one;
+                });
+
+                // 判断one
+                if (opt.one) {
+                    eves.splice(index, 1);
+                }
             });
+
+            // 冒泡触发
+            let {
+                parent
+            } = this;
+            if (parent) {
+                nextTick(() => {
+                    eventObj.keys.unshift(this.hostkey);
+                });
+                parent.emit(eventObj, emitData);
+            }
 
             return this;
         },
-        // 设置值得方法
+        // 设置值
         set(key, value) {
 
+        },
+        // 删除值
+        remove(key) {
+            if (isUndefined(key)) {
+
+            } else {
+
+            }
         },
         // 插入trend数据
         entrend(options) {
 
+        },
+        // 同步数据
+        sync(xdataObj) {
+
+        },
+        watch() {
+
+        },
+        unwatch() {
+
         }
     });
+
+    // 私有属性正则
+    const PRIREG = /^_.+|^parent$|^hostkey$|^status$/;
 
     // handler
     let XDataHandler = {
         set(xdata, key, value, receiver) {
-            if (!/^_.+/.test(key)) {
-                // 设置数据
-                setXData({
-                    xdata,
-                    key,
-                    value,
-                    receiver
-                });
-                return true;
-            }
+            // if (!PRIREG.test(key)) {
+            //     // 设置数据
+            //     debugger
+            //     return true;
+            // }
             return Reflect.set(xdata, key, value, receiver);
         },
         deleteProperty(xdata, key) {
-            if (!/^_.+/.test(key)) {
-                // 删除数据
-                setXData({
-                    xdata,
-                    key,
-                    receiver: xdata,
-                    type: "delete"
-                });
-                return true;
-            }
+            // if (!PRIREG.test(key)) {
+            //     // 删除数据
+            //     debugger
+            //     return true;
+            // }
             return Reflect.deleteProperty(xdata, key);
         }
     };
 
     // main 
-    const createXData = (obj) => new XData(obj);
 
     // init
     glo.stanz = (obj = {}) => createXData(obj);

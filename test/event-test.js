@@ -21,7 +21,7 @@
     };
 
     a.on('haha', function (e, data) {
-        console.log(e);
+        // console.log(e);
         tester.ok(this === a, "this ok");
         tester.ok(e.data === bindDataOptions.data, 'binding data ok');
         tester.ok(data === "emit data", "emit data ok");
@@ -58,5 +58,5 @@
     // 再次触发，eveid相同的事件会被覆盖
     a.emit('eveid_test');
 
-    console.log(a);
+    // console.log(a);
 })();

@@ -44,6 +44,7 @@
 
     // common
     const EVES = "_eves_" + getRandomId();
+    const RUNARRMETHOD = "_runarrmethod_" + getRandomId(0);
 
     // business function
     const createXData = (obj, options) => {
@@ -69,6 +70,11 @@
             stopPropagated: false
         });
     }
+
+    assign(XDataEvent.prototype, {
+        // 解密trend数据的方法
+        detrend(target) {}
+    });
 
     function XData(obj, options = {}) {
         // 生成代理对象
@@ -141,7 +147,27 @@
             defineProperty(XDataFn, methodName, {
                 writable: true,
                 value(...args) {
-                    return arrayFnFunc.apply(this, args);
+                    // 设置不可执行setHandler
+                    this[RUNARRMETHOD] = 1;
+
+                    let redata = arrayFnFunc.apply(this, args);
+
+                    // 事件实例生成
+                    let eveObj = new XDataEvent('update', this);
+
+                    eveObj.modify = {
+                        // change 改动
+                        // set 新增值
+                        genre: "arrayMethod",
+                        methodName,
+                        args
+                    };
+
+                    this.emit(eveObj);
+
+                    // 还原可执行setHandler
+                    delete this[RUNARRMETHOD];
+                    return redata;
                 }
             });
         }
@@ -272,7 +298,13 @@
     // handler
     let XDataHandler = {
         set(xdata, key, value, receiver) {
-            if (!PRIREG.test(key)) {
+            // 数据转换
+            let newValue = createXData(value, {
+                parent: receiver,
+                hostkey: key
+            });
+
+            if (!PRIREG.test(key) && !xdata[RUNARRMETHOD]) {
                 // 事件实例生成
                 let eveObj = new XDataEvent('update', receiver);
 
@@ -297,7 +329,10 @@
                 // 触发事件
                 receiver.emit(eveObj);
             }
-            return Reflect.set(xdata, key, value, receiver);
+
+            let redata = Reflect.set(xdata, key, newValue, receiver);
+
+            return redata;
         },
         deleteProperty(xdata, key) {
             // if (!PRIREG.test(key)) {

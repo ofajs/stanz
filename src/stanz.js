@@ -187,38 +187,41 @@
             });
             return this;
         },
-        emit(eventName, emitData) {
+        emit(eventName, emitData, options = {}) {
             let eves, eventObj;
 
             if (eventName instanceof XDataEvent) {
-                eves = getEvesArr(this, eventName.type);
-
+                // 直接获取对象
                 eventObj = eventName;
-            } else {
-                eves = getEvesArr(this, eventName);
 
+                // 修正事件名变量
+                eventName = eventName.type;
+            } else {
                 // 生成emitEvent对象
                 eventObj = new XDataEvent(eventName, this);
             }
 
+            // 获取事件队列数组
+            eves = getEvesArr(this, eventName);
+
             // 事件数组触发
             eves.forEach((opt, index) => {
                 // 触发callback
-                nextTick(() => {
-                    // 添加数据
-                    let args = [eventObj];
-                    !isUndefined(opt.onData) && (eventObj.data = opt.onData);
-                    !isUndefined(opt.eventId) && (eventObj.eventId = opt.eventId);
-                    !isUndefined(opt.one) && (eventObj.one = opt.one);
-                    !isUndefined(emitData) && (args.push(emitData));
+                // nextTick(() => {
+                // 添加数据
+                let args = [eventObj];
+                !isUndefined(opt.onData) && (eventObj.data = opt.onData);
+                !isUndefined(opt.eventId) && (eventObj.eventId = opt.eventId);
+                !isUndefined(opt.one) && (eventObj.one = opt.one);
+                !isUndefined(emitData) && (args.push(emitData));
 
-                    opt.callback.apply(this, args);
+                opt.callback.apply(this, args);
 
-                    // 删除多余数据
-                    delete eventObj.data;
-                    delete eventObj.eventId;
-                    delete eventObj.one;
-                });
+                // 删除多余数据
+                delete eventObj.data;
+                delete eventObj.eventId;
+                delete eventObj.one;
+                // });
 
                 // 判断one
                 if (opt.one) {
@@ -231,17 +234,13 @@
                 parent
             } = this;
             if (parent) {
-                nextTick(() => {
-                    eventObj.keys.unshift(this.hostkey);
-                });
+                // nextTick(() => {
+                eventObj.keys.unshift(this.hostkey);
+                // });
                 parent.emit(eventObj, emitData);
             }
 
             return this;
-        },
-        // 设置值
-        set(key, value) {
-
         },
         // 删除值
         remove(key) {
@@ -268,16 +267,36 @@
     });
 
     // 私有属性正则
-    const PRIREG = /^_.+|^parent$|^hostkey$|^status$/;
+    const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
 
     // handler
     let XDataHandler = {
         set(xdata, key, value, receiver) {
-            // if (!PRIREG.test(key)) {
-            //     // 设置数据
-            //     debugger
-            //     return true;
-            // }
+            if (!PRIREG.test(key)) {
+                // 事件实例生成
+                let eveObj = new XDataEvent('update', receiver);
+
+                let isFirst, oldVal;
+                // 判断是否初次设置
+                if (key in xdata) {
+                    oldVal = xdata[key];
+                } else {
+                    isFirst = 1;
+                }
+
+                // 添加修正数据
+                eveObj.modify = {
+                    // change 改动
+                    // set 新增值
+                    genre: isFirst ? "set" : "change",
+                    key,
+                    value,
+                    oldVal
+                };
+
+                // 触发事件
+                receiver.emit(eveObj);
+            }
             return Reflect.set(xdata, key, value, receiver);
         },
         deleteProperty(xdata, key) {

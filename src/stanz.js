@@ -334,44 +334,47 @@
 
             let oldVal = xdata[key];
 
-            // 相同值就别瞎折腾了
-            if (oldVal === newValue) {
-                return true;
-            }
-
-            if (oldVal instanceof XData) {
-                if (newValue instanceof XData && oldVal.string === newValue.string) {
-                    // 同是object
+            if (!xdata[RUNARRMETHOD]) {
+                // 相同值就别瞎折腾了
+                if (oldVal === newValue) {
                     return true;
                 }
 
-                // 触发object的改动destory
-                debugger
-            }
+                if (oldVal instanceof XData) {
+                    if (newValue instanceof XData && oldVal.string === newValue.string) {
+                        // 同是object
+                        return true;
+                    }
 
-            if (!PRIREG.test(key) && !xdata[RUNARRMETHOD]) {
-                // 事件实例生成
-                let eveObj = new XDataEvent('update', receiver);
+                    // 触发object的改动destory
+                    debugger
 
-                let isFirst;
-                // 判断是否初次设置
-                if (!(key in xdata)) {
-                    isFirst = 1;
                 }
 
-                // 添加修正数据
-                eveObj.modify = {
-                    // change 改动
-                    // set 新增值
-                    genre: isFirst ? "set" : "change",
-                    key,
-                    value,
-                    oldVal,
-                    // modifyId: getRandomId()
-                };
+                if (!PRIREG.test(key)) {
+                    // 事件实例生成
+                    let eveObj = new XDataEvent('update', receiver);
 
-                // 触发事件
-                receiver.emit(eveObj);
+                    let isFirst;
+                    // 判断是否初次设置
+                    if (!(key in xdata)) {
+                        isFirst = 1;
+                    }
+
+                    // 添加修正数据
+                    eveObj.modify = {
+                        // change 改动
+                        // set 新增值
+                        genre: isFirst ? "set" : "change",
+                        key,
+                        value,
+                        oldVal,
+                        // modifyId: getRandomId()
+                    };
+
+                    // 触发事件
+                    receiver.emit(eveObj);
+                }
             }
 
             let redata = Reflect.set(xdata, key, newValue, receiver);

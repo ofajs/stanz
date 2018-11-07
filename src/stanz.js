@@ -160,7 +160,8 @@
                         // set 新增值
                         genre: "arrayMethod",
                         methodName,
-                        args
+                        args,
+                        // modifyId: getRandomId()
                     };
 
                     this.emit(eveObj);
@@ -284,11 +285,38 @@
         sync(xdataObj) {
 
         },
-        watch() {
+        listen() {
 
         },
-        unwatch() {
+        unlisten() {
 
+        }
+    });
+
+
+    defineProperties(XDataFn, {
+        // 直接返回object
+        "object": {
+            get() {
+                let obj = {};
+
+                Object.keys(this).forEach(k => {
+                    let val = this[k];
+
+                    if (val instanceof XData) {
+                        obj[k] = val.object;
+                    } else {
+                        obj[k] = val;
+                    }
+                });
+
+                return obj;
+            }
+        },
+        "string": {
+            get() {
+                return JSON.stringify(this.object);
+            }
         }
     });
 
@@ -304,15 +332,30 @@
                 hostkey: key
             });
 
+            let oldVal = xdata[key];
+
+            // 相同值就别瞎折腾了
+            if (oldVal === newValue) {
+                return true;
+            }
+
+            if (oldVal instanceof XData) {
+                if (newValue instanceof XData && oldVal.string === newValue.string) {
+                    // 同是object
+                    return true;
+                }
+
+                // 触发object的改动destory
+                debugger
+            }
+
             if (!PRIREG.test(key) && !xdata[RUNARRMETHOD]) {
                 // 事件实例生成
                 let eveObj = new XDataEvent('update', receiver);
 
-                let isFirst, oldVal;
+                let isFirst;
                 // 判断是否初次设置
-                if (key in xdata) {
-                    oldVal = xdata[key];
-                } else {
+                if (!(key in xdata)) {
                     isFirst = 1;
                 }
 
@@ -323,7 +366,8 @@
                     genre: isFirst ? "set" : "change",
                     key,
                     value,
-                    oldVal
+                    oldVal,
+                    // modifyId: getRandomId()
                 };
 
                 // 触发事件

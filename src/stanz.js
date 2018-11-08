@@ -49,6 +49,12 @@
     // business function
     const createXData = (obj, options) => {
         let redata = obj;
+
+        // 判断是否属于xdata数据
+        if (obj instanceof XData) {
+            debugger
+        }
+
         switch (getType(obj)) {
             case "object":
             case "array":
@@ -67,7 +73,9 @@
         });
         setNotEnumer(this, {
             target,
-            stopPropagated: false
+            currentTarget: target,
+            bubble: true,
+            cancel: false
         });
     }
 
@@ -228,13 +236,23 @@
                 eventObj = new XDataEvent(eventName, this);
             }
 
+            // 设置emit上的bubble
+            if (options.bubble == false) {
+                eventObj.bubble = false;
+            }
+
             // 获取事件队列数组
             eves = getEvesArr(this, eventName);
 
             // 事件数组触发
-            eves.forEach((opt, index) => {
+            eves.some((opt, index) => {
                 // 触发callback
                 // nextTick(() => {
+                // 如果cancel就不执行了
+                if (eventObj.cancel) {
+                    return true;
+                }
+
                 // 添加数据
                 let args = [eventObj];
                 !isUndefined(opt.onData) && (eventObj.data = opt.onData);
@@ -257,14 +275,16 @@
             });
 
             // 冒泡触发
-            let {
-                parent
-            } = this;
-            if (parent) {
-                // nextTick(() => {
-                eventObj.keys.unshift(this.hostkey);
-                // });
-                parent.emit(eventObj, emitData);
+            if (eventObj.bubble && !eventObj.cancel) {
+                let {
+                    parent
+                } = this;
+                if (parent) {
+                    // nextTick(() => {
+                    eventObj.keys.unshift(this.hostkey);
+                    // });
+                    parent.emit(eventObj, emitData);
+                }
             }
 
             return this;
@@ -289,6 +309,9 @@
 
         },
         unlisten() {
+
+        },
+        seek(expr) {
 
         }
     });
@@ -347,8 +370,19 @@
                     }
 
                     // 触发object的改动destory
-                    debugger
+                    oldVal.parent = null;
+                    oldVal.hostkey = null;
 
+                    // 准备触发destory事件
+                    nextTick(() => {
+                        if (!oldVal.parent && oldVal.status !== "root") {
+                            // destory事件对象
+                            let eveObj = new XDataEvent('destory', oldVal);
+                            oldVal.emit(eveObj, undefined, {
+                                bubble: false
+                            });
+                        }
+                    });
                 }
 
                 if (!PRIREG.test(key)) {

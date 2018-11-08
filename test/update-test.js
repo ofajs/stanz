@@ -19,7 +19,7 @@
     });
 
     a.one("update", e => {
-        console.log(e);
+        // console.log(e);
         tester.ok(JSON.stringify(e.keys) == "[1,0]", "keys ok");
         tester.ok(e.modify.genre == "change", "genre ok");
         tester.ok(e.modify.key == "val", "key ok");
@@ -58,5 +58,5 @@
 
     a.off('update', errfun);
 
-    console.log(a);
+    // console.log(a);
 })();

@@ -18,12 +18,16 @@
         }
     });
 
-    a[0].one("destory", e => {
+    a[1].one("destory", e => {
         debugger
     });
 
-    a[0] = {
-        id: "B2",
+    a[1][0].one("destory", e => {
+        debugger
+    });
+
+    a[1] = {
+        id: "C2",
         val: "change B2"
     }
 })();

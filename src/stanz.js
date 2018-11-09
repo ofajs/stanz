@@ -67,15 +67,34 @@
 
     // main class
     function XDataEvent(type, target) {
-        assign(this, {
-            type,
-            keys: [],
-        });
-        setNotEnumer(this, {
-            target,
-            currentTarget: target,
-            bubble: true,
-            cancel: false
+        defineProperties(this, {
+            type: {
+                enumerable: true,
+                value: type
+            },
+            keys: {
+                enumerable: true,
+                value: []
+            },
+            target: {
+                enumerable: true,
+                value: target
+            },
+            bubble: {
+                enumerable: true,
+                writable: true,
+                value: true
+            },
+            cancel: {
+                enumerable: true,
+                writable: true,
+                value: false
+            },
+            currentTarget: {
+                enumerable: true,
+                writable: true,
+                value: target
+            }
         });
     }
 
@@ -346,6 +365,24 @@
     // 私有属性正则
     const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
 
+    // destory 方法
+    const destoryData = (tarData, eveObj) => {
+        // 修改状态
+        tarData.status = "destory";
+
+        // 事件触发
+        tarData.emit(eveObj);
+
+        // 获取key
+        Object.keys(tarData).forEach(k => {
+            let val = tarData[k];
+
+            if (val instanceof XData) {
+                destoryData(val, eveObj);
+            }
+        });
+    }
+
     // handler
     let XDataHandler = {
         set(xdata, key, value, receiver) {
@@ -378,9 +415,14 @@
                         if (!oldVal.parent && oldVal.status !== "root") {
                             // destory事件对象
                             let eveObj = new XDataEvent('destory', oldVal);
-                            oldVal.emit(eveObj, undefined, {
-                                bubble: false
+
+                            // 设置事件对象不可冒泡
+                            defineProperty(eveObj, 'bubble', {
+                                writable: false,
+                                value: false
                             });
+
+                            destoryData(oldVal, eveObj);
                         }
                     });
                 }

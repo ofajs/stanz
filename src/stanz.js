@@ -63,40 +63,40 @@
     };
 
     // destory 方法
-    const destoryData = (tarData, eveObj) => {
-        // 修改状态
-        tarData.status = "destory";
+    // const destoryData = (tarData, eveObj) => {
+    //     // 修改状态
+    //     tarData.status = "destory";
 
-        // 事件触发
-        tarData.emit(eveObj);
+    //     // 事件触发
+    //     tarData.emit(eveObj);
 
-        // 获取key
-        Object.keys(tarData).forEach(k => {
-            let val = tarData[k];
+    //     // 获取key
+    //     Object.keys(tarData).forEach(k => {
+    //         let val = tarData[k];
 
-            if (val instanceof XData) {
-                destoryData(val, eveObj);
-            }
-        });
-    }
+    //         if (val instanceof XData) {
+    //             destoryData(val, eveObj);
+    //         }
+    //     });
+    // }
 
-    // 准备消灭数据
-    const readyDestoryData = (tarData) => {
-        nextTick(() => {
-            if (!tarData.parent && tarData.status !== "root") {
-                // destory事件对象
-                let eveObj = new XDataEvent('destory', tarData);
+    // // 准备消灭数据
+    // const readyDestoryData = (tarData) => {
+    //     nextTick(() => {
+    //         if (!tarData.parent && tarData.status !== "root") {
+    //             // destory事件对象
+    //             let eveObj = new XDataEvent('destory', tarData);
 
-                // 设置事件对象不可冒泡
-                defineProperty(eveObj, 'bubble', {
-                    writable: false,
-                    value: false
-                });
+    //             // 设置事件对象不可冒泡
+    //             defineProperty(eveObj, 'bubble', {
+    //                 writable: false,
+    //                 value: false
+    //             });
 
-                destoryData(tarData, eveObj);
-            }
-        });
-    }
+    //             destoryData(tarData, eveObj);
+    //         }
+    //     });
+    // }
 
     // main class
     function XDataEvent(type, target) {
@@ -457,11 +457,11 @@
                     }
 
                     // 触发object的改动destory
-                    oldVal.parent = null;
-                    oldVal.hostkey = null;
+                    // oldVal.parent = null;
+                    // oldVal.hostkey = null;
 
                     // 准备触发destory事件
-                    readyDestoryData(oldVal);
+                    // readyDestoryData(oldVal);
                 }
 
                 if (!PRIREG.test(key)) {

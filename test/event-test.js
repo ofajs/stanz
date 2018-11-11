@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'event test');
+    let tester = expect(10, 'event test');
 
     let a = stanz({
         val: "I am a",
@@ -27,6 +27,7 @@
         tester.ok(data === "emit data", "emit data ok");
         tester.ok(JSON.stringify(e.keys) === "[1,0]", "keys ok 2");
         tester.ok(e.target === a[1][0], "target ok");
+        tester.ok(e.currentTarget === a, "currentTarget ok");
     }, bindDataOptions);
 
     a[1].one('haha', e => {
@@ -56,6 +57,13 @@
     });
 
     // 再次触发，eveid相同的事件会被覆盖
+    a.emit('eveid_test');
+
+    // 覆盖空值就会清除
+    a.on('eveid_test', null, {
+        id: "1111"
+    });
+    // 因为清空就没什么触发了
     a.emit('eveid_test');
 
     // console.log(a);

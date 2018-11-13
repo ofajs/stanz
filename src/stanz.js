@@ -52,6 +52,8 @@
     const createXData = (obj, options) => {
         let redata = obj;
 
+        debugger
+
         switch (getType(obj)) {
             case "object":
             case "array":
@@ -97,6 +99,22 @@
     //         }
     //     });
     // }
+
+    // 查找数据
+    const seekData = (data, expr) => {
+        let arr = [];
+
+        Object.keys(data).forEach(k => {
+            let tarData = data[k];
+
+            if (tarData instanceof XData) {
+                let newArr = seekData(tarData, expr);
+                arr.push(...newArr);
+            }
+            debugger
+        });
+        return arr;
+    }
 
     // main class
     function XDataEvent(type, target) {
@@ -362,7 +380,36 @@
             }
         },
         seek(expr) {
+            // 分析expr字符串数据
+            let garr = expr.match(/\[.+\]/);
 
+            // 代表式的组织化数据
+            let exprObj = [];
+
+            garr.forEach(str => {
+                str = str.replace(/\[|\]/g, "");
+                let strarr = str.split("=");
+                switch (strarr.length) {
+                    case "2":
+                        exprObj.push({
+                            type: "keyValue",
+                            k: strarr[0],
+                            v: strarr[1]
+                        });
+                        break;
+                    case "1":
+                        exprObj.push({
+                            type: "hasKey",
+                            k: strarr[0]
+                        });
+                        break;
+                }
+            });
+
+            // 查找数据
+            let redata = seekData(this, exprObj);
+
+            return redata;
         },
         // 插入trend数据
         entrend(options) {

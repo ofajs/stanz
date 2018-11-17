@@ -52,8 +52,6 @@
     const createXData = (obj, options) => {
         let redata = obj;
 
-        debugger
-
         switch (getType(obj)) {
             case "object":
             case "array":
@@ -101,17 +99,36 @@
     // }
 
     // 查找数据
-    const seekData = (data, expr) => {
+    const seekData = (data, exprObj) => {
         let arr = [];
+
+        let exprKey = exprObj.k;
 
         Object.keys(data).forEach(k => {
             let tarData = data[k];
 
             if (tarData instanceof XData) {
-                let newArr = seekData(tarData, expr);
+                let tempArr = [];
+
+                // 搜索数据
+                switch (exprObj.type) {
+                    case "keyValue":
+                        if (tarData[exprKey] == exprObj.v) {
+                            tempArr.push(tarData);
+                        }
+                        break;
+                    case "hasKey":
+                        if (exprKey in tarData) {
+                            tempArr.push(tarData);
+                        }
+                        break;
+                }
+
+                arr.push(...tempArr);
+
+                let newArr = seekData(tarData, exprObj);
                 arr.push(...newArr);
             }
-            debugger
         });
         return arr;
     }
@@ -381,24 +398,24 @@
         },
         seek(expr) {
             // 分析expr字符串数据
-            let garr = expr.match(/\[.+\]/);
+            let garr = expr.match(/\[.+?\]/g);
 
             // 代表式的组织化数据
-            let exprObj = [];
+            let exprObjArr = [];
 
             garr.forEach(str => {
                 str = str.replace(/\[|\]/g, "");
                 let strarr = str.split("=");
                 switch (strarr.length) {
-                    case "2":
-                        exprObj.push({
+                    case 2:
+                        exprObjArr.push({
                             type: "keyValue",
                             k: strarr[0],
                             v: strarr[1]
                         });
                         break;
-                    case "1":
-                        exprObj.push({
+                    case 1:
+                        exprObjArr.push({
                             type: "hasKey",
                             k: strarr[0]
                         });
@@ -406,8 +423,37 @@
                 }
             });
 
-            // 查找数据
-            let redata = seekData(this, exprObj);
+            // 要返回的数据
+            let redata;
+
+            exprObjArr.forEach((exprObj, i) => {
+                let exprKey = exprObj.k;
+
+                switch (i) {
+                    case 0:
+                        // 查找数据
+                        redata = seekData(this, exprObj);
+                        break;
+                    default:
+                        switch (exprObj.type) {
+                            case "keyValue":
+                                // 筛选掉不符合规格的
+                                redata = redata.filter(e => {
+                                    if (e[exprKey] == exprObj.v) {
+                                        return e;
+                                    }
+                                });
+                                break;
+                            case "hasKey":
+                                redata = redata.filter(e => {
+                                    if (exprKey in e) {
+                                        return e;
+                                    }
+                                });
+                                break;
+                        }
+                }
+            });
 
             return redata;
         },

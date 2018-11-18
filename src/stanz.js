@@ -62,44 +62,8 @@
         return redata;
     };
 
-    // destory 方法
-    // const destoryData = (tarData, eveObj) => {
-    //     // 修改状态
-    //     tarData.status = "destory";
-
-    //     // 事件触发
-    //     tarData.emit(eveObj);
-
-    //     // 获取key
-    //     Object.keys(tarData).forEach(k => {
-    //         let val = tarData[k];
-
-    //         if (val instanceof XData) {
-    //             destoryData(val, eveObj);
-    //         }
-    //     });
-    // }
-
-    // // 准备消灭数据
-    // const readyDestoryData = (tarData) => {
-    //     nextTick(() => {
-    //         if (!tarData.parent && tarData.status !== "root") {
-    //             // destory事件对象
-    //             let eveObj = new XDataEvent('destory', tarData);
-
-    //             // 设置事件对象不可冒泡
-    //             defineProperty(eveObj, 'bubble', {
-    //                 writable: false,
-    //                 value: false
-    //             });
-
-    //             destoryData(tarData, eveObj);
-    //         }
-    //     });
-    // }
-
     // 按条件判断数据是否符合条件
-    const conditData = (exprKey, exprType, exprValue, exprEqType, tarData) => {
+    const conditData = (exprKey, exprValue, exprType, exprEqType, tarData) => {
         let reData = 0;
 
         // 搜索数据
@@ -138,53 +102,23 @@
     const seekData = (data, exprObj) => {
         let arr = [];
 
-        // let exprKey = exprObj.k;
-        // let exprValue = exprObj.v;
-        // let exprEqType = exprObj.eqType;
+        // 关键数据
+        let exprKey = exprObj.k,
+            exprValue = exprObj.v,
+            exprType = exprObj.type,
+            exprEqType = exprObj.eqType;
 
         Object.keys(data).forEach(k => {
             let tarData = data[k];
 
             if (tarData instanceof XData) {
-                // let tempArr = [];
+                // 判断是否可添加
+                let canAdd = conditData(exprKey, exprValue, exprType, exprEqType, tarData);
 
-                // 搜索数据
-                // switch (exprObj.type) {
-                //     case "keyValue":
-                //         let tarValue = tarData[exprKey];
-                //         switch (exprEqType) {
-                //             case "=":
-                //                 if (tarValue == exprValue) {
-                //                     tempArr.push(tarData);
-                //                 }
-                //                 break;
-                //             case ":=":
-                //                 if (tarValue instanceof XData && tarValue.findIndex(e => e == exprValue) > -1) {
-                //                     tempArr.push(tarData);
-                //                 }
-                //                 break;
-                //         }
-                //         break;
-                //     case "hasKey":
-                //         if (exprKey in tarData) {
-                //             tempArr.push(tarData);
-                //         }
-                //         break;
-                //     case "hasValue":
-                //         if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
-                //             tempArr.push(tarData);
-                //         }
-                //         break;
-                // }
+                // 允许就添加
+                canAdd && arr.push(tarData);
 
-                let canAdd = conditData(exprObj.k, exprObj.type, exprObj.v, exprObj.eqType, tarData);
-
-                // arr.push(...tempArr);
-
-                if (canAdd) {
-                    arr.push(tarData);
-                }
-
+                // 查找子项
                 let newArr = seekData(tarData, exprObj);
                 arr.push(...newArr);
             }
@@ -470,7 +404,6 @@
 
             garr.forEach(str => {
                 str = str.replace(/\[|\]/g, "");
-                // let strarr = str.split("=");
                 let strarr = str.split(/(=|\*=|\!=|:=)/);
 
                 let param_first = strarr[0];
@@ -505,39 +438,19 @@
             let redata;
 
             exprObjArr.forEach((exprObj, i) => {
-                let exprKey = exprObj.k;
-                let exprValue = exprObj.v;
+                let exprKey = exprObj.k,
+                    exprValue = exprObj.v,
+                    exprType = exprObj.type,
+                    exprEqType = exprObj.eqType;
 
                 switch (i) {
                     case 0:
-                        // 查找数据
+                        // 初次查找数据
                         redata = seekData(this, exprObj);
                         break;
                     default:
-                        switch (exprObj.type) {
-                            case "keyValue":
-                                // 筛选掉不符合规格的
-                                redata = redata.filter(e => {
-                                    if (e[exprKey] == exprValue) {
-                                        return e;
-                                    }
-                                });
-                                break;
-                            case "hasKey":
-                                redata = redata.filter(e => {
-                                    if (exprKey in e) {
-                                        return e;
-                                    }
-                                });
-                                break;
-                            case "hasValue":
-                                redata = redata.filter(e => {
-                                    if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
-                                        return e;
-                                    }
-                                });
-                                break;
-                        }
+                        // 筛选数据
+                        redata = redata.filter(tarData => conditData(exprKey, exprValue, exprType, exprEqType, tarData) ? tarData : undefined);
                 }
             });
 

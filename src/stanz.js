@@ -103,6 +103,7 @@
         let arr = [];
 
         let exprKey = exprObj.k;
+        let exprValue = exprObj.v;
 
         Object.keys(data).forEach(k => {
             let tarData = data[k];
@@ -113,12 +114,17 @@
                 // 搜索数据
                 switch (exprObj.type) {
                     case "keyValue":
-                        if (tarData[exprKey] == exprObj.v) {
+                        if (tarData[exprKey] == exprValue) {
                             tempArr.push(tarData);
                         }
                         break;
                     case "hasKey":
                         if (exprKey in tarData) {
+                            tempArr.push(tarData);
+                        }
+                        break;
+                    case "hasValue":
+                        if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
                             tempArr.push(tarData);
                         }
                         break;
@@ -408,11 +414,18 @@
                 let strarr = str.split("=");
                 switch (strarr.length) {
                     case 2:
-                        exprObjArr.push({
-                            type: "keyValue",
-                            k: strarr[0],
-                            v: strarr[1]
-                        });
+                        if (strarr[0]) {
+                            exprObjArr.push({
+                                type: "keyValue",
+                                k: strarr[0],
+                                v: strarr[1]
+                            });
+                        } else {
+                            exprObjArr.push({
+                                type: "hasValue",
+                                v: strarr[1]
+                            });
+                        }
                         break;
                     case 1:
                         exprObjArr.push({
@@ -428,6 +441,7 @@
 
             exprObjArr.forEach((exprObj, i) => {
                 let exprKey = exprObj.k;
+                let exprValue = exprObj.v;
 
                 switch (i) {
                     case 0:
@@ -439,7 +453,7 @@
                             case "keyValue":
                                 // 筛选掉不符合规格的
                                 redata = redata.filter(e => {
-                                    if (e[exprKey] == exprObj.v) {
+                                    if (e[exprKey] == exprValue) {
                                         return e;
                                     }
                                 });
@@ -447,6 +461,13 @@
                             case "hasKey":
                                 redata = redata.filter(e => {
                                     if (exprKey in e) {
+                                        return e;
+                                    }
+                                });
+                                break;
+                            case "hasValue":
+                                redata = redata.filter(e => {
+                                    if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
                                         return e;
                                     }
                                 });

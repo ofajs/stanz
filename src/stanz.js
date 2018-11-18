@@ -98,39 +98,92 @@
     //     });
     // }
 
+    // 按条件判断数据是否符合条件
+    const conditData = (exprKey, exprType, exprValue, exprEqType, tarData) => {
+        let reData = 0;
+
+        // 搜索数据
+        switch (exprType) {
+            case "keyValue":
+                let tarValue = tarData[exprKey];
+                switch (exprEqType) {
+                    case "=":
+                        if (tarValue == exprValue) {
+                            reData = 1;
+                        }
+                        break;
+                    case ":=":
+                        if (tarValue instanceof XData && tarValue.findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                        }
+                        break;
+                }
+                break;
+            case "hasKey":
+                if (exprKey in tarData) {
+                    reData = 1;
+                }
+                break;
+            case "hasValue":
+                if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
+                    reData = 1;
+                }
+                break;
+        }
+
+        return reData;
+    }
+
     // 查找数据
     const seekData = (data, exprObj) => {
         let arr = [];
 
-        let exprKey = exprObj.k;
-        let exprValue = exprObj.v;
+        // let exprKey = exprObj.k;
+        // let exprValue = exprObj.v;
+        // let exprEqType = exprObj.eqType;
 
         Object.keys(data).forEach(k => {
             let tarData = data[k];
 
             if (tarData instanceof XData) {
-                let tempArr = [];
+                // let tempArr = [];
 
                 // 搜索数据
-                switch (exprObj.type) {
-                    case "keyValue":
-                        if (tarData[exprKey] == exprValue) {
-                            tempArr.push(tarData);
-                        }
-                        break;
-                    case "hasKey":
-                        if (exprKey in tarData) {
-                            tempArr.push(tarData);
-                        }
-                        break;
-                    case "hasValue":
-                        if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
-                            tempArr.push(tarData);
-                        }
-                        break;
-                }
+                // switch (exprObj.type) {
+                //     case "keyValue":
+                //         let tarValue = tarData[exprKey];
+                //         switch (exprEqType) {
+                //             case "=":
+                //                 if (tarValue == exprValue) {
+                //                     tempArr.push(tarData);
+                //                 }
+                //                 break;
+                //             case ":=":
+                //                 if (tarValue instanceof XData && tarValue.findIndex(e => e == exprValue) > -1) {
+                //                     tempArr.push(tarData);
+                //                 }
+                //                 break;
+                //         }
+                //         break;
+                //     case "hasKey":
+                //         if (exprKey in tarData) {
+                //             tempArr.push(tarData);
+                //         }
+                //         break;
+                //     case "hasValue":
+                //         if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
+                //             tempArr.push(tarData);
+                //         }
+                //         break;
+                // }
 
-                arr.push(...tempArr);
+                let canAdd = conditData(exprObj.k, exprObj.type, exprObj.v, exprObj.eqType, tarData);
+
+                // arr.push(...tempArr);
+
+                if (canAdd) {
+                    arr.push(tarData);
+                }
 
                 let newArr = seekData(tarData, exprObj);
                 arr.push(...newArr);
@@ -403,34 +456,46 @@
             }
         },
         seek(expr) {
-            // 分析expr字符串数据
-            let garr = expr.match(/\[.+?\]/g);
-
             // 代表式的组织化数据
             let exprObjArr = [];
 
+            let hostKey;
+            let hostKeyArr = expr.match(/(^[^\[\]])\[.+\]/);
+            if (hostKeyArr && hostKeyArr.length >= 2) {
+                hostKey = hostKeyArr[1];
+            }
+
+            // 分析expr字符串数据
+            let garr = expr.match(/\[.+?\]/g);
+
             garr.forEach(str => {
                 str = str.replace(/\[|\]/g, "");
-                let strarr = str.split("=");
+                // let strarr = str.split("=");
+                let strarr = str.split(/(=|\*=|\!=|:=)/);
+
+                let param_first = strarr[0];
+
                 switch (strarr.length) {
-                    case 2:
-                        if (strarr[0]) {
+                    case 3:
+                        if (param_first) {
                             exprObjArr.push({
                                 type: "keyValue",
-                                k: strarr[0],
-                                v: strarr[1]
+                                k: param_first,
+                                eqType: strarr[1],
+                                v: strarr[2]
                             });
                         } else {
                             exprObjArr.push({
                                 type: "hasValue",
-                                v: strarr[1]
+                                eqType: strarr[1],
+                                v: strarr[2]
                             });
                         }
                         break;
                     case 1:
                         exprObjArr.push({
                             type: "hasKey",
-                            k: strarr[0]
+                            k: param_first
                         });
                         break;
                 }
@@ -475,6 +540,11 @@
                         }
                 }
             });
+
+            // hostKey过滤
+            if (hostKey) {
+                redata = redata.filter(e => (e.hostkey == hostKey) ? e : undefined);
+            }
 
             return redata;
         },

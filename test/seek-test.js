@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(10, 'seek test');
+    let tester = expect(15, 'seek test');
 
     let a = stanz({
         val: "I am a",
@@ -9,14 +9,16 @@
             t: [111, 222, 333, 444]
         },
         0: {
+            v: "I am 0",
             val: "0000",
-            selected: 1
+            selected: 1,
+            ha: [333]
         },
         1: {
             val: "11111111",
             selected: "0",
             0: {
-                val: "childs 0",
+                val: "am I childs 0?",
                 selected: 0
             }
         }
@@ -33,5 +35,10 @@
     tester.ok(a.seek('[=0][val=11111111]').length == 1, 'mult mark length ok');
     tester.ok(a.seek('d[selected]')[0] == a.d, 'hostKey mark ok');
     tester.ok(a.seek('d[selected]').length == 1, 'hostKey mark length ok');
-    tester.ok(a.seek('[t:=333]')[0] == a.d, 'mark ":" ok');
+    tester.ok(a.seek('[t:=333]')[0] == a.d, 'mark := ok 1');
+    tester.ok(a.seek('[:=333]').length == 2, 'mark := ok 2');
+    tester.ok(a.seek('[val*=I am]')[0] == a.d, 'mark *= ok 1');
+    tester.ok(a.seek('[*=I am]').length == 2, 'mark *= ok 2');
+    tester.ok(a.seek('[val~=am]').length == 2, 'mark ~= ok 1');
+    tester.ok(a.seek('[~=am]').length == 3, 'mark ~= ok 2');
 })();

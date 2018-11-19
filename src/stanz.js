@@ -81,15 +81,53 @@
                             reData = 1;
                         }
                         break;
+                    case "*=":
+                        if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                            reData = 1;
+                        }
+                        break;
+                    case "~=":
+                        if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                        }
+                        break;
+                }
+                break;
+            case "hasValue":
+                switch (exprEqType) {
+                    case "=":
+                        if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                        }
+                        break;
+                    case ":=":
+                        Object.values(tarData).some(tarValue => {
+                            if (tarValue instanceof XData && tarValue.findIndex(e => e == exprValue) > -1) {
+                                reData = 1;
+                                return true;
+                            }
+                        });
+                        break;
+                    case "*=":
+                        Object.values(tarData).some(tarValue => {
+                            if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                                reData = 1;
+                                return true;
+                            }
+                        });
+                        break;
+                    case "~=":
+                        Object.values(tarData).some(tarValue => {
+                            if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                                reData = 1;
+                                return true;
+                            }
+                        });
+                        break;
                 }
                 break;
             case "hasKey":
                 if (exprKey in tarData) {
-                    reData = 1;
-                }
-                break;
-            case "hasValue":
-                if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
                     reData = 1;
                 }
                 break;
@@ -404,7 +442,7 @@
 
             garr.forEach(str => {
                 str = str.replace(/\[|\]/g, "");
-                let strarr = str.split(/(=|\*=|\!=|:=)/);
+                let strarr = str.split(/(=|\*=|:=|~=)/);
 
                 let param_first = strarr[0];
 

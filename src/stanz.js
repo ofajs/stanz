@@ -44,8 +44,9 @@
 
     // common
     const EVES = "_eves_" + getRandomId();
-    const RUNARRMETHOD = "_runarrmethod_" + getRandomId(0);
-    const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId(0);
+    const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
+    const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId();
+    const WATCHFUNCHOST = "_watch_func_" + getRandomId();
 
     // business function
     // 生成xdata对象
@@ -240,6 +241,8 @@
             [EVES]: {},
             // watch 的 timeout 寄宿器
             [WATCHTIMEOUTDATA]: {},
+            // watch寄宿对象
+            [WATCHFUNCHOST]: {}
         };
 
         if (options.parent) {
@@ -524,9 +527,36 @@
             if (!expr && callback) {
                 this.on('watch', callback);
             } else if (expr && callback) {
-                debugger
-            }
+                // 获取一次初始数据
+                let hostArr = this[WATCHFUNCHOST] = (this[WATCHFUNCHOST] = []);
 
+                // 记录之前的数据
+                let beforeValue = '[]';
+
+                // 寄宿在watch方法上的函数
+                let watchCall = e => {
+                    // 查找数据
+                    let seekData = this.seek(expr);
+                    let seekDataStr = JSON.stringify(seekData);
+
+                    // 对比数据
+                    if (seekDataStr !== beforeValue) {
+                        callback(seekData);
+                        beforeValue = seekDataStr;
+                    }
+                };
+                this.on('watch', watchCall);
+
+                // 记录数据
+                hostArr.push({
+                    expr,
+                    callback,
+                    watchCall
+                });
+
+                // 先记录一次数据
+                watchCall()
+            }
         },
         unwatch() {
 
@@ -590,13 +620,6 @@
                         // 同是object
                         return true;
                     }
-
-                    // 触发object的改动destory
-                    // oldVal.parent = null;
-                    // oldVal.hostkey = null;
-
-                    // 准备触发destory事件
-                    // readyDestoryData(oldVal);
                 }
 
                 if (!PRIREG.test(key)) {

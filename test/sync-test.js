@@ -51,4 +51,6 @@
         tester.ok(b[1].val == "new [1]", 'entrend arrayMethod ok');
     }, 10);
 
+    window.a = a;
+
 })();

@@ -168,6 +168,19 @@
         return arr;
     }
 
+    // modifyId清理设置
+    let addModify = (xdata, modifyId) => {
+        let modifyHost = xdata[MODIFYHOST];
+        modifyHost.push(modifyId);
+
+        // 适时回收
+        clearTimeout(xdata[MODIFYTIMER]);
+        xdata[MODIFYTIMER] = setTimeout(() => {
+            modifyHost.length = 0;
+            modifyHost = null;
+        }, 2000);
+    }
+
     // main class
     function XDataEvent(type, target) {
         let enumerable = true;
@@ -339,12 +352,16 @@
                     if (_entrendModifyId) {
                         // 拿到数据立刻删除
                         delete this._entrendModifyId;
+                    } else {
+                        _entrendModifyId = getRandomId();
+
+                        addModify(this, _entrendModifyId);
                     }
 
                     let redata = arrayFnFunc.apply(this, args);
 
                     // 修正Id
-                    let modifyId = _entrendModifyId || getRandomId();
+                    let modifyId = _entrendModifyId;
 
                     // 事件实例生成
                     let eveObj = new XDataEvent('update', this);
@@ -592,14 +609,7 @@
                     if (modifyHost.includes(options.modifyId)) {
                         return;
                     } else {
-                        modifyHost.push(options.modifyId);
-
-                        // 适时回收
-                        clearTimeout(this[MODIFYTIMER]);
-                        this[MODIFYTIMER] = setTimeout(() => {
-                            modifyHost.length = 0;
-                            modifyHost = null;
-                        }, 2000);
+                        addModify(this, options.modifyId);
                     }
 
                     // 临时记录数据

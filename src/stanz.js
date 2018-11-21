@@ -49,6 +49,7 @@
     const WATCHFUNCHOST = "_watch_func_" + getRandomId();
     const SYNCHOST = "_synchost_" + getRandomId();
     const MODIFYHOST = "_modify_" + getRandomId();
+    const MODIFYTIMER = "_modify_timer_" + getRandomId();
 
     // business function
     // 生成xdata对象
@@ -288,7 +289,8 @@
             [WATCHFUNCHOST]: [],
             // sync 寄宿对象
             [SYNCHOST]: [],
-            [MODIFYHOST]: []
+            [MODIFYHOST]: [],
+            [MODIFYTIMER]: ""
         };
 
         if (options.parent) {
@@ -576,20 +578,6 @@
         entrend(options) {
             // 目标数据
             let target = this;
-            let modifyHost = this[MODIFYHOST];
-
-            // 判断是否运行过
-            if (modifyHost.includes(options.modifyId)) {
-                return;
-            } else {
-                modifyHost.push(options.modifyId);
-
-                // 适时回收
-                setTimeout(() => {
-                    let id = modifyHost.indexOf(options.modifyId);
-                    modifyHost.splice(id, 1);
-                }, 2000);
-            }
 
             // 获取target
             options.keys.forEach(k => {
@@ -598,6 +586,22 @@
 
             switch (options.genre) {
                 case "arrayMethod":
+                    let modifyHost = this[MODIFYHOST];
+
+                    // 判断是否运行过
+                    if (modifyHost.includes(options.modifyId)) {
+                        return;
+                    } else {
+                        modifyHost.push(options.modifyId);
+
+                        // 适时回收
+                        clearTimeout(this[MODIFYTIMER]);
+                        this[MODIFYTIMER] = setTimeout(() => {
+                            modifyHost.length = 0;
+                            modifyHost = null;
+                        }, 2000);
+                    }
+
                     // 临时记录数据
                     target._entrendModifyId = options.modifyId;
                     target[options.methodName](...options.args);

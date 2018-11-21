@@ -23,6 +23,9 @@
         }
     }
 
+    // 克隆object
+    const cloneObject = obj => JSON.parse(JSON.stringify(obj));
+
     //改良异步方法
     const nextTick = (() => {
         let isTick = false;
@@ -603,10 +606,8 @@
 
             switch (options.genre) {
                 case "arrayMethod":
-                    let modifyHost = this[MODIFYHOST];
-
                     // 判断是否运行过
-                    if (modifyHost.includes(options.modifyId)) {
+                    if (this[MODIFYHOST].includes(options.modifyId)) {
                         return;
                     } else {
                         addModify(this, options.modifyId);
@@ -698,22 +699,95 @@
             let watchFunc, oppWatchFunc;
 
             switch (optionsType) {
+                case "string":
+                    this.on('watch', watchFunc = e => {
+                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
+                        if (keysOne == options) {
+                            xdataObj.entrend(e.trend);
+                        }
+                    });
+                    xdataObj.on('watch', oppWatchFunc = e => {
+                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
+                        if (keysOne == options) {
+                            this.entrend(e.trend);
+                        }
+                    });
+                    break;
                 case "array":
+                    this.on('watch', watchFunc = e => {
+                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
+                        if (options.includes(keysOne)) {
+                            xdataObj.entrend(e.trend);
+                        }
+                    });
+                    xdataObj.on('watch', oppWatchFunc = e => {
+                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
+                        if (options.includes(keysOne)) {
+                            this.entrend(e.trend);
+                        }
+                    });
                     break;
                 case "object":
-                    break;
-                case "string":
+                    let resOptions = {};
+                    Object.keys(options).forEach(k => {
+                        resOptions[options[k]] = k;
+                    });
+
+                    this.on('watch', watchFunc = e => {
+                        let {
+                            trend
+                        } = e;
+
+                        let keysOne = trend.keys[0];
+
+                        keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+
+                        if (keysOne in options) {
+                            if (isUndefined(trend.keys[0])) {
+                                trend.key = options[keysOne];
+                            } else {
+                                trend.keys[0] = options[keysOne];
+                            }
+                            xdataObj.entrend(trend);
+                        }
+                    });
+
+                    xdataObj.on('watch', watchFunc = e => {
+                        let {
+                            trend
+                        } = e;
+
+                        let keysOne = trend.keys[0];
+
+                        keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+
+                        if (keysOne in resOptions) {
+                            if (isUndefined(trend.keys[0])) {
+                                trend.key = resOptions[keysOne];
+                            } else {
+                                trend.keys[0] = resOptions[keysOne];
+                            }
+                            this.entrend(trend);
+                        }
+                    });
+
                     break;
                 default:
                     // undefined
-                    this.on('watch', e => {
+                    this.on('watch', watchFunc = e => {
                         xdataObj.entrend(e.trend);
                     });
-                    xdataObj.on('watch', e => {
+                    xdataObj.on('watch', oppWatchFunc = e => {
                         this.entrend(e.trend);
                     });
                     break;
             }
+
+            this[SYNCHOST].push({
+                opp: xdataObj,
+                oppWatchFunc,
+                watchFunc
+            });
         },
         unsync(xdataObj) {
 

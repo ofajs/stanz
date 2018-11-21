@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(3, 'watch test');
+    let tester = expect(4, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -33,7 +33,10 @@
     a[1][0].val = "change 1-0 2";
 
     // 监听 selected=1 元素
-    a.watch('[selected=1]', arr => {
-        debugger
+    // 会同步先运行一次callback
+    let callFunc;
+    a.watch('[selected=1]', callFunc = e => {
+        tester.ok(e.val[0] == a[0], "watch ok 3");
     });
+    a.unwatch(callFunc);
 })();

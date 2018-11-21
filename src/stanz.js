@@ -199,11 +199,45 @@
         });
     }
 
-    // defineProperties(XDataEvent.prototype, {
-    //     trend: {
-    //         get() {}
-    //     }
-    // });
+    defineProperties(XDataEvent.prototype, {
+        // trend数据，用于给其他数据同步用的
+        trend: {
+            get() {
+                let {
+                    modify
+                } = this;
+
+                let reobj = {
+                    genre: modify.genre,
+                    keys: this.keys
+                };
+
+                switch (modify.genre) {
+                    case "arrayMethod":
+                        assign(reobj, {
+                            methodName: modify.methodName,
+                            args: modify.args,
+                        });
+                        break;
+                    default:
+                        let {
+                            value
+                        } = modify;
+
+                        if (value instanceof XData) {
+                            value = value.object;
+                        }
+                        assign(reobj, {
+                            key: modify.key,
+                            value,
+                        });
+                        break;
+                }
+
+                return reobj;
+            }
+        }
+    });
 
     function XData(obj, options = {}) {
         // 生成代理对象
@@ -242,7 +276,7 @@
             // watch 的 timeout 寄宿器
             [WATCHTIMEOUTDATA]: {},
             // watch寄宿对象
-            [WATCHFUNCHOST]: {}
+            [WATCHFUNCHOST]: []
         };
 
         if (options.parent) {
@@ -504,7 +538,22 @@
         },
         // 插入trend数据
         entrend(options) {
+            // 目标数据
+            let target = this;
 
+            // 获取target
+            options.keys.forEach(k => {
+                target = target[k];
+            });
+
+            switch (options.genre) {
+                case "arrayMethod":
+                    debugger
+                    break;
+                default:
+                    target[options.key] = options.value;
+                    break;
+            }
         },
         // 同步数据
         sync(xdataObj) {
@@ -528,10 +577,11 @@
                 this.on('watch', callback);
             } else if (expr && callback) {
                 // 获取一次初始数据
-                let hostArr = this[WATCHFUNCHOST] = (this[WATCHFUNCHOST] = []);
+                let hostArr = this[WATCHFUNCHOST];
 
                 // 记录之前的数据
-                let beforeValue = '[]';
+                let beforeVal = [];
+                let beforeValueStr = '[]';
 
                 // 寄宿在watch方法上的函数
                 let watchCall = e => {
@@ -540,9 +590,14 @@
                     let seekDataStr = JSON.stringify(seekData);
 
                     // 对比数据
-                    if (seekDataStr !== beforeValue) {
-                        callback(seekData);
-                        beforeValue = seekDataStr;
+                    if (seekDataStr !== beforeValueStr) {
+                        callback({
+                            old: beforeVal,
+                            val: seekData,
+                            event: e
+                        });
+                        beforeVal = seekData;
+                        beforeValueStr = seekDataStr;
                     }
                 };
                 this.on('watch', watchCall);
@@ -558,8 +613,24 @@
                 watchCall()
             }
         },
-        unwatch() {
+        unwatch(callback) {
+            let hostArr = this[WATCHFUNCHOST];
 
+            let tarIndex = hostArr.findIndex(e => {
+                return e.callback == callback;
+            });
+
+            let tarObj = hostArr[tarIndex];
+
+            // 取消watch监听
+            this.off('watch', tarObj.watchCall);
+
+            if (tarIndex > -1) {
+                hostArr.splice(tarIndex, 1);
+            }
+        },
+        clone() {
+            return createXData(this.object);
         }
     });
 

@@ -47,6 +47,8 @@
     const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
     const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId();
     const WATCHFUNCHOST = "_watch_func_" + getRandomId();
+    const SYNCHOST = "_synchost_" + getRandomId();
+    const MODIFYHOST = "_modify_" + getRandomId();
 
     // business function
     // 生成xdata对象
@@ -214,9 +216,16 @@
 
                 switch (modify.genre) {
                     case "arrayMethod":
+                        let {
+                            methodName,
+                            args,
+                            modifyId
+                        } = modify;
+
                         assign(reobj, {
-                            methodName: modify.methodName,
-                            args: modify.args,
+                            methodName,
+                            args,
+                            modifyId
                         });
                         break;
                     default:
@@ -275,8 +284,11 @@
             [EVES]: {},
             // watch 的 timeout 寄宿器
             [WATCHTIMEOUTDATA]: {},
-            // watch寄宿对象
-            [WATCHFUNCHOST]: []
+            // watch 寄宿对象
+            [WATCHFUNCHOST]: [],
+            // sync 寄宿对象
+            [SYNCHOST]: [],
+            [MODIFYHOST]: []
         };
 
         if (options.parent) {
@@ -317,7 +329,20 @@
                     // 设置不可执行setHandler
                     this[RUNARRMETHOD] = 1;
 
+                    let {
+                        _entrendModifyId
+                    } = this;
+
+
+                    if (_entrendModifyId) {
+                        // 拿到数据立刻删除
+                        delete this._entrendModifyId;
+                    }
+
                     let redata = arrayFnFunc.apply(this, args);
+
+                    // 修正Id
+                    let modifyId = _entrendModifyId || getRandomId();
 
                     // 事件实例生成
                     let eveObj = new XDataEvent('update', this);
@@ -328,10 +353,21 @@
                         genre: "arrayMethod",
                         methodName,
                         args,
-                        // modifyId: getRandomId()
+                        modifyId
                     };
 
                     this.emit(eveObj);
+
+                    nextTick(() => {
+                        let watchEveObj = new XDataEvent('watch', this);
+                        watchEveObj.modify = {
+                            genre: "arrayMethod",
+                            methodName,
+                            args,
+                            modifyId
+                        };
+                        this.emit(watchEveObj);
+                    });
 
                     // 还原可执行setHandler
                     delete this[RUNARRMETHOD];
@@ -540,6 +576,20 @@
         entrend(options) {
             // 目标数据
             let target = this;
+            let modifyHost = this[MODIFYHOST];
+
+            // 判断是否运行过
+            if (modifyHost.includes(options.modifyId)) {
+                return;
+            } else {
+                modifyHost.push(options.modifyId);
+
+                // 适时回收
+                setTimeout(() => {
+                    let id = modifyHost.indexOf(options.modifyId);
+                    modifyHost.splice(id, 1);
+                }, 2000);
+            }
 
             // 获取target
             options.keys.forEach(k => {
@@ -548,16 +598,14 @@
 
             switch (options.genre) {
                 case "arrayMethod":
-                    debugger
+                    // 临时记录数据
+                    target._entrendModifyId = options.modifyId;
+                    target[options.methodName](...options.args);
                     break;
                 default:
                     target[options.key] = options.value;
                     break;
             }
-        },
-        // 同步数据
-        sync(xdataObj) {
-
         },
         watch(arg1, arg2) {
             let expr, callback;
@@ -628,6 +676,33 @@
             if (tarIndex > -1) {
                 hostArr.splice(tarIndex, 1);
             }
+        },
+        // 同步数据
+        sync(xdataObj, options) {
+            let optionsType = getType(options);
+
+            let watchFunc, oppWatchFunc;
+
+            switch (optionsType) {
+                case "array":
+                    break;
+                case "object":
+                    break;
+                case "string":
+                    break;
+                default:
+                    // undefined
+                    this.on('watch', e => {
+                        xdataObj.entrend(e.trend);
+                    });
+                    xdataObj.on('watch', e => {
+                        this.entrend(e.trend);
+                    });
+                    break;
+            }
+        },
+        unsync(xdataObj) {
+
         },
         clone() {
             return createXData(this.object);

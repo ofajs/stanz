@@ -48,8 +48,9 @@
     // common
     const EVES = "_eves_" + getRandomId();
     const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
-    const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId();
-    const WATCHFUNCHOST = "_watch_func_" + getRandomId();
+    // const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId();
+    // const WATCHFUNCHOST = "_watch_func_" + getRandomId();
+    const WATCHHOST = "_watch_" + getRandomId();
     const SYNCHOST = "_synchost_" + getRandomId();
     const MODIFYHOST = "_modify_" + getRandomId();
     const MODIFYTIMER = "_modify_timer_" + getRandomId();
@@ -230,6 +231,10 @@
                     keys: this.keys
                 };
 
+                defineProperty(reobj, "oldVal", {
+                    value: modify.oldVal
+                });
+
                 switch (modify.genre) {
                     case "arrayMethod":
                         let {
@@ -299,9 +304,11 @@
             // 事件寄宿对象
             [EVES]: {},
             // watch 的 timeout 寄宿器
-            [WATCHTIMEOUTDATA]: {},
+            // [WATCHTIMEOUTDATA]: {},
             // watch 寄宿对象
-            [WATCHFUNCHOST]: [],
+            // [WATCHFUNCHOST]: [],
+            // watch寄宿对象
+            [WATCHHOST]: {},
             // sync 寄宿对象
             [SYNCHOST]: [],
             [MODIFYHOST]: [],
@@ -379,16 +386,16 @@
 
                     this.emit(eveObj);
 
-                    nextTick(() => {
-                        let watchEveObj = new XDataEvent('watch', this);
-                        watchEveObj.modify = {
-                            genre: "arrayMethod",
-                            methodName,
-                            args,
-                            modifyId
-                        };
-                        this.emit(watchEveObj);
-                    });
+                    // nextTick(() => {
+                    //     let watchEveObj = new XDataEvent('watch', this);
+                    //     watchEveObj.modify = {
+                    //         genre: "arrayMethod",
+                    //         methodName,
+                    //         args,
+                    //         modifyId
+                    //     };
+                    //     this.emit(watchEveObj);
+                    // });
 
                     // 还原可执行setHandler
                     delete this[RUNARRMETHOD];
@@ -613,92 +620,133 @@
 
             return this;
         },
-        watch(arg1, arg2) {
-            let expr, callback;
-            let arg1Type = getType(arg1);
-            let arg2Type = getType(arg2);
-
+        watch(expr, callback) {
+            let arg1Type = getType(expr);
             if (/function/.test(arg1Type)) {
-                callback = arg1;
+                callback = expr;
+                expr = "_";
             }
 
-            if (arg1Type == "string") {
-                expr = arg1;
-                callback = arg2;
-            }
+            let rootWatchHost = this[WATCHHOST]["$"];
 
-            if (!expr && callback) {
-                this.on('watch', callback);
-            } else if (expr && callback) {
-                // 获取一次初始数据
-                let hostArr = this[WATCHFUNCHOST];
-
-                // 记录之前的数据
-                let beforeVal = [];
-
-                // 寄宿在watch方法上的函数
-                let watchCall = e => {
-                    // 查找数据
-                    let seekData = this.seek(expr);
-
-                    // 判断是否相等
-                    let isEq = 1;
-                    if (seekData.length != beforeVal.length) {
-                        isEq = 0;
-                    }
-                    isEq && seekData.some((e, i) => {
-                        if (beforeVal[i] != e) {
-                            isEq = 0;
-                            return true;
-                        }
-                    });
-
-                    // 不相等就触发callback
-                    if (!isEq) {
-                        callback({
-                            old: beforeVal,
-                            val: seekData,
-                            event: e
-                        });
-                        beforeVal = seekData;
-                    }
+            if (!rootWatchHost) {
+                rootWatchHost = this[WATCHHOST]["$"] = {
+                    timer: 0,
+                    modifys: []
                 };
-                this.on('watch', watchCall);
 
-                // 记录数据
-                hostArr.push({
-                    expr,
-                    callback,
-                    watchCall
+                // update事件绑定的函数
+                let updateFunc;
+
+                // 注册update事件
+                this.on('update', updateFunc = e => {
+                    // 添加进trend队列
+                    let {
+                        trend
+                    } = e;
+                    rootWatchHost.modifys.push(trend);
+
+                    // 重置计时器
+                    clearTimeout(rootWatchHost.timer);
+                    rootWatchHost.timer = setTimeout(() => {
+                        // 备份modifys并清零
+                        let cloneModifys = Array.from(rootWatchHost.modifys);
+                        rootWatchHost.modifys.length = 0;
+
+                        Object.keys(this[WATCHHOST]).forEach(expr => {
+                            let tarObj = this[WATCHHOST][expr];
+
+                            switch (expr) {
+                                case "$":
+                                    // 不用任何操作
+                                    break;
+                                case "_":
+                                    // 无expr
+                                    tarObj.arr.forEach(callback => {
+                                        callback({
+                                            type: "watch",
+                                            modifys: cloneModifys
+                                        });
+                                    });
+                                    break;
+                                default:
+                                    // 带有expr的
+                                    let seekData = this.seek(expr);
+                                    let {
+                                        oldVals
+                                    } = tarObj;
+
+                                    // 判断是否相等
+                                    let isEq = 1;
+                                    if (seekData.length != oldVals.length) {
+                                        isEq = 0;
+                                    }
+                                    isEq && seekData.some((e, i) => {
+                                        if (oldVals[i] != e) {
+                                            isEq = 0;
+                                            return true;
+                                        }
+                                    });
+
+                                    // 不相等就触发callback
+                                    if (!isEq) {
+                                        tarObj.arr.forEach(callback => {
+                                            callback({
+                                                type: "watch",
+                                                expr,
+                                                old: oldVals,
+                                                val: seekData
+                                            });
+                                        });
+                                        oldVals = seekData;
+                                    }
+                                    break;
+                            }
+                        });
+                    }, 0);
                 });
+            }
 
-                // 先记录一次数据
-                watchCall()
+            // 添加进队列
+            let tarExprObj = this[WATCHHOST][expr] || (this[WATCHHOST][expr] = {
+                arr: []
+            });
+
+            // 添加进队列
+            tarExprObj.arr.push(callback);
+
+            // 判断是否expr
+            if (expr != "_") {
+                let seekData = this.seek(expr);
+                callback({
+                    val: seekData
+                });
+                tarExprObj.oldVals = seekData;
             }
 
             return this;
         },
         // 注销watch
         unwatch(callback) {
-            let hostArr = this[WATCHFUNCHOST];
+            // let hostArr = this[WATCHFUNCHOST];
 
-            let tarIndex = hostArr.findIndex(e => {
-                return e.callback == callback;
-            });
+            // let tarIndex = hostArr.findIndex(e => {
+            //     return e.callback == callback;
+            // });
 
-            if (tarIndex == -1) {
-                this.off('watch', callback);
-                return this;
-            }
+            // if (tarIndex == -1) {
+            //     this.off('watch', callback);
+            //     return this;
+            // }
 
-            let tarObj = hostArr[tarIndex];
+            // let tarObj = hostArr[tarIndex];
 
-            // 取消watch监听
-            this.off('watch', tarObj.watchCall);
+            // // 取消watch监听
+            // this.off('watch', tarObj.watchCall);
 
-            if (tarIndex > -1) {
-                hostArr.splice(tarIndex, 1);
-            }
+            // if (tarIndex > -1) {
+            //     hostArr.splice(tarIndex, 1);
+            // }
 
             return this;
         },
@@ -710,13 +758,13 @@
 
             switch (optionsType) {
                 case "string":
-                    this.on('watch', watchFunc = e => {
+                    this.watch(watchFunc = e => {
                         let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
                         if (keysOne == options) {
                             xdataObj.entrend(e.trend);
                         }
                     });
-                    xdataObj.on('watch', oppWatchFunc = e => {
+                    xdataObj.watch(oppWatchFunc = e => {
                         let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
                         if (keysOne == options) {
                             this.entrend(e.trend);
@@ -724,13 +772,13 @@
                     });
                     break;
                 case "array":
-                    this.on('watch', watchFunc = e => {
+                    this.watch(watchFunc = e => {
                         let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
                         if (options.includes(keysOne)) {
                             xdataObj.entrend(e.trend);
                         }
                     });
-                    xdataObj.on('watch', oppWatchFunc = e => {
+                    xdataObj.watch(oppWatchFunc = e => {
                         let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
                         if (options.includes(keysOne)) {
                             this.entrend(e.trend);
@@ -743,52 +791,90 @@
                         resOptions[options[k]] = k;
                     });
 
-                    this.on('watch', watchFunc = e => {
-                        let {
-                            trend
-                        } = e;
+                    this.watch(watchFunc = e => {
+                        e.modifys.forEach(trend => {
+                            trend = cloneObject(trend);
+                            let keysOne = trend.keys[0];
 
-                        let keysOne = trend.keys[0];
+                            keysOne = isUndefined(keysOne) ? trend.key : keysOne;
 
-                        keysOne = isUndefined(keysOne) ? trend.key : keysOne;
-
-                        if (keysOne in options) {
-                            if (isUndefined(trend.keys[0])) {
-                                trend.key = options[keysOne];
-                            } else {
-                                trend.keys[0] = options[keysOne];
+                            if (keysOne in options) {
+                                if (isUndefined(trend.keys[0])) {
+                                    trend.key = options[keysOne];
+                                } else {
+                                    trend.keys[0] = options[keysOne];
+                                }
+                                xdataObj.entrend(trend);
                             }
-                            xdataObj.entrend(trend);
-                        }
+                        });
+
+                        // let {
+                        //     trend
+                        // } = e;
+
+                        // let keysOne = trend.keys[0];
+
+                        // keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+
+                        // if (keysOne in options) {
+                        //     if (isUndefined(trend.keys[0])) {
+                        //         trend.key = options[keysOne];
+                        //     } else {
+                        //         trend.keys[0] = options[keysOne];
+                        //     }
+                        //     xdataObj.entrend(trend);
+                        // }
                     });
 
-                    xdataObj.on('watch', watchFunc = e => {
-                        let {
-                            trend
-                        } = e;
+                    xdataObj.watch(watchFunc = e => {
+                        e.modifys.forEach(trend => {
 
-                        let keysOne = trend.keys[0];
+                            trend = cloneObject(trend);
 
-                        keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+                            let keysOne = trend.keys[0];
 
-                        if (keysOne in resOptions) {
-                            if (isUndefined(trend.keys[0])) {
-                                trend.key = resOptions[keysOne];
-                            } else {
-                                trend.keys[0] = resOptions[keysOne];
+                            keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+
+                            if (keysOne in resOptions) {
+                                if (isUndefined(trend.keys[0])) {
+                                    trend.key = resOptions[keysOne];
+                                } else {
+                                    trend.keys[0] = resOptions[keysOne];
+                                }
+                                this.entrend(trend);
                             }
-                            this.entrend(trend);
-                        }
+                        });
+
+                        // let {
+                        //     trend
+                        // } = e;
+
+                        // let keysOne = trend.keys[0];
+
+                        // keysOne = isUndefined(keysOne) ? trend.key : keysOne;
+
+                        // if (keysOne in resOptions) {
+                        //     if (isUndefined(trend.keys[0])) {
+                        //         trend.key = resOptions[keysOne];
+                        //     } else {
+                        //         trend.keys[0] = resOptions[keysOne];
+                        //     }
+                        //     this.entrend(trend);
+                        // }
                     });
 
                     break;
                 default:
                     // undefined
-                    this.on('watch', watchFunc = e => {
-                        xdataObj.entrend(e.trend);
+                    this.watch(watchFunc = e => {
+                        e.modifys.forEach(trend => {
+                            xdataObj.entrend(trend);
+                        });
                     });
-                    xdataObj.on('watch', oppWatchFunc = e => {
-                        this.entrend(e.trend);
+                    xdataObj.watch(oppWatchFunc = e => {
+                        e.modifys.forEach(trend => {
+                            this.entrend(trend);
+                        });
                     });
                     break;
             }
@@ -808,8 +894,8 @@
                 let tarObj = this[SYNCHOST][tarIndex];
 
                 // 注销watch事件
-                this.off('watch', tarObj.watchFunc);
-                tarObj.opp.off('watch', tarObj.oppWatchFunc);
+                this.unwatch(tarObj.watchFunc);
+                tarObj.opp.unwatch(tarObj.oppWatchFunc);
 
                 // 去除记录数据
                 this[SYNCHOST].splice(tarIndex, 1);
@@ -907,6 +993,8 @@
 
             let oldVal = xdata[key];
 
+            let reData;
+
             if (!xdata[RUNARRMETHOD]) {
                 // 相同值就别瞎折腾了
                 if (oldVal === newValue) {
@@ -936,65 +1024,18 @@
                     genre: isFirst ? "set" : "change",
                     key,
                     value,
-                    oldVal,
-                    // modifyId: getRandomId()
+                    oldVal
                 };
+
+                reData = Reflect.set(xdata, key, newValue, receiver)
 
                 // 触发事件
                 receiver.emit(eveObj);
-
-                // watch 事件触发
-                // 获取相应的 watch timeout 对象数据
-                let watch_timeout_data = xdata[WATCHTIMEOUTDATA][key];
-                if (!watch_timeout_data) {
-                    // 是初始改动
-                    watch_timeout_data = xdata[WATCHTIMEOUTDATA][key] = {
-                        // 最开始旧的值
-                        initData: oldVal,
-                        // 前一次值
-                        beforeData: oldVal,
-                        // 是否第一次
-                        isFirst
-                    };
-                } else {
-                    // 修正上一次的值
-                    watch_timeout_data.beforeData = oldVal;
-                }
-
-                clearTimeout(watch_timeout_data.timeout)
-                watch_timeout_data.timeout = setTimeout(() => {
-                    let {
-                        initData,
-                        isFirst
-                    } = watch_timeout_data;
-
-                    // 判断相对初始值，是否有改动过
-                    if (initData !== value || (initData instanceof XData && newValue instanceof XData && initData.string !== newValue.string)) {
-                        // 事件实例生成
-                        let eveObj = new XDataEvent('watch', receiver);
-
-                        // 添加修正数据
-                        eveObj.modify = {
-                            // change 改动
-                            // set 新增值
-                            genre: isFirst ? "set" : "change",
-                            key,
-                            value,
-                            // 最开始的 value 才是 oldVal
-                            oldVal: watch_timeout_data.initData,
-                            // modifyId: getRandomId()
-                        };
-
-                        // 触发事件
-                        receiver.emit(eveObj);
-                    }
-
-                    // 删除组数据
-                    delete xdata[WATCHTIMEOUTDATA][key];
-                }, 0);
+            } else {
+                reData = Reflect.set(xdata, key, newValue, receiver)
             }
 
-            return Reflect.set(xdata, key, newValue, receiver);
+            return reData;
         },
         deleteProperty(xdata, key) {
             // 私有的变量直接通过
@@ -1037,8 +1078,6 @@
 
             // 触发事件
             receiver.emit(eveObj);
-
-            debugger
 
             return reData;
         }

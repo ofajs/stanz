@@ -65,7 +65,7 @@
     a.off('update', errfun);
 
     a.one('update', e => {
-        debugger
+        tester.ok(e.modify.genre == "delete", "delete genre ok");
     });
 
     delete a.nd.ndInner;

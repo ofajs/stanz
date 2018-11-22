@@ -32,7 +32,10 @@
 
     // 单项同步数据
     a.on('watch', e => {
-        b.entrend(e.trend)
+        debugger
+        e.modifys.forEach(trend => {
+            b.entrend(trend)
+        });
     });
 
     // 同步数据

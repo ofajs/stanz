@@ -28,7 +28,8 @@
     });
 
     let cid = 0;
-    a.watch('[selected=1]', e => {
+    let callFunc;
+    a.watch('[selected=1]', callFunc = e => {
         switch (cid) {
             case 0:
                 tester.ok(e.val[0] == a[0], "watch ok 1");
@@ -36,6 +37,10 @@
             case 1:
                 tester.ok(e.old[0] == a[0], "watch old ok");
                 tester.ok(e.val[0] == a[1], "watch ok 2");
+                a.unwatch('[selected=1]', callFunc);
+                break;
+            case 2:
+                debugger
                 break;
         }
         cid++;
@@ -46,10 +51,4 @@
     a[1][0].val = "change 1-0 2";
     a[0].selected = 0;
     a[1].selected = 1;
-
-
-    // 监听 selected=1 元素
-    // 会同步先运行一次callback
-    let callFunc;
-    // a.unwatch(callFunc);
 })();

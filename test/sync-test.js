@@ -31,8 +31,7 @@
     });
 
     // 单项同步数据
-    a.on('watch', e => {
-        debugger
+    a.watch(e => {
         e.modifys.forEach(trend => {
             b.entrend(trend)
         });

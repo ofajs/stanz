@@ -48,8 +48,6 @@
     // common
     const EVES = "_eves_" + getRandomId();
     const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
-    // const WATCHTIMEOUTDATA = "_watchtimeout_" + getRandomId();
-    // const WATCHFUNCHOST = "_watch_func_" + getRandomId();
     const WATCHHOST = "_watch_" + getRandomId();
     const SYNCHOST = "_synchost_" + getRandomId();
     const MODIFYHOST = "_modify_" + getRandomId();
@@ -303,10 +301,6 @@
             length,
             // 事件寄宿对象
             [EVES]: {},
-            // watch 的 timeout 寄宿器
-            // [WATCHTIMEOUTDATA]: {},
-            // watch 寄宿对象
-            // [WATCHFUNCHOST]: [],
             // watch寄宿对象
             [WATCHHOST]: {},
             // sync 寄宿对象
@@ -727,26 +721,21 @@
             return this;
         },
         // 注销watch
-        unwatch(callback) {
-            // let hostArr = this[WATCHFUNCHOST];
+        unwatch(expr, callback) {
+            let arg1Type = getType(expr);
+            if (/function/.test(arg1Type)) {
+                callback = expr;
+                expr = "_";
+            }
 
-            // let tarIndex = hostArr.findIndex(e => {
-            //     return e.callback == callback;
-            // });
+            let tarExprObj = this[WATCHHOST][expr];
 
-            // if (tarIndex == -1) {
-            //     this.off('watch', callback);
-            //     return this;
-            // }
-
-            // let tarObj = hostArr[tarIndex];
-
-            // // 取消watch监听
-            // this.off('watch', tarObj.watchCall);
-
-            // if (tarIndex > -1) {
-            //     hostArr.splice(tarIndex, 1);
-            // }
+            if (tarExprObj) {
+                let tarId = tarExprObj.arr.indexOf(callback);
+                if (tarId > -1) {
+                    tarExprObj.arr.splice(tarId, 1);
+                }
+            }
 
             return this;
         },
@@ -759,30 +748,38 @@
             switch (optionsType) {
                 case "string":
                     this.watch(watchFunc = e => {
-                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
-                        if (keysOne == options) {
-                            xdataObj.entrend(e.trend);
-                        }
+                        e.modifys.forEach(trend => {
+                            let keysOne = isUndefined(trend.keys[0]) ? trend.key : trend.keys[0];
+                            if (keysOne == options) {
+                                xdataObj.entrend(trend);
+                            }
+                        });
                     });
                     xdataObj.watch(oppWatchFunc = e => {
-                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
-                        if (keysOne == options) {
-                            this.entrend(e.trend);
-                        }
+                        e.modifys.forEach(trend => {
+                            let keysOne = isUndefined(trend.keys[0]) ? trend.key : trend.keys[0];
+                            if (keysOne == options) {
+                                this.entrend(trend);
+                            }
+                        });
                     });
                     break;
                 case "array":
                     this.watch(watchFunc = e => {
-                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
-                        if (options.includes(keysOne)) {
-                            xdataObj.entrend(e.trend);
-                        }
+                        e.modifys.forEach(trend => {
+                            let keysOne = isUndefined(trend.keys[0]) ? trend.key : trend.keys[0];
+                            if (options.includes(keysOne)) {
+                                xdataObj.entrend(trend);
+                            }
+                        });
                     });
                     xdataObj.watch(oppWatchFunc = e => {
-                        let keysOne = isUndefined(trend.keys[0]) ? e.modify.key : trend.keys[0];
-                        if (options.includes(keysOne)) {
-                            this.entrend(e.trend);
-                        }
+                        e.modifys.forEach(trend => {
+                            let keysOne = isUndefined(trend.keys[0]) ? trend.key : trend.keys[0];
+                            if (options.includes(keysOne)) {
+                                this.entrend(trend);
+                            }
+                        });
                     });
                     break;
                 case "object":
@@ -807,23 +804,6 @@
                                 xdataObj.entrend(trend);
                             }
                         });
-
-                        // let {
-                        //     trend
-                        // } = e;
-
-                        // let keysOne = trend.keys[0];
-
-                        // keysOne = isUndefined(keysOne) ? trend.key : keysOne;
-
-                        // if (keysOne in options) {
-                        //     if (isUndefined(trend.keys[0])) {
-                        //         trend.key = options[keysOne];
-                        //     } else {
-                        //         trend.keys[0] = options[keysOne];
-                        //     }
-                        //     xdataObj.entrend(trend);
-                        // }
                     });
 
                     xdataObj.watch(watchFunc = e => {
@@ -844,23 +824,6 @@
                                 this.entrend(trend);
                             }
                         });
-
-                        // let {
-                        //     trend
-                        // } = e;
-
-                        // let keysOne = trend.keys[0];
-
-                        // keysOne = isUndefined(keysOne) ? trend.key : keysOne;
-
-                        // if (keysOne in resOptions) {
-                        //     if (isUndefined(trend.keys[0])) {
-                        //         trend.key = resOptions[keysOne];
-                        //     } else {
-                        //         trend.keys[0] = resOptions[keysOne];
-                        //     }
-                        //     this.entrend(trend);
-                        // }
                     });
 
                     break;

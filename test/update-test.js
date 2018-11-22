@@ -1,9 +1,15 @@
 (() => {
-    let tester = expect(8, 'update test');
+    let tester = expect(9, 'update test');
 
     let a = stanz({
         id: "A",
         val: "I am a",
+        nd: {
+            val: "I am nd",
+            ndInner: {
+                val: "I am ndInner"
+            }
+        },
         0: {
             id: "B",
             val: "0000"
@@ -57,6 +63,12 @@
     };
 
     a.off('update', errfun);
+
+    a.one('update', e => {
+        debugger
+    });
+
+    delete a.nd.ndInner;
 
     // console.log(a);
 })();

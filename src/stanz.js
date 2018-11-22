@@ -58,7 +58,6 @@
     // 生成xdata对象
     const createXData = (obj, options) => {
         let redata = obj;
-
         switch (getType(obj)) {
             case "object":
             case "array":
@@ -181,7 +180,7 @@
         xdata[MODIFYTIMER] = setTimeout(() => {
             modifyHost.length = 0;
             modifyHost = null;
-        }, 2000);
+        }, 8000);
     }
 
     // main class
@@ -471,7 +470,6 @@
             // 事件数组触发
             Array.from(eves).some((opt, index) => {
                 // 触发callback
-                // nextTick(() => {
                 // 如果cancel就不执行了
                 if (eventObj.cancel) {
                     return true;
@@ -490,7 +488,6 @@
                 delete eventObj.data;
                 delete eventObj.eventId;
                 delete eventObj.one;
-                // });
 
                 // 判断one
                 if (opt.one) {
@@ -513,14 +510,6 @@
             }
 
             return this;
-        },
-        // 删除值
-        remove(key) {
-            if (isUndefined(key)) {
-
-            } else {
-
-            }
         },
         seek(expr) {
             // 代表式的组织化数据
@@ -608,7 +597,7 @@
                 case "arrayMethod":
                     // 判断是否运行过
                     if (this[MODIFYHOST].includes(options.modifyId)) {
-                        return;
+                        return this;
                     } else {
                         addModify(this, options.modifyId);
                     }
@@ -621,6 +610,8 @@
                     target[options.key] = options.value;
                     break;
             }
+
+            return this;
         },
         watch(arg1, arg2) {
             let expr, callback;
@@ -644,23 +635,32 @@
 
                 // 记录之前的数据
                 let beforeVal = [];
-                let beforeValueStr = '[]';
 
                 // 寄宿在watch方法上的函数
                 let watchCall = e => {
                     // 查找数据
                     let seekData = this.seek(expr);
-                    let seekDataStr = JSON.stringify(seekData);
 
-                    // 对比数据
-                    if (seekDataStr !== beforeValueStr) {
+                    // 判断是否相等
+                    let isEq = 1;
+                    if (seekData.length != beforeVal.length) {
+                        isEq = 0;
+                    }
+                    isEq && seekData.some((e, i) => {
+                        if (beforeVal[i] != e) {
+                            isEq = 0;
+                            return true;
+                        }
+                    });
+
+                    // 不相等就触发callback
+                    if (!isEq) {
                         callback({
                             old: beforeVal,
                             val: seekData,
                             event: e
                         });
                         beforeVal = seekData;
-                        beforeValueStr = seekDataStr;
                     }
                 };
                 this.on('watch', watchCall);
@@ -675,13 +675,21 @@
                 // 先记录一次数据
                 watchCall()
             }
+
+            return this;
         },
+        // 注销watch
         unwatch(callback) {
             let hostArr = this[WATCHFUNCHOST];
 
             let tarIndex = hostArr.findIndex(e => {
                 return e.callback == callback;
             });
+
+            if (tarIndex == -1) {
+                this.off('watch', callback);
+                return this;
+            }
 
             let tarObj = hostArr[tarIndex];
 
@@ -691,6 +699,8 @@
             if (tarIndex > -1) {
                 hostArr.splice(tarIndex, 1);
             }
+
+            return this;
         },
         // 同步数据
         sync(xdataObj, options) {
@@ -788,8 +798,36 @@
                 oppWatchFunc,
                 watchFunc
             });
+
+            return this;
         },
+        // 注销sync绑定
         unsync(xdataObj) {
+            let tarIndex = this[SYNCHOST].findIndex(e => e.opp == xdataObj);
+            if (tarIndex > -1) {
+                let tarObj = this[SYNCHOST][tarIndex];
+
+                // 注销watch事件
+                this.off('watch', tarObj.watchFunc);
+                tarObj.opp.off('watch', tarObj.oppWatchFunc);
+
+                // 去除记录数据
+                this[SYNCHOST].splice(tarIndex, 1);
+            } else {
+                console.warn("not found => ", xdataObj);
+            }
+
+            return this;
+        },
+        // 删除值
+        remove(key) {
+            if (isUndefined(key)) {
+
+            } else {
+
+            }
+        },
+        removeByKey() {
 
         },
         clone() {
@@ -821,6 +859,15 @@
             get() {
                 return JSON.stringify(this.object);
             }
+        },
+        "root": {
+            get() {
+                let root = this;
+                while (root.parent) {
+                    root = root.parent;
+                }
+                return root;
+            }
         }
     });
 
@@ -830,16 +877,33 @@
     // handler
     let XDataHandler = {
         set(xdata, key, value, receiver) {
-            // 判断是否属于xdata数据
-            if (value instanceof XData) {
-                debugger
+            // 私有的变量直接通过
+            if (PRIREG.test(key)) {
+                return Reflect.set(xdata, key, value, receiver);
             }
 
-            // 数据转换
-            let newValue = createXData(value, {
-                parent: receiver,
-                hostkey: key
-            });
+            let newValue = value;
+
+            // 判断是否属于xdata数据
+            if (value instanceof XData) {
+                if (value.parent == receiver) {
+                    value.hostkey = key;
+                } else {
+                    if (value.status == "root") {
+                        value.status = 'binding';
+                        value.parent = receiver;
+                        value.hostkey = key;
+                    } else {
+                        debugger
+                    }
+                }
+            } else {
+                // 数据转换
+                newValue = createXData(value, {
+                    parent: receiver,
+                    hostkey: key
+                });
+            }
 
             let oldVal = xdata[key];
 
@@ -856,93 +920,127 @@
                     }
                 }
 
-                if (!PRIREG.test(key)) {
-                    // 事件实例生成
-                    let eveObj = new XDataEvent('update', receiver);
+                // 事件实例生成
+                let eveObj = new XDataEvent('update', receiver);
 
-                    let isFirst;
-                    // 判断是否初次设置
-                    if (!(key in xdata)) {
-                        isFirst = 1;
-                    }
+                let isFirst;
+                // 判断是否初次设置
+                if (!(key in xdata)) {
+                    isFirst = 1;
+                }
 
-                    // 添加修正数据
-                    eveObj.modify = {
-                        // change 改动
-                        // set 新增值
-                        genre: isFirst ? "set" : "change",
-                        key,
-                        value,
-                        oldVal,
-                        // modifyId: getRandomId()
+                // 添加修正数据
+                eveObj.modify = {
+                    // change 改动
+                    // set 新增值
+                    genre: isFirst ? "set" : "change",
+                    key,
+                    value,
+                    oldVal,
+                    // modifyId: getRandomId()
+                };
+
+                // 触发事件
+                receiver.emit(eveObj);
+
+                // watch 事件触发
+                // 获取相应的 watch timeout 对象数据
+                let watch_timeout_data = xdata[WATCHTIMEOUTDATA][key];
+                if (!watch_timeout_data) {
+                    // 是初始改动
+                    watch_timeout_data = xdata[WATCHTIMEOUTDATA][key] = {
+                        // 最开始旧的值
+                        initData: oldVal,
+                        // 前一次值
+                        beforeData: oldVal,
+                        // 是否第一次
+                        isFirst
                     };
+                } else {
+                    // 修正上一次的值
+                    watch_timeout_data.beforeData = oldVal;
+                }
 
-                    // 触发事件
-                    receiver.emit(eveObj);
+                clearTimeout(watch_timeout_data.timeout)
+                watch_timeout_data.timeout = setTimeout(() => {
+                    let {
+                        initData,
+                        isFirst
+                    } = watch_timeout_data;
 
-                    // watch 事件触发
-                    // 获取相应的 watch timeout 对象数据
-                    let watch_timeout_data = xdata[WATCHTIMEOUTDATA][key];
-                    if (!watch_timeout_data) {
-                        // 是初始改动
-                        watch_timeout_data = xdata[WATCHTIMEOUTDATA][key] = {
-                            // 最开始旧的值
-                            initData: oldVal,
-                            // 前一次值
-                            beforeData: oldVal,
-                            // 是否第一次
-                            isFirst
+                    // 判断相对初始值，是否有改动过
+                    if (initData !== value || (initData instanceof XData && newValue instanceof XData && initData.string !== newValue.string)) {
+                        // 事件实例生成
+                        let eveObj = new XDataEvent('watch', receiver);
+
+                        // 添加修正数据
+                        eveObj.modify = {
+                            // change 改动
+                            // set 新增值
+                            genre: isFirst ? "set" : "change",
+                            key,
+                            value,
+                            // 最开始的 value 才是 oldVal
+                            oldVal: watch_timeout_data.initData,
+                            // modifyId: getRandomId()
                         };
-                    } else {
-                        // 修正上一次的值
-                        watch_timeout_data.beforeData = oldVal;
+
+                        // 触发事件
+                        receiver.emit(eveObj);
                     }
 
-                    clearTimeout(watch_timeout_data.timeout)
-                    watch_timeout_data.timeout = setTimeout(() => {
-                        let {
-                            initData,
-                            isFirst
-                        } = watch_timeout_data;
+                    // 删除组数据
+                    delete xdata[WATCHTIMEOUTDATA][key];
+                }, 0);
+            }
 
-                        // 判断相对初始值，是否有改动过
-                        if (initData !== value || (initData instanceof XData && newValue instanceof XData && initData.string !== newValue.string)) {
-                            // 事件实例生成
-                            let eveObj = new XDataEvent('watch', receiver);
+            return Reflect.set(xdata, key, newValue, receiver);
+        },
+        deleteProperty(xdata, key) {
+            // 私有的变量直接通过
+            if (PRIREG.test(key)) {
+                return Reflect.deleteProperty(xdata, key);
+            }
 
-                            // 添加修正数据
-                            eveObj.modify = {
-                                // change 改动
-                                // set 新增值
-                                genre: isFirst ? "set" : "change",
-                                key,
-                                value,
-                                // 最开始的 value 才是 oldVal
-                                oldVal: watch_timeout_data.initData,
-                                // modifyId: getRandomId()
-                            };
+            let receiver;
 
-                            // 触发事件
-                            receiver.emit(eveObj);
-                        }
+            if (xdata.parent) {
+                receiver = xdata.parent[xdata.hostkey];
+            } else {
+                Object.values(xdata).some(e => {
+                    if (e instanceof XData) {
+                        receiver = e.parent;
+                        return true;
+                    }
+                });
 
-                        // 删除组数据
-                        delete xdata[WATCHTIMEOUTDATA][key];
-                    }, 0);
+                if (!receiver) {
+                    receiver = new Proxy(xdata, XDataHandler);
                 }
             }
 
-            let redata = Reflect.set(xdata, key, newValue, receiver);
+            let oldVal = xdata[key];
 
-            return redata;
-        },
-        deleteProperty(xdata, key) {
-            // if (!PRIREG.test(key)) {
-            //     // 删除数据
-            //     debugger
-            //     return true;
-            // }
-            return Reflect.deleteProperty(xdata, key);
+            let reData = Reflect.deleteProperty(xdata, key);
+
+            // 事件实例生成
+            let eveObj = new XDataEvent('update', receiver);
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: "delete",
+                key,
+                oldVal
+            };
+
+            // 触发事件
+            receiver.emit(eveObj);
+
+            debugger
+
+            return reData;
         }
     };
 

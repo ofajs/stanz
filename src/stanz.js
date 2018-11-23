@@ -552,9 +552,7 @@
                     parent
                 } = this;
                 if (parent) {
-                    // nextTick(() => {
                     eventObj.keys.unshift(this.hostkey);
-                    // });
                     parent.emit(eventObj, emitData);
                 }
             }
@@ -920,9 +918,6 @@
 
             return this;
         },
-        add() {
-
-        },
         // 删除值
         remove(key) {
             if (isUndefined(key)) {
@@ -946,6 +941,10 @@
         },
         clone() {
             return createXData(this.object);
+        },
+        // push的去重版本
+        add(data) {
+            !this.includes(data) && this.push(data);
         },
         reset(value) {
             let valueKeys = Object.keys(value);
@@ -1128,8 +1127,6 @@
             return reData;
         }
     };
-
-    // main 
 
     // init
     glo.stanz = (obj = {}) => createXData(obj);

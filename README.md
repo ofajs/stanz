@@ -4,6 +4,8 @@
 
 将原来数据同步修改方式转为全异步，因此watch的同步数据监听和listen；
 
+相比 stanz3 体积减少，功能增强；
+
 # stanz 3
 
 由于 stanz2 沿用了 `emitChange` 机制，导致同步数据的 `entrend` 容易出现问题，所以重构；

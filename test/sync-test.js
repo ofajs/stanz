@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(6, 'sync test');
+    let tester = expect(9, 'sync test');
 
     let a = stanz({
         val: "I am a",
@@ -65,5 +65,14 @@
     }, 100);
 
     window.a = a;
+
+    // 删除记录
+    delete a.val;
+
+    setTimeout(() => {
+        tester.ok(!('val' in a), 'delete ok');
+        tester.ok(!('val' in b), 'sync delete ok1');
+        tester.ok(!('val' in c), 'sync delete ok2');
+    }, 100);
 
 })();

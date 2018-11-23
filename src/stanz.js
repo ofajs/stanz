@@ -380,17 +380,6 @@
 
                     this.emit(eveObj);
 
-                    // nextTick(() => {
-                    //     let watchEveObj = new XDataEvent('watch', this);
-                    //     watchEveObj.modify = {
-                    //         genre: "arrayMethod",
-                    //         methodName,
-                    //         args,
-                    //         modifyId
-                    //     };
-                    //     this.emit(watchEveObj);
-                    // });
-
                     // 还原可执行setHandler
                     delete this[RUNARRMETHOD];
                     return redata;
@@ -606,6 +595,9 @@
                     // 临时记录数据
                     target._entrendModifyId = options.modifyId;
                     target[options.methodName](...options.args);
+                    break;
+                case "delete":
+                    delete target[options.key];
                     break;
                 default:
                     target[options.key] = options.value;
@@ -1004,6 +996,10 @@
             // 私有的变量直接通过
             if (PRIREG.test(key)) {
                 return Reflect.deleteProperty(xdata, key);
+            }
+            // 都不存在瞎折腾什么
+            if (!(key in xdata)) {
+                return true;
             }
 
             let receiver;

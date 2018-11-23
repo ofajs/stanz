@@ -40,8 +40,8 @@
                 a.unwatch('[selected=1]', callFunc);
                 break;
             case 2:
-                debugger
-                break;
+                // unwatch test
+                throw "error";
         }
         cid++;
     });

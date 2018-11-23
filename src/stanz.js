@@ -338,7 +338,8 @@
     });
 
     // 会影响数组结构的方法
-    ['pop', 'push', 'reverse', 'sort', 'splice', 'shift', 'unshift'].forEach(methodName => {
+    // sort参数会出现函数，会导致不能sync数据的情况
+    ['pop', 'push', 'reverse', 'splice', 'shift', 'unshift'].forEach(methodName => {
         let arrayFnFunc = Array.prototype[methodName];
         if (arrayFnFunc) {
             defineProperty(XDataFn, methodName, {
@@ -351,7 +352,6 @@
                         _entrendModifyId
                     } = this;
 
-
                     if (_entrendModifyId) {
                         // 拿到数据立刻删除
                         delete this._entrendModifyId;
@@ -363,25 +363,21 @@
 
                     let redata = arrayFnFunc.apply(this, args);
 
-                    // 修正Id
-                    let modifyId = _entrendModifyId;
-
                     // 事件实例生成
                     let eveObj = new XDataEvent('update', this);
 
                     eveObj.modify = {
-                        // change 改动
-                        // set 新增值
                         genre: "arrayMethod",
                         methodName,
                         args,
-                        modifyId
+                        modifyId: _entrendModifyId
                     };
 
                     this.emit(eveObj);
 
                     // 还原可执行setHandler
                     delete this[RUNARRMETHOD];
+
                     return redata;
                 }
             });
@@ -391,8 +387,72 @@
     // 获取事件数组
     const getEvesArr = (tar, eventName) => tar[EVES][eventName] || (tar[EVES][eventName] = []);
 
+    const sortMethod = Array.prototype.sort;
+
     // 设置数组上的方法
     setNotEnumer(XDataFn, {
+        // sort单独处理
+        sort(sFunc) {
+            // 设置不可执行setHandler
+            this[RUNARRMETHOD] = 1;
+
+            let {
+                _entrendModifyId
+            } = this;
+
+            if (_entrendModifyId) {
+                // 拿到数据立刻删除
+                delete this._entrendModifyId;
+            } else {
+                _entrendModifyId = getRandomId();
+
+                addModify(this, _entrendModifyId);
+            }
+
+            // 传送的后期参数
+            let args;
+
+            if (sFunc instanceof Array) {
+                args = [sFunc];
+
+                // 先做备份
+                let backThis = Array.from(this);
+
+                sFunc.forEach((eid, i) => {
+                    this[i] = backThis[eid];
+                });
+            } else {
+                // 记录顺序的数组
+                let orders = [];
+                args = [orders];
+
+                // 先做备份
+                let backThis = Array.from(this);
+
+                // 执行默认方法
+                sortMethod.call(this, sFunc);
+
+                // 记录顺序
+                this.forEach(e => orders.push(backThis.indexOf(e)));
+            }
+
+            // 事件实例生成
+            let eveObj = new XDataEvent('update', this);
+
+            eveObj.modify = {
+                genre: "arrayMethod",
+                methodName: "sort",
+                args,
+                modifyId: _entrendModifyId
+            };
+
+            this.emit(eveObj);
+
+            // 还原可执行setHandler
+            delete this[RUNARRMETHOD];
+
+            return this;
+        },
         // 事件注册
         on(eventName, callback, options = {}) {
             let eves = getEvesArr(this, eventName);
@@ -860,19 +920,45 @@
 
             return this;
         },
+        add() {
+
+        },
         // 删除值
         remove(key) {
             if (isUndefined(key)) {
+                // 删除自身
+                let {
+                    parent
+                } = this;
 
+                // 删除
+                parent.remove(key);
             } else {
-
+                // 删除子数据
+                if (/\D/.test(key)) {
+                    // 非数字
+                    delete this[key];
+                } else {
+                    // 纯数字，术语数组内元素，通过splice删除
+                    this.splice(parseInt(key), 1);
+                }
             }
-        },
-        removeByKey() {
-
         },
         clone() {
             return createXData(this.object);
+        },
+        reset(value) {
+            let valueKeys = Object.keys(value);
+
+            // 删除本身不存在的key
+            Object.keys(this).forEach(k => {
+                if (!valueKeys.includes(k) && k !== "length") {
+                    delete this[k];
+                }
+            });
+
+            assign(this, value);
+            return this;
         }
     });
 
@@ -997,6 +1083,7 @@
             if (PRIREG.test(key)) {
                 return Reflect.deleteProperty(xdata, key);
             }
+
             // 都不存在瞎折腾什么
             if (!(key in xdata)) {
                 return true;

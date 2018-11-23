@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'sync test');
+    let tester = expect(12, 'sync test');
 
     let a = stanz({
         val: "I am a",
@@ -64,8 +64,6 @@
         tester.ok(c[1].val == "new [1]", 'sync arrayMethod ok 2');
     }, 100);
 
-    window.a = a;
-
     // 删除记录
     delete a.val;
 
@@ -73,6 +71,35 @@
         tester.ok(!('val' in a), 'delete ok');
         tester.ok(!('val' in b), 'sync delete ok1');
         tester.ok(!('val' in c), 'sync delete ok2');
+    }, 100);
+
+
+    let sObj = stanz([{
+        val: 222
+    }, {
+        val: 555
+    }, {
+        val: 333
+    }, {
+        val: 111
+    }, {
+        val: 444
+    }])
+
+    let sObj2 = sObj.clone();
+    let sObj3 = sObj.clone();
+
+    sObj.sync(sObj2);
+    sObj2.sync(sObj3);
+
+    sObj.sort((a, b) => {
+        return a.val - b.val;
+    });
+
+    setTimeout(() => {
+        tester.ok(sObj[0].val == 111, 'sort ok');
+        tester.ok(sObj2[0].val == 111, 'sort sync ok 1');
+        tester.ok(sObj3[0].val == 111, 'sort sync ok 2');
     }, 100);
 
 })();

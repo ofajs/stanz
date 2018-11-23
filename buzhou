@@ -1,0 +1,4 @@
+// 首先确认change相同值不会触发update
+// 禁止冒泡和cancel
+destroy事件触发
+sync数据同步

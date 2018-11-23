@@ -1,121 +1,54 @@
 (() => {
-    let tester = expect(20, 'watch test');
-    let obj = {
-        a: "i am a",
-        b: "bbbb",
-        c: {
-            val: "I am c",
-            c_c: {
-                val: "I am cc"
-            }
-        },
-        d: {
-            val: "I am d"
-        },
+    let tester = expect(6, 'watch test');
+
+    let a = stanz({
+        val: "I am a",
         0: {
-            val: 100
+            val: "0000",
+            selected: 1
         },
         1: {
-            val: 150
-        },
-        2: {
+            val: "11111111",
+            selected: 0,
             0: {
-                val: "I am zero"
-            },
-            1: {
-                val: "I am one"
-            },
-            length: 2,
-            val: 50
-        },
-        length: 3
-    };
-
-    let xd = stanz(obj);
-
-    let xd2 = xd.clone();
-
-    let xd3 = xd.clone();
-
-    let xd4 = stanz({});
-
-    xd.sync(xd4, {
-        "a": "aaa"
+                val: "childs 0",
+                selected: 0
+            }
+        }
     });
 
-    // 数据绑定
-    xd.sync(xd2);
-    xd2.sync(xd3);
-
-    let f, f2;
-    xd.watch('a', f = (value, e) => {
-        tester.ok(e.type === "update", "xd type update ok");
-        tester.ok(value === "change a", "xd watch [a] ok");
-    });
-    xd2.watch('a', f2 = (value, e) => {
-        tester.ok(e.type === "update", "xd2 type update ok");
-        tester.ok(value === "change a", "xd2 watch [a] ok");
+    a.one('update', e => {
+        // 快速的改动只会触发一次，val是最后设置的结果
+        tester.ok(e.target.val == "change 1-0", "change value ok");
+        tester.ok(e.keys[0] == 1, "change value key ok");
     });
 
-    // 改动
-    xd.a = "change a";
-
-    xd.unwatch('a', f);
-    xd2.unwatch('a', f2);
-
-    tester.ok(xd.a === "change a", "value [a] ok1");
-    tester.ok(xd2.a === "change a", "value [a] ok2");
-    tester.ok(xd3.a === "change a", "value [a] ok3");
-
-    xd.watch((e) => {
-        console.log('xd watch self => ', e);
-    });
-    xd2.watch(e => {
-        console.log('xd2 watch self => ', e);
-    });
-    xd3.watch(e => {
-        console.log('xd3 watch self => ', e);
-    });
-    // 排序
-    xd.sort((a, b) => {
-        return a.val > b.val;
+    a.watch((e) => {
+        tester.ok(e.modifys.length == 4, "watch modifys length ok");
     });
 
-    // 检查排序
-    tester.ok(xd[0].val === 50 && xd[1].val === 100 && xd[2].val === 150, "sort ok1");
-    tester.ok(xd2.string === xd.string, "sync sort ok1");
-    tester.ok(xd3.string === xd.string, "sync sort ok2");
-
-    // 换成对象
-    xd.watch('a', f = (value, e) => {
-        tester.ok(e.type === "update", "type update ok 2");
-        tester.ok(value.string === `{"val":"I am a"}`, "watch [a] ok");
+    let cid = 0;
+    let callFunc;
+    a.watch('[selected=1]', callFunc = e => {
+        switch (cid) {
+            case 0:
+                tester.ok(e.val[0] == a[0], "watch ok 1");
+                break;
+            case 1:
+                tester.ok(e.old[0] == a[0], "watch old ok");
+                tester.ok(e.val[0] == a[1], "watch ok 2");
+                a.unwatch('[selected=1]', callFunc);
+                break;
+            case 2:
+                // unwatch test
+                throw "error";
+        }
+        cid++;
     });
 
-    xd.a = {
-        val: "I am a"
-    };
-    tester.ok(xd2.a.string === `{"val":"I am a"}`, "sync object ok1");
-    tester.ok(xd3.a.string === `{"val":"I am a"}`, "sync object ok2");
-
-    // 在设置一次会无效，因为对象结构是一样的
-    xd.a = {
-        val: "I am a"
-    };
-    xd.unwatch('a', f);
-
-    xd.watch('a', f = (value, e) => {
-        tester.ok(e.type === "delete", "type delete ok");
-        tester.ok(!value, "watch [a] ok");
-    });
-    // 确认xd4
-    tester.ok(xd4.aaa.string === `{"val":"I am a"}`, "sync object ok3");
-
-    // 删除操作
-    delete xd.a;
-
-    tester.ok(xd2.a === undefined, "delete object ok1");
-    tester.ok(xd3.a === undefined, "delete object ok2");
-    tester.ok(xd4.aaa === undefined, "delete object sync ok");
-
+    // 同时修改，只会触发最后一个
+    a[1][0].val = "change 1-0";
+    a[1][0].val = "change 1-0 2";
+    a[0].selected = 0;
+    a[1].selected = 1;
 })();

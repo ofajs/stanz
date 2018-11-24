@@ -325,7 +325,7 @@
 
     // 数组通用方法
     // 可运行的方法
-    ['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'map', 'slice', 'some'].forEach(methodName => {
+    ['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'map', 'slice', 'some', 'indexOf', 'includes'].forEach(methodName => {
         let arrayFnFunc = Array.prototype[methodName];
         if (arrayFnFunc) {
             defineProperty(XDataFn, methodName, {
@@ -918,24 +918,35 @@
 
             return this;
         },
+        // 删除相应Key的值
+        removeByKey(key) {
+            // 删除子数据
+            if (/\D/.test(key)) {
+                // 非数字
+                delete this[key];
+            } else {
+                // 纯数字，术语数组内元素，通过splice删除
+                this.splice(parseInt(key), 1);
+            }
+        },
         // 删除值
-        remove(key) {
-            if (isUndefined(key)) {
+        remove(value) {
+            if (isUndefined(value)) {
                 // 删除自身
                 let {
                     parent
                 } = this;
 
                 // 删除
-                parent.remove(key);
+                parent.removeByKey(this.hostkey);
             } else {
-                // 删除子数据
-                if (/\D/.test(key)) {
-                    // 非数字
-                    delete this[key];
+                if (value instanceof XData) {
+                    this.removeByKey(value.hostkey);
                 } else {
-                    // 纯数字，术语数组内元素，通过splice删除
-                    this.splice(parseInt(key), 1);
+                    let tarId = this.indexOf(value);
+                    if (tarId > -1) {
+                        this.removeByKey(tarId);
+                    }
                 }
             }
         },

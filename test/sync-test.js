@@ -96,6 +96,8 @@
         return a.val - b.val;
     });
 
+    console.log(sObj);
+
     setTimeout(() => {
         tester.ok(sObj[0].val == 111, 'sort ok');
         tester.ok(sObj2[0].val == 111, 'sort sync ok 1');

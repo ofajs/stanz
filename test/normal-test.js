@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(2, 'normal test');
+    let tester = expect(5, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -35,5 +35,14 @@
 
     tester.ok(a[1][0].root == a, "root ok");
     tester.ok(b.root == a, "root ok 2");
+
+    let c = stanz(["111", "222", "333"]);
+    c.add("444");
+    tester.ok(c.length == 4, "add ok 1");
+    c.add("333");
+    tester.ok(c.length == 4, "add ok 2");
+    c.remove("333");
+    tester.ok(c.length == 3, "remove ok");
+
 
 })();

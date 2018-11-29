@@ -145,7 +145,7 @@
     }
 
     // 查找数据
-    const seekData = (data, exprObj) => {
+    let seekData = (data, exprObj) => {
         let arr = [];
 
         // 关键数据
@@ -307,7 +307,7 @@
             // 设置数组长度
             length,
             // 事件寄宿对象
-            // [EVES]: {},
+            [EVES]: {},
             // watch寄宿对象
             [WATCHHOST]: {},
             // sync 寄宿对象
@@ -393,11 +393,6 @@
 
     // 获取事件数组
     const getEvesArr = (tar, eventName) => {
-        if (!tar[EVES]) {
-            defineProperty(tar, EVES, {
-                value: {}
-            });
-        }
         let eves = tar[EVES];
         let redata = eves[eventName] || (eves[eventName] = []);
         return redata;

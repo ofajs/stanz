@@ -182,7 +182,7 @@
         xdata[MODIFYTIMER] = setTimeout(() => {
             modifyHost.length = 0;
             modifyHost = null;
-        }, 8000);
+        }, 5000);
     }
 
     // main class

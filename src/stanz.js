@@ -1039,11 +1039,12 @@
                 } else {
                     if (value.status == "root") {
                         value.status = 'binding';
-                        value.parent = receiver;
-                        value.hostkey = key;
                     } else {
-                        debugger
+                        // 从原来的地方拿走，先从原处删除在安上
+                        value.remove();
                     }
+                    value.parent = receiver;
+                    value.hostkey = key;
                 }
             } else {
                 // 数据转换

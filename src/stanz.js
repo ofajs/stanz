@@ -711,7 +711,7 @@
 
             // 判断是否注册了update事件函数
             if (!tarExprObj.updateFunc) {
-                this.on('update', tarExprObj.updateFunc = (e) => {
+                this.on('update', tarExprObj.updateFunc = e => {
                     // 如果是 _ 添加modify
                     switch (watchType) {
                         case "watchOri":
@@ -740,7 +740,7 @@
                             case "watchKey":
                                 // 监听整个数据
                                 tarExprObj.arr.forEach(callback => {
-                                    callback(new WatchData({
+                                    callback.call(this, new WatchData({
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });
@@ -768,7 +768,7 @@
                                 // 不相等就触发callback
                                 if (!isEq) {
                                     tarExprObj.arr.forEach(callback => {
-                                        callback(new WatchData({
+                                        callback.call(this, new WatchData({
                                             expr,
                                             old: oldVals,
                                             val: sData

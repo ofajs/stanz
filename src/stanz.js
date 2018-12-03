@@ -720,6 +720,11 @@
                         case "watchKey":
                             let keyOne = e.keys[0];
                             isUndefined(keyOne) && (keyOne = e.modify.key);
+
+                            if (keyOne != expr) {
+                                return
+                            }
+
                             if (!isUndefined(keyOne) && keyOne == expr) {
                                 tarExprObj.modifys.push(e.trend);
                             }

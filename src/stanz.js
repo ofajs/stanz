@@ -274,6 +274,11 @@
         }
     });
 
+    function WatchData(data) {
+        this.type = "watch";
+        assign(this, data);
+    }
+
     function XData(obj, options = {}) {
         // 生成代理对象
         let proxyThis = new Proxy(this, XDataHandler);
@@ -682,6 +687,16 @@
                 expr = "_";
             }
 
+            let watchType;
+
+            if (expr == "_") {
+                watchType = "watchOri";
+            } else if (/\[.+\]/.test(expr)) {
+                watchType = "seekOri";
+            } else {
+                watchType = "watchKey";
+            }
+
             // 获取相应队列数据
             let tarExprObj = this[WATCHHOST][expr] || (this[WATCHHOST][expr] = {
                 // 是否已经有nextTick
@@ -698,8 +713,17 @@
             if (!tarExprObj.updateFunc) {
                 this.on('update', tarExprObj.updateFunc = (e) => {
                     // 如果是 _ 添加modify
-                    if (expr == "_") {
-                        tarExprObj.modifys.push(e.trend);
+                    switch (watchType) {
+                        case "watchOri":
+                            tarExprObj.modifys.push(e.trend);
+                            break;
+                        case "watchKey":
+                            let keyOne = e.keys[0];
+                            isUndefined(keyOne) && (keyOne = e.modify.key);
+                            if (!isUndefined(keyOne) && keyOne == expr) {
+                                tarExprObj.modifys.push(e.trend);
+                            }
+                            break;
                     }
 
                     // 判断是否进入nextTick
@@ -711,16 +735,18 @@
                     tarExprObj.isNextTick = 1;
 
                     nextTick(() => {
-                        switch (expr) {
-                            case "_":
+                        switch (watchType) {
+                            case "watchOri":
+                            case "watchKey":
+                                // 监听整个数据
                                 tarExprObj.arr.forEach(callback => {
-                                    callback({
-                                        type: "watch",
+                                    callback(new WatchData({
                                         modifys: Array.from(tarExprObj.modifys)
-                                    });
+                                    }));
                                 });
                                 break;
-                            default:
+                            case "seekOri":
+                                // 监听动态数据
                                 // 带有expr的
                                 let sData = this.seek(expr);
                                 let {
@@ -742,16 +768,15 @@
                                 // 不相等就触发callback
                                 if (!isEq) {
                                     tarExprObj.arr.forEach(callback => {
-                                        callback({
-                                            type: "watch",
+                                        callback(new WatchData({
                                             expr,
                                             old: oldVals,
                                             val: sData
-                                        });
+                                        }));
                                     });
                                     tarExprObj.oldVals = sData;
                                 }
-
+                                break;
                         }
 
                         // 开放nextTick
@@ -764,7 +789,7 @@
             tarExprObj.arr.push(callback);
 
             // 判断是否expr
-            if (expr != "_") {
+            if (watchType == "seekOri") {
                 let sData = this.seek(expr);
                 callback({
                     val: sData

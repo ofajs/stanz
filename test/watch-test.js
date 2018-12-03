@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(6, 'watch test');
+    let tester = expect(7, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -23,8 +23,14 @@
         tester.ok(e.keys[0] == 1, "change value key ok");
     });
 
+    // 整体watch
     a.watch((e) => {
         tester.ok(e.modifys.length == 4, "watch modifys length ok");
+    });
+
+    // watch key
+    a.watch("1", (e) => {
+        tester.ok(e.modifys.length == 3, "watch key modifys length ok");
     });
 
     let cid = 0;

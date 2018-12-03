@@ -737,10 +737,18 @@
                     nextTick(() => {
                         switch (watchType) {
                             case "watchOri":
-                            case "watchKey":
                                 // 监听整个数据
                                 tarExprObj.arr.forEach(callback => {
                                     callback.call(this, new WatchData({
+                                        modifys: Array.from(tarExprObj.modifys)
+                                    }));
+                                });
+                                break;
+                            case "watchKey":
+                                tarExprObj.arr.forEach(callback => {
+                                    callback.call(this, new WatchData({
+                                        expr,
+                                        val: this[expr],
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });

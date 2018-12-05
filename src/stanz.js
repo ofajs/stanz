@@ -260,7 +260,7 @@
 
                 switch (modify.genre) {
                     case "arrayMethod":
-                        let {
+                        var {
                             methodName,
                             args,
                             modifyId
@@ -273,8 +273,9 @@
                         });
                         break;
                     default:
-                        let {
-                            value
+                        var {
+                            value,
+                            modifyId
                         } = modify;
 
                         if (isXData(value)) {
@@ -283,6 +284,7 @@
                         assign(reobj, {
                             key: modify.key,
                             value,
+                            modifyId
                         });
                         break;
                 }
@@ -1116,7 +1118,7 @@
                     }
                 }
 
-                let mid = getModifyId(xdata);
+                let mid = getModifyId(receiver);
 
                 // 事件实例生成
                 let eveObj = new XDataEvent('update', receiver);
@@ -1180,8 +1182,6 @@
 
             let reData = Reflect.deleteProperty(xdata, key);
 
-            let _entrendModifyId = getModifyId(xdata);
-
             // 事件实例生成
             let eveObj = new XDataEvent('update', receiver);
 
@@ -1191,8 +1191,7 @@
                 // set 新增值
                 genre: "delete",
                 key,
-                oldVal,
-                modifyId: _entrendModifyId
+                oldVal
             };
 
             // 触发事件

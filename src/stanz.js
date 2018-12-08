@@ -1118,13 +1118,10 @@
             // 删除子数据
             if (/\D/.test(key)) {
                 // 非数字
-                // clearXdata(this[key]);
                 delete this[key];
             } else {
                 // 纯数字，术语数组内元素，通过splice删除
                 this.splice(parseInt(key), 1);
-                // let removeData = this.splice(parseInt(key), 1);
-                // clearXdata(removeData[0]);
             }
         },
         // 删除值

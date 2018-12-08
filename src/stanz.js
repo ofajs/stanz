@@ -93,20 +93,9 @@
 
                 // 清扫 watch
                 xdata[WATCHHOST] = {};
-                // let watchHost = xdata[WATCHHOST];
-                // Object.keys(watchHost).forEach(expr => {
-                //     delete this[WATCHHOST][expr];
-                //     // let tarExprObj = this[WATCHHOST][expr];
-                //     // tarExprObj.arr.forEach(callback => xdata.unwatch(expr, callback));
-                // });
 
                 // 清扫 on
                 xdata[EVES] = {};
-                // let eves = xdata[EVES];
-                // Object.keys(eves).forEach(eventName => {
-                // let arr = xdata[eventName];
-                // arr.length = 0;
-                // });
 
                 xdata[MODIFYHOST] = [];
                 clearTimeout(xdata[MODIFYTIMER]);
@@ -1084,7 +1073,8 @@
             // 转换为xdata
             cloneData = createXData(cloneData);
 
-            this.on('update', e => {
+            let _thisUpdateFunc;
+            this.on('update', _thisUpdateFunc = e => {
                 let {
                     trend
                 } = e;
@@ -1107,6 +1097,17 @@
                 if (!isUndefined(tarKey)) {
                     trend.key = tarKey;
                     this.entrend(trend);
+                }
+            });
+
+            // 修正remove方法
+            defineProperty(cloneData, "remove", {
+                value(...args) {
+                    if (!args.length) {
+                        // 确认删除自身，清除this的函数
+                        this.off('update', _thisUpdateFunc);
+                    }
+                    XDataFn.remove.call(cloneData, ...args);
                 }
             });
 

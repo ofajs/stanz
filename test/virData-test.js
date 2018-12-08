@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(2, 'virData test');
+    let tester = expect(3, 'virData test');
 
     let a = stanz({
         val: "I am a",
@@ -36,5 +36,9 @@
     a.d.selected = 3;
 
     tester.ok(virA.d.flash == 3, 'virData sync ok');
+
+    virA.d.flash = 4;
+
+    tester.ok(virA.d.flash == 4, 'virData sync ok 2');
 
 })();

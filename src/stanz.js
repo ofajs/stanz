@@ -1237,6 +1237,9 @@
                     }
                     value.parent = receiver;
                     value.hostkey = key;
+
+                    // 替换value为普通对象
+                    value = value.object;
                 }
             } else {
                 // 数据转换

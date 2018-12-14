@@ -833,6 +833,8 @@
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });
+                                // 事后清空
+                                tarExprObj.modifys.length = 0;
                                 break;
                             case "watchKey":
                                 tarExprObj.arr.forEach(callback => {
@@ -842,6 +844,8 @@
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });
+                                // 事后清空
+                                tarExprObj.modifys.length = 0;
                                 break;
                             case "seekOri":
                                 // 监听动态数据

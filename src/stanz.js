@@ -103,6 +103,14 @@
         }
     }
 
+    // 判断两个xdata数据是否相等
+    let isXDataEqual = (xd1, xd2) => {
+        if (xd1 === xd2) {
+            return true;
+        }
+    }
+
+    // virData用的数据映射方法
     const mapData = (data, options) => {
         options.forEach(e => {
             switch (e.type) {
@@ -861,7 +869,7 @@
                                     isEq = 0;
                                 }
                                 isEq && sData.some((e, i) => {
-                                    if (oldVals[i] != e) {
+                                    if (!isXDataEqual(oldVals[i], e)) {
                                         isEq = 0;
                                         return true;
                                     }

@@ -471,6 +471,19 @@
                     // 事件实例生成
                     let eveObj = new XDataEvent('update', this);
 
+                    // 判断添加方法上是否有xdata，存在就干掉它
+                    switch (methodName) {
+                        case "splice":
+                        case "unshift":
+                        case "push":
+                            args = args.map(e => {
+                                if (isXData(e)) {
+                                    return e.object;
+                                }
+                                return e;
+                            });
+                    }
+
                     eveObj.modify = {
                         genre: "arrayMethod",
                         methodName,

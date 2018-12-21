@@ -39,9 +39,18 @@
         console.log('haha2', e, " eventId=>", e.eventId);
     });
 
+    a.on('update', e => {
+        console.log("update =>", e);
+    });
+
     console.log(a);
 
     a[1].emit('haha');
+
+    // 直接修改值
+    a[1].b = {
+        val: "I am b"
+    };
 </script>
 
 </html>

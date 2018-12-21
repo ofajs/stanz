@@ -4,7 +4,7 @@
 
 新的stanz5将架起简易脚手架，看起来更舒畅；
 
-兼容stanz4；
+兼容stanz4，相比stanz4性能和扩展性提升；
 
 # stanz 4
 

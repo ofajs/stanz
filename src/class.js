@@ -1,6 +1,6 @@
 function XData(obj, options = {}) {
-    // let proxyThis = new Proxy(this, XDataHandler);
-    let proxyThis = this;
+    let proxyThis = new Proxy(this, XDataHandler);
+    // let proxyThis = this;
 
     // 数组的长度
     let length = 0;
@@ -31,7 +31,8 @@ function XData(obj, options = {}) {
         // 设置数组长度
         length,
         // 事件寄宿对象
-        [EVES]: new Map()
+        [EVES]: new Map(),
+        [MODIFYHOST]: new Set()
     };
 
     // 设置不可枚举数据

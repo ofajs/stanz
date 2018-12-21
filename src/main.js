@@ -1,16 +1,3 @@
-// 生成xdata对象
-const createXData = (obj, options) => {
-    let redata = obj;
-    switch (getType(obj)) {
-        case "object":
-        case "array":
-            redata = new XData(obj, options);
-            break;
-    }
-
-    return redata;
-};
-
 setNotEnumer(XDataFn, {
     seek(expr) {
         // 代表式的组织化数据
@@ -84,4 +71,40 @@ setNotEnumer(XDataFn, {
 
         return redata;
     },
+});
+
+
+defineProperties(XDataFn, {
+    // 直接返回object
+    "object": {
+        get() {
+            let obj = {};
+
+            Object.keys(this).forEach(k => {
+                let val = this[k];
+
+                if (isXData(val)) {
+                    obj[k] = val.object;
+                } else {
+                    obj[k] = val;
+                }
+            });
+
+            return obj;
+        }
+    },
+    "string": {
+        get() {
+            return JSON.stringify(this.object);
+        }
+    },
+    "root": {
+        get() {
+            let root = this;
+            while (root.parent) {
+                root = root.parent;
+            }
+            return root;
+        }
+    }
 });

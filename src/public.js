@@ -26,7 +26,12 @@ const setNotEnumer = (tar, obj) => {
 }
 
 // common
+// 事件寄宿对象key
 const EVES = "_eves_" + getRandomId();
+// 是否在数组方法执行中key
+const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
+// 存放modifyId的寄宿对象key
+const MODIFYHOST = "_modify_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;
@@ -132,3 +137,16 @@ let seekData = (data, exprObj) => {
     });
     return arr;
 }
+
+// 生成xdata对象
+const createXData = (obj, options) => {
+    let redata = obj;
+    switch (getType(obj)) {
+        case "object":
+        case "array":
+            redata = new XData(obj, options);
+            break;
+    }
+
+    return redata;
+};

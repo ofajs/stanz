@@ -27,7 +27,12 @@ const setNotEnumer = (tar, obj) => {
 }
 
 // common
+// 事件寄宿对象key
 const EVES = "_eves_" + getRandomId();
+// 是否在数组方法执行中key
+const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
+// 存放modifyId的寄宿对象key
+const MODIFYHOST = "_modify_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;
@@ -134,9 +139,22 @@ let seekData = (data, exprObj) => {
     return arr;
 }
 
+// 生成xdata对象
+const createXData = (obj, options) => {
+    let redata = obj;
+    switch (getType(obj)) {
+        case "object":
+        case "array":
+            redata = new XData(obj, options);
+            break;
+    }
+
+    return redata;
+};
+
     function XData(obj, options = {}) {
-    // let proxyThis = new Proxy(this, XDataHandler);
-    let proxyThis = this;
+    let proxyThis = new Proxy(this, XDataHandler);
+    // let proxyThis = this;
 
     // 数组的长度
     let length = 0;
@@ -167,7 +185,8 @@ let seekData = (data, exprObj) => {
         // 设置数组长度
         length,
         // 事件寄宿对象
-        [EVES]: new Map()
+        [EVES]: new Map(),
+        [MODIFYHOST]: new Set()
     };
 
     // 设置不可枚举数据
@@ -442,29 +461,107 @@ setNotEnumer(XDataFn, {
     }
 });
 
+    // 主体entrend方法
+const entrend = (options) => {
+    let {
+        target,
+        key,
+        value,
+        receiver,
+        modifyId,
+        genre
+    } = options;
+
+    // 判断modifyId
+    if (!modifyId) {
+        modifyId = getRandomId();
+    } else {
+        // 查看是否已经存在这个modifyId了，存在就不折腾
+        if (target[MODIFYHOST].has(modifyId)) {
+            return;
+        };
+    }
+
+    switch (genre) {
+        case "handleSet":
+            // 获取旧的值
+            let oldVal = target[key];
+
+            // 如果相等的话，就不要折腾了
+            if (oldVal === value) {
+                return true;
+            }
+
+            let isFirst;
+            // 判断是否初次设置
+            if (!target.hasOwnProperty(key)) {
+                isFirst = 1;
+            }
+
+            // 设置值
+            target[key] = createXData(value, {
+                parent: receiver,
+                hostkey: key
+            });
+
+            // 事件实例生成
+            let eveObj = new XDataEvent('update', receiver);
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: isFirst ? "new" : "change",
+                key,
+                value,
+                oldVal,
+                modifyId
+            };
+
+            target.emit(eveObj);
+            break;
+    }
+
+    return true;
+}
+
+    // 数组通用方法
+// 可运行的方法
+['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'map', 'slice', 'some', 'indexOf', 'includes'].forEach(methodName => {
+    let arrayFnFunc = Array.prototype[methodName];
+    if (arrayFnFunc) {
+        defineProperty(XDataFn, methodName, {
+            writable: true,
+            value(...args) {
+                return arrayFnFunc.apply(this, args);
+            }
+        });
+    }
+});
+
     let XDataHandler = {
-    set(xdata, key, value, receiver) {
-        return Reflect.set(xdata, key, value, receiver)
+    set(target, key, value, receiver) {
+        // 私有变量直接通过
+        // 数组函数运行中直接通过
+        if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
+            return Reflect.set(xdata, key, value, receiver);
+        }
+
+        // 其他方式就要通过主体entrend调整
+        return entrend({
+            genre: "handleSet",
+            target,
+            key,
+            value,
+            receiver
+        });
     },
     deleteProperty(xdata, key) {
         return Reflect.deleteProperty(xdata, key);
     }
 };
 
-    // 生成xdata对象
-const createXData = (obj, options) => {
-    let redata = obj;
-    switch (getType(obj)) {
-        case "object":
-        case "array":
-            redata = new XData(obj, options);
-            break;
-    }
-
-    return redata;
-};
-
-setNotEnumer(XDataFn, {
+    setNotEnumer(XDataFn, {
     seek(expr) {
         // 代表式的组织化数据
         let exprObjArr = [];
@@ -537,6 +634,42 @@ setNotEnumer(XDataFn, {
 
         return redata;
     },
+});
+
+
+defineProperties(XDataFn, {
+    // 直接返回object
+    "object": {
+        get() {
+            let obj = {};
+
+            Object.keys(this).forEach(k => {
+                let val = this[k];
+
+                if (isXData(val)) {
+                    obj[k] = val.object;
+                } else {
+                    obj[k] = val;
+                }
+            });
+
+            return obj;
+        }
+    },
+    "string": {
+        get() {
+            return JSON.stringify(this.object);
+        }
+    },
+    "root": {
+        get() {
+            let root = this;
+            while (root.parent) {
+                root = root.parent;
+            }
+            return root;
+        }
+    }
 });
 
     glo.stanz = (obj) => createXData(obj);

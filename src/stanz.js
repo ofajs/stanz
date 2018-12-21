@@ -70,6 +70,68 @@
         return redata;
     };
 
+    // 销毁数据绑定的事件函数
+    const clearXdata = (xdata) => {
+        if (isXData(xdata)) {
+            // 更新状态
+            xdata.parent = null;
+            xdata.hostkey = null;
+            xdata.status = "readyDestory";
+
+            nextTick(() => {
+                if (xdata.parent && xdata.hostkey && xdata.status != "root") {
+                    // 挂载其他对象上成功，修正状态
+                    xdata.status = "binding";
+                    return;
+                }
+
+                // 开始清扫所有绑定
+                // 先清扫 sync
+                xdata[SYNCHOST].forEach(e => {
+                    xdata.unsync(e.opp);
+                });
+
+                // 清扫 watch
+                xdata[WATCHHOST] = {};
+
+                // 清扫 on
+                xdata[EVES] = {};
+
+                xdata[MODIFYHOST] = [];
+                clearTimeout(xdata[MODIFYTIMER]);
+            });
+        }
+    }
+
+    // 判断两个xdata数据是否相等
+    let isXDataEqual = (xd1, xd2) => {
+        if (xd1 === xd2) {
+            return true;
+        }
+    }
+
+    // virData用的数据映射方法
+    const mapData = (data, options) => {
+        options.forEach(e => {
+            switch (e.type) {
+                case "map":
+                    if (!isUndefined(data[e.key])) {
+                        data[e.toKey] = data[e.key];
+                        delete data[e.key];
+                    }
+                    break;
+            }
+        });
+
+        for (let k in data) {
+            let d = data[k];
+
+            if (d instanceof Object) {
+                mapData(d, options);
+            }
+        }
+    }
+
     // 按条件判断数据是否符合条件
     const conditData = (exprKey, exprValue, exprType, exprEqType, tarData) => {
         let reData = 0;
@@ -328,7 +390,7 @@
         });
 
         let opt = {
-            status: "root",
+            // status: "root",
             // 设置数组长度
             length,
             // 事件寄宿对象
@@ -341,14 +403,25 @@
             [MODIFYTIMER]: ""
         };
 
-        if (options.parent) {
-            opt.status = "binding";
-            opt.parent = options.parent;
-            opt.hostkey = options.hostkey;
-        }
-
         // 设置不可枚举数据
         setNotEnumer(this, opt);
+
+        // if (options.parent) {
+        defineProperties(this, {
+            status: {
+                writable: true,
+                value: options.parent ? "binding" : "root"
+            },
+            parent: {
+                writable: true,
+                value: options.parent
+            },
+            hostkey: {
+                writable: true,
+                value: options.hostkey
+            }
+        });
+        // }
 
         // 返回Proxy对象
         return proxyThis;
@@ -384,8 +457,32 @@
 
                     let redata = arrayFnFunc.apply(this, args);
 
+                    // 根据方法添加删除装填
+                    switch (methodName) {
+                        case "shift":
+                        case "pop":
+                        case "splice":
+                            redata.forEach(oldVal => {
+                                clearXdata(oldVal);
+                            });
+                            break;
+                    }
+
                     // 事件实例生成
                     let eveObj = new XDataEvent('update', this);
+
+                    // 判断添加方法上是否有xdata，存在就干掉它
+                    switch (methodName) {
+                        case "splice":
+                        case "unshift":
+                        case "push":
+                            args = args.map(e => {
+                                if (isXData(e)) {
+                                    return e.object;
+                                }
+                                return e;
+                            });
+                    }
 
                     eveObj.modify = {
                         genre: "arrayMethod",
@@ -757,6 +854,8 @@
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });
+                                // 事后清空
+                                tarExprObj.modifys.length = 0;
                                 break;
                             case "watchKey":
                                 tarExprObj.arr.forEach(callback => {
@@ -766,6 +865,8 @@
                                         modifys: Array.from(tarExprObj.modifys)
                                     }));
                                 });
+                                // 事后清空
+                                tarExprObj.modifys.length = 0;
                                 break;
                             case "seekOri":
                                 // 监听动态数据
@@ -781,7 +882,7 @@
                                     isEq = 0;
                                 }
                                 isEq && sData.some((e, i) => {
-                                    if (oldVals[i] != e) {
+                                    if (!isXDataEqual(oldVals[i], e)) {
                                         isEq = 0;
                                         return true;
                                     }
@@ -813,9 +914,10 @@
             // 判断是否expr
             if (watchType == "seekOri") {
                 let sData = this.seek(expr);
-                callback({
+                callback(new WatchData({
+                    expr,
                     val: sData
-                });
+                }));
                 tarExprObj.oldVals = sData;
             }
 
@@ -976,6 +1078,67 @@
 
             return this;
         },
+        virData(options) {
+            let cloneData = this.object;
+
+            // 重置数据
+            mapData(cloneData, options);
+
+            // 提取关键数据
+            let keyMapObj = {};
+            let reserveKeyMapObj = {};
+            options.forEach(c => {
+                switch (c.type) {
+                    case "map":
+                        keyMapObj[c.key] = c.toKey;
+                        reserveKeyMapObj[c.toKey] = c.key;
+                        break;
+                }
+            });
+
+            // 转换为xdata
+            cloneData = createXData(cloneData);
+
+            let _thisUpdateFunc;
+            this.on('update', _thisUpdateFunc = e => {
+                let {
+                    trend
+                } = e;
+
+                let tarKey = keyMapObj[trend.key];
+                if (!isUndefined(tarKey)) {
+                    // 修正trend数据
+                    trend.key = tarKey;
+                    cloneData.entrend(trend);
+                }
+            });
+
+            cloneData.on('update', e => {
+                let {
+                    trend
+                } = e;
+
+                let tarKey = reserveKeyMapObj[trend.key];
+
+                if (!isUndefined(tarKey)) {
+                    trend.key = tarKey;
+                    this.entrend(trend);
+                }
+            });
+
+            // 修正remove方法
+            defineProperty(cloneData, "remove", {
+                value(...args) {
+                    if (!args.length) {
+                        // 确认删除自身，清除this的函数
+                        this.off('update', _thisUpdateFunc);
+                    }
+                    XDataFn.remove.call(cloneData, ...args);
+                }
+            });
+
+            return cloneData;
+        },
         // 删除相应Key的值
         removeByKey(key) {
             // 删除子数据
@@ -995,11 +1158,15 @@
                     parent
                 } = this;
 
-                // 删除
-                parent.removeByKey(this.hostkey);
+                if (parent) {
+                    // 删除
+                    parent.removeByKey(this.hostkey);
+                } else {
+                    clearXdata(this);
+                }
             } else {
                 if (isXData(value)) {
-                    this.removeByKey(value.hostkey);
+                    (value.parent == this) && this.removeByKey(value.hostkey);
                 } else {
                     let tarId = this.indexOf(value);
                     if (tarId > -1) {
@@ -1084,7 +1251,7 @@
                 if (value.parent == receiver) {
                     value.hostkey = key;
                 } else {
-                    if (value.status == "root") {
+                    if (value.status !== "binding") {
                         value.status = 'binding';
                     } else {
                         // 从原来的地方拿走，先从原处删除在安上
@@ -1092,6 +1259,9 @@
                     }
                     value.parent = receiver;
                     value.hostkey = key;
+
+                    // 替换value为普通对象
+                    value = value.object;
                 }
             } else {
                 // 数据转换
@@ -1181,6 +1351,10 @@
             let oldVal = xdata[key];
 
             let reData = Reflect.deleteProperty(xdata, key);
+
+            if (isXData(oldVal)) {
+                clearXdata(oldVal);
+            }
 
             // 事件实例生成
             let eveObj = new XDataEvent('update', receiver);

@@ -27,3 +27,108 @@ const setNotEnumer = (tar, obj) => {
 
 // common
 const EVES = "_eves_" + getRandomId();
+
+// business function
+let isXData = obj => obj instanceof XData;
+
+// 按条件判断数据是否符合条件
+const conditData = (exprKey, exprValue, exprType, exprEqType, tarData) => {
+    let reData = 0;
+
+    // 搜索数据
+    switch (exprType) {
+        case "keyValue":
+            let tarValue = tarData[exprKey];
+            switch (exprEqType) {
+                case "=":
+                    if (tarValue == exprValue) {
+                        reData = 1;
+                    }
+                    break;
+                case ":=":
+                    if (isXData(tarValue) && tarValue.findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case "*=":
+                    if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case "~=":
+                    if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+            }
+            break;
+        case "hasValue":
+            switch (exprEqType) {
+                case "=":
+                    if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case ":=":
+                    Object.values(tarData).some(tarValue => {
+                        if (isXData(tarValue) && tarValue.findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+                case "*=":
+                    Object.values(tarData).some(tarValue => {
+                        if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+                case "~=":
+                    Object.values(tarData).some(tarValue => {
+                        if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+            }
+            break;
+        case "hasKey":
+            if (tarData.hasOwnProperty(exprKey)) {
+                reData = 1;
+            }
+            break;
+    }
+
+    return reData;
+}
+
+// 查找数据
+let seekData = (data, exprObj) => {
+    let arr = [];
+
+    // 关键数据
+    let exprKey = exprObj.k,
+        exprValue = exprObj.v,
+        exprType = exprObj.type,
+        exprEqType = exprObj.eqType;
+
+    Object.keys(data).forEach(k => {
+        let tarData = data[k];
+
+        if (isXData(tarData)) {
+            // 判断是否可添加
+            let canAdd = conditData(exprKey, exprValue, exprType, exprEqType, tarData);
+
+            // 允许就添加
+            canAdd && arr.push(tarData);
+
+            // 查找子项
+            let newArr = seekData(tarData, exprObj);
+            arr.push(...newArr);
+        }
+    });
+    return arr;
+}

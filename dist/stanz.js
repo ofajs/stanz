@@ -29,6 +29,111 @@ const setNotEnumer = (tar, obj) => {
 // common
 const EVES = "_eves_" + getRandomId();
 
+// business function
+let isXData = obj => obj instanceof XData;
+
+// 按条件判断数据是否符合条件
+const conditData = (exprKey, exprValue, exprType, exprEqType, tarData) => {
+    let reData = 0;
+
+    // 搜索数据
+    switch (exprType) {
+        case "keyValue":
+            let tarValue = tarData[exprKey];
+            switch (exprEqType) {
+                case "=":
+                    if (tarValue == exprValue) {
+                        reData = 1;
+                    }
+                    break;
+                case ":=":
+                    if (isXData(tarValue) && tarValue.findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case "*=":
+                    if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case "~=":
+                    if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+            }
+            break;
+        case "hasValue":
+            switch (exprEqType) {
+                case "=":
+                    if (Object.values(tarData).findIndex(e => e == exprValue) > -1) {
+                        reData = 1;
+                    }
+                    break;
+                case ":=":
+                    Object.values(tarData).some(tarValue => {
+                        if (isXData(tarValue) && tarValue.findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+                case "*=":
+                    Object.values(tarData).some(tarValue => {
+                        if (getType(tarValue) == "string" && tarValue.search(exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+                case "~=":
+                    Object.values(tarData).some(tarValue => {
+                        if (getType(tarValue) == "string" && tarValue.split(' ').findIndex(e => e == exprValue) > -1) {
+                            reData = 1;
+                            return true;
+                        }
+                    });
+                    break;
+            }
+            break;
+        case "hasKey":
+            if (tarData.hasOwnProperty(exprKey)) {
+                reData = 1;
+            }
+            break;
+    }
+
+    return reData;
+}
+
+// 查找数据
+let seekData = (data, exprObj) => {
+    let arr = [];
+
+    // 关键数据
+    let exprKey = exprObj.k,
+        exprValue = exprObj.v,
+        exprType = exprObj.type,
+        exprEqType = exprObj.eqType;
+
+    Object.keys(data).forEach(k => {
+        let tarData = data[k];
+
+        if (isXData(tarData)) {
+            // 判断是否可添加
+            let canAdd = conditData(exprKey, exprValue, exprType, exprEqType, tarData);
+
+            // 允许就添加
+            canAdd && arr.push(tarData);
+
+            // 查找子项
+            let newArr = seekData(tarData, exprObj);
+            arr.push(...newArr);
+        }
+    });
+    return arr;
+}
+
     function XData(obj, options = {}) {
     // let proxyThis = new Proxy(this, XDataHandler);
     let proxyThis = this;
@@ -358,6 +463,81 @@ const createXData = (obj, options) => {
 
     return redata;
 };
+
+setNotEnumer(XDataFn, {
+    seek(expr) {
+        // 代表式的组织化数据
+        let exprObjArr = [];
+
+        let hostKey;
+        let hostKeyArr = expr.match(/(^[^\[\]])\[.+\]/);
+        if (hostKeyArr && hostKeyArr.length >= 2) {
+            hostKey = hostKeyArr[1];
+        }
+
+        // 分析expr字符串数据
+        let garr = expr.match(/\[.+?\]/g);
+
+        garr.forEach(str => {
+            str = str.replace(/\[|\]/g, "");
+            let strarr = str.split(/(=|\*=|:=|~=)/);
+
+            let param_first = strarr[0];
+
+            switch (strarr.length) {
+                case 3:
+                    if (param_first) {
+                        exprObjArr.push({
+                            type: "keyValue",
+                            k: param_first,
+                            eqType: strarr[1],
+                            v: strarr[2]
+                        });
+                    } else {
+                        exprObjArr.push({
+                            type: "hasValue",
+                            eqType: strarr[1],
+                            v: strarr[2]
+                        });
+                    }
+                    break;
+                case 1:
+                    exprObjArr.push({
+                        type: "hasKey",
+                        k: param_first
+                    });
+                    break;
+            }
+        });
+
+        // 要返回的数据
+        let redata;
+
+        exprObjArr.forEach((exprObj, i) => {
+            let exprKey = exprObj.k,
+                exprValue = exprObj.v,
+                exprType = exprObj.type,
+                exprEqType = exprObj.eqType;
+
+            switch (i) {
+                case 0:
+                    // 初次查找数据
+                    redata = seekData(this, exprObj);
+                    break;
+                default:
+                    // 筛选数据
+                    redata = redata.filter(tarData => conditData(exprKey, exprValue, exprType, exprEqType, tarData) ? tarData : undefined);
+            }
+        });
+
+        // hostKey过滤
+        if (hostKey) {
+            redata = redata.filter(e => (e.hostkey == hostKey) ? e : undefined);
+        }
+
+        return redata;
+    },
+});
 
     glo.stanz = (obj) => createXData(obj);
 

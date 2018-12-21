@@ -1,0 +1,10 @@
+{
+    "name": "stanz.js",
+    "version": "5.0.0",
+    "description": "sync data lib",
+    "scripts": {
+        "watch": "node scripts/watch.js"
+    },
+    "author": "YAO",
+    "license": "MIT"
+}

@@ -13,3 +13,17 @@ let {
 
 // 克隆object
 const cloneObject = obj => JSON.parse(JSON.stringify(obj));
+
+// 设置不可枚举的方法
+const setNotEnumer = (tar, obj) => {
+    for (let k in obj) {
+        defineProperty(tar, k, {
+            // enumerable: false,
+            writable: true,
+            value: obj[k]
+        });
+    }
+}
+
+// common
+const EVES = "_eves_" + getRandomId();

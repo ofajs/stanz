@@ -15,10 +15,33 @@
 </body>
 <script>
     let a = stanz({
-        a: "I am a"
+        a: "I am a",
+        obj: {
+            val: "I am obj"
+        },
+        0: "i am zero",
+        1: {
+            val: "I am 1"
+        }
+    });
+
+    a.on('haha#aa', (e) => {
+        // 注册第1次
+        throw "error";
+    });
+
+    a.on('haha', (e) => {
+        console.log('haha', e, e.id);
+    });
+
+    a.on('haha#aa', (e) => {
+        // 注册第2次
+        console.log('haha2', e, " eventId=>", e.eventId);
     });
 
     console.log(a);
+
+    a[1].emit('haha');
 </script>
 
 </html>

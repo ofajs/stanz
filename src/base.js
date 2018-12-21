@@ -3,13 +3,12 @@
 
     //<!--class-->
 
+    //<!--event-->
+
     //<!--handler-->
 
     //<!--main-->
 
-    glo.stanz = (obj) => {
-        return new XData(obj);
-    }
-
+    glo.stanz = (obj) => createXData(obj);
 
 })(window);

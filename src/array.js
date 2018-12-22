@@ -50,7 +50,13 @@ assign(arrayFn, {
     // 改良的sort方法，可以直接传入置换顺序对象
     sort(func) {
         if (func instanceof Array) {
-            debugger
+            let backupThis = this.slice();
+
+            func.forEach((k, i) => {
+                this[k] = backupThis[i];
+            });
+
+            return this;
         } else {
             // 参数和原生sort无区别，直接代入
             return Array.prototype.sort.call(this, func);

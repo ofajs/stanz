@@ -71,6 +71,201 @@ setNotEnumer(XDataFn, {
 
         return redata;
     },
+    watch(expr, callback) {
+        // 调整参数
+        let arg1Type = getType(expr);
+        if (/function/.test(arg1Type)) {
+            callback = expr;
+            expr = "";
+        }
+
+        // 根据参数调整类型
+        let watchType;
+
+        if (expr == "") {
+            watchType = "watchOri";
+        } else if (/\[.+\]/.test(expr)) {
+            watchType = "seekOri";
+        } else {
+            watchType = "watchKey";
+        }
+
+        // 获取相应队列数据
+        let tarExprObj = this[WATCHHOST].get(expr);
+        if (!tarExprObj) {
+            tarExprObj = {
+                // 是否已经有nextTick
+                isNextTick: 0,
+                // 事件函数存放数组
+                arr: new Set(),
+                // 空expr使用的数据
+                modifys: [],
+                // 注册的update事件函数
+                // updateFunc
+            }
+            this[WATCHHOST].set(expr, tarExprObj);
+        }
+
+        // 添加callback
+        tarExprObj.arr.add(callback);
+
+        if (!tarExprObj.updateFunc) {
+            let updateFunc;
+
+            // 根据类型调整
+            switch (watchType) {
+                case "watchOri":
+                    this.on('update', updateFunc = (e) => {
+                        // 添加trend数据
+                        tarExprObj.modifys.push(e.trend);
+
+                        // 判断是否进入nextTick
+                        if (tarExprObj.isNextTick) {
+                            return;
+                        }
+
+                        // 锁上
+                        tarExprObj.isNextTick = 1;
+
+                        nextTick(() => {
+                            // 监听整个数据
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    modifys: Array.from(tarExprObj.modifys)
+                                });
+                            });
+
+                            // 事后清空modifys
+                            tarExprObj.modifys.length = 0;
+
+                            // 解锁
+                            tarExprObj.isNextTick = 0;
+                        });
+                    });
+                    break;
+                case "watchKey":
+                    this.on('update', updateFunc = e => {
+                        let {
+                            trend
+                        } = e;
+
+                        if (trend.fromKey !== expr) {
+                            return;
+                        }
+
+                        // 添加改动
+                        tarExprObj.modifys.push(trend);
+
+                        // 判断是否进入nextTick
+                        if (tarExprObj.isNextTick) {
+                            return;
+                        }
+
+                        // 锁上
+                        tarExprObj.isNextTick = 1;
+
+                        nextTick(() => {
+                            // 监听整个数据
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    expr,
+                                    val: this[expr],
+                                    modifys: Array.from(tarExprObj.modifys)
+                                });
+                            });
+
+                            // 事后清空modifys
+                            tarExprObj.modifys.length = 0;
+
+                            // 解锁
+                            tarExprObj.isNextTick = 0;
+                        });
+                    });
+                    break;
+                case "seekOri":
+                    // 判断是否进入nextTick
+                    if (tarExprObj.isNextTick) {
+                        return;
+                    }
+
+                    // 先记录旧的数据
+                    let oldVals = this.seek(expr);
+
+                    // 锁上
+                    tarExprObj.isNextTick = 1;
+
+                    nextTick(() => {
+                        let sData = this.seek(expr);
+
+                        // 判断是否相等
+                        let isEq = 1;
+                        if (sData.length != oldVals.length) {
+                            isEq = 0;
+                        }
+                        isEq && sData.some((e, i) => {
+                            if (!isEqual(oldVals[i], e)) {
+                                isEq = 0;
+                                return true;
+                            }
+                        });
+
+                        // 不相等就触发callback
+                        if (!isEq) {
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    expr,
+                                    old: oldVals,
+                                    val: sData
+                                });
+                            });
+                        }
+
+                        // 解锁
+                        tarExprObj.isNextTick = 0;
+                    });
+                    break;
+            }
+
+            // 设置绑定update的函数
+            tarExprObj.updateFunc = updateFunc;
+        }
+
+        // 判断是否expr
+        if (watchType == "seekOri") {
+            let sData = this.seek(expr);
+            callback({
+                expr,
+                val: sData
+            });
+        }
+    },
+    // 注销watch
+    unwatch(expr, callback) {
+        // 调整参数
+        let arg1Type = getType(expr);
+        if (/function/.test(arg1Type)) {
+            callback = expr;
+            expr = "";
+        }
+
+        let tarExprObj = this[WATCHHOST].get(expr);
+
+        if (tarExprObj) {
+            tarExprObj.arr.delete(callback);
+
+            // 判断arr是否清空，是的话回收update事件绑定
+            if (!tarExprObj.arr.length) {
+                this.off('update', tarExprObj.updateFunc);
+                delete tarExprObj.updateFunc;
+                delete this[WATCHHOST].delete(expr);
+            }
+        }
+
+        return this;
+    },
+    // 同步数据的方法
+    sync() {},
+    unsync() {}
 });
 
 

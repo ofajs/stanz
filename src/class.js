@@ -32,7 +32,10 @@ function XData(obj, options = {}) {
         length,
         // 事件寄宿对象
         [EVES]: new Map(),
-        [MODIFYHOST]: new Set()
+        // modifyId存放寄宿对象
+        [MODIFYIDHOST]: new Set(),
+        // watch寄宿对象
+        [WATCHHOST]: new Map()
     };
 
     // 设置不可枚举数据
@@ -137,10 +140,13 @@ defineProperties(XDataEvent.prototype, {
                     if (isXData(value)) {
                         value = value.object;
                     }
+                    let fromKey = this.keys[0];
+                    fromKey = isUndefined(fromKey) ? modify.key : fromKey;
                     assign(reobj, {
                         key: modify.key,
                         value,
-                        modifyId
+                        modifyId,
+                        fromKey
                     });
                     break;
             }

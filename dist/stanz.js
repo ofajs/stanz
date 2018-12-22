@@ -1,5 +1,5 @@
 ((glo) => {
-    // public function
+// public function
 // 获取随机id
 const getRandomId = () => Math.random().toString(32).substr(2);
 let objectToString = Object.prototype.toString;
@@ -11,6 +11,25 @@ let {
     defineProperties,
     assign
 } = Object;
+
+//改良异步方法
+const nextTick = (() => {
+    let isTick = false;
+    let nextTickArr = [];
+    return (fun) => {
+        if (!isTick) {
+            isTick = true;
+            setTimeout(() => {
+                for (let i = 0; i < nextTickArr.length; i++) {
+                    nextTickArr[i]();
+                }
+                nextTickArr = [];
+                isTick = false;
+            }, 0);
+        }
+        nextTickArr.push(fun);
+    };
+})();
 
 // 克隆object
 const cloneObject = obj => JSON.parse(JSON.stringify(obj));
@@ -26,13 +45,18 @@ const setNotEnumer = (tar, obj) => {
     }
 }
 
+// 判断两个值是否相等
+let isEqual = (d1, d2) => d1 === d2;
+
 // common
 // 事件寄宿对象key
 const EVES = "_eves_" + getRandomId();
 // 是否在数组方法执行中key
 const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 // 存放modifyId的寄宿对象key
-const MODIFYHOST = "_modify_" + getRandomId();
+const MODIFYIDHOST = "_modify_" + getRandomId();
+// watch寄宿对象
+const WATCHHOST = "_watch_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;
@@ -152,7 +176,7 @@ const createXData = (obj, options) => {
     return redata;
 };
 
-    function XData(obj, options = {}) {
+function XData(obj, options = {}) {
     let proxyThis = new Proxy(this, XDataHandler);
     // let proxyThis = this;
 
@@ -186,7 +210,10 @@ const createXData = (obj, options) => {
         length,
         // 事件寄宿对象
         [EVES]: new Map(),
-        [MODIFYHOST]: new Set()
+        // modifyId存放寄宿对象
+        [MODIFYIDHOST]: new Set(),
+        // watch寄宿对象
+        [WATCHHOST]: new Map()
     };
 
     // 设置不可枚举数据
@@ -291,10 +318,13 @@ defineProperties(XDataEvent.prototype, {
                     if (isXData(value)) {
                         value = value.object;
                     }
+                    let fromKey = this.keys[0];
+                    fromKey = isUndefined(fromKey) ? modify.key : fromKey;
                     assign(reobj, {
                         key: modify.key,
                         value,
-                        modifyId
+                        modifyId,
+                        fromKey
                     });
                     break;
             }
@@ -304,7 +334,7 @@ defineProperties(XDataEvent.prototype, {
     }
 });
 
-    // 获取事件数组
+// 获取事件数组
 const getEvesArr = (tar, eventName) => {
     let eves = tar[EVES];
     let tarSetter = eves.get(eventName);
@@ -461,7 +491,7 @@ setNotEnumer(XDataFn, {
     }
 });
 
-    // 主体entrend方法
+// 主体entrend方法
 const entrend = (options) => {
     let {
         target,
@@ -477,15 +507,18 @@ const entrend = (options) => {
         modifyId = getRandomId();
     } else {
         // 查看是否已经存在这个modifyId了，存在就不折腾
-        if (target[MODIFYHOST].has(modifyId)) {
+        if (target[MODIFYIDHOST].has(modifyId)) {
             return;
         };
     }
 
+    // 事件实例生成
+    let eveObj = new XDataEvent('update', receiver);
+
     switch (genre) {
         case "handleSet":
             // 获取旧的值
-            let oldVal = target[key];
+            var oldVal = target[key];
 
             // 如果相等的话，就不要折腾了
             if (oldVal === value) {
@@ -504,9 +537,6 @@ const entrend = (options) => {
                 hostkey: key
             });
 
-            // 事件实例生成
-            let eveObj = new XDataEvent('update', receiver);
-
             // 添加修正数据
             eveObj.modify = {
                 // change 改动
@@ -517,15 +547,40 @@ const entrend = (options) => {
                 oldVal,
                 modifyId
             };
+            break;
+        case "handleDelete":
+            // 没有值也不折腾了
+            if (!target.hasOwnProperty(key)) {
+                return true;
+            }
 
-            target.emit(eveObj);
+            // 获取旧的值
+            var oldVal = target[key];
+
+            // 删除值
+            delete target[key];
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: "delete",
+                key,
+                oldVal,
+                modifyId
+            };
+            break;
+        case "arrayMethod":
+
             break;
     }
+
+    target.emit(eveObj);
 
     return true;
 }
 
-    // 数组通用方法
+// 数组通用方法
 // 可运行的方法
 ['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'map', 'slice', 'some', 'indexOf', 'includes'].forEach(methodName => {
     let arrayFnFunc = Array.prototype[methodName];
@@ -539,12 +594,12 @@ const entrend = (options) => {
     }
 });
 
-    let XDataHandler = {
+let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
         if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
-            return Reflect.set(xdata, key, value, receiver);
+            return Reflect.set(target, key, value, receiver);
         }
 
         // 其他方式就要通过主体entrend调整
@@ -556,12 +611,41 @@ const entrend = (options) => {
             receiver
         });
     },
-    deleteProperty(xdata, key) {
-        return Reflect.deleteProperty(xdata, key);
+    deleteProperty(target, key) {
+        // 私有变量直接通过
+        // 数组函数运行中直接通过
+        if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
+            return Reflect.deleteProperty(target, key);
+        }
+
+        // 获取receiver
+        let receiver;
+
+        if (target.parent) {
+            receiver = target.parent[target.hostkey];
+        } else {
+            Object.values(target).some(e => {
+                if (isXData(e)) {
+                    receiver = e.parent;
+                    return true;
+                }
+            });
+
+            if (!receiver) {
+                receiver = new Proxy(target, XDataHandler);
+            }
+        }
+
+        return entrend({
+            genre: "handleDelete",
+            target,
+            key,
+            receiver
+        });
     }
 };
 
-    setNotEnumer(XDataFn, {
+setNotEnumer(XDataFn, {
     seek(expr) {
         // 代表式的组织化数据
         let exprObjArr = [];
@@ -634,6 +718,201 @@ const entrend = (options) => {
 
         return redata;
     },
+    watch(expr, callback) {
+        // 调整参数
+        let arg1Type = getType(expr);
+        if (/function/.test(arg1Type)) {
+            callback = expr;
+            expr = "";
+        }
+
+        // 根据参数调整类型
+        let watchType;
+
+        if (expr == "") {
+            watchType = "watchOri";
+        } else if (/\[.+\]/.test(expr)) {
+            watchType = "seekOri";
+        } else {
+            watchType = "watchKey";
+        }
+
+        // 获取相应队列数据
+        let tarExprObj = this[WATCHHOST].get(expr);
+        if (!tarExprObj) {
+            tarExprObj = {
+                // 是否已经有nextTick
+                isNextTick: 0,
+                // 事件函数存放数组
+                arr: new Set(),
+                // 空expr使用的数据
+                modifys: [],
+                // 注册的update事件函数
+                // updateFunc
+            }
+            this[WATCHHOST].set(expr, tarExprObj);
+        }
+
+        // 添加callback
+        tarExprObj.arr.add(callback);
+
+        if (!tarExprObj.updateFunc) {
+            let updateFunc;
+
+            // 根据类型调整
+            switch (watchType) {
+                case "watchOri":
+                    this.on('update', updateFunc = (e) => {
+                        // 添加trend数据
+                        tarExprObj.modifys.push(e.trend);
+
+                        // 判断是否进入nextTick
+                        if (tarExprObj.isNextTick) {
+                            return;
+                        }
+
+                        // 锁上
+                        tarExprObj.isNextTick = 1;
+
+                        nextTick(() => {
+                            // 监听整个数据
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    modifys: Array.from(tarExprObj.modifys)
+                                });
+                            });
+
+                            // 事后清空modifys
+                            tarExprObj.modifys.length = 0;
+
+                            // 解锁
+                            tarExprObj.isNextTick = 0;
+                        });
+                    });
+                    break;
+                case "watchKey":
+                    this.on('update', updateFunc = e => {
+                        let {
+                            trend
+                        } = e;
+
+                        if (trend.fromKey !== expr) {
+                            return;
+                        }
+
+                        // 添加改动
+                        tarExprObj.modifys.push(trend);
+
+                        // 判断是否进入nextTick
+                        if (tarExprObj.isNextTick) {
+                            return;
+                        }
+
+                        // 锁上
+                        tarExprObj.isNextTick = 1;
+
+                        nextTick(() => {
+                            // 监听整个数据
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    expr,
+                                    val: this[expr],
+                                    modifys: Array.from(tarExprObj.modifys)
+                                });
+                            });
+
+                            // 事后清空modifys
+                            tarExprObj.modifys.length = 0;
+
+                            // 解锁
+                            tarExprObj.isNextTick = 0;
+                        });
+                    });
+                    break;
+                case "seekOri":
+                    // 判断是否进入nextTick
+                    if (tarExprObj.isNextTick) {
+                        return;
+                    }
+
+                    // 先记录旧的数据
+                    let oldVals = this.seek(expr);
+
+                    // 锁上
+                    tarExprObj.isNextTick = 1;
+
+                    nextTick(() => {
+                        let sData = this.seek(expr);
+
+                        // 判断是否相等
+                        let isEq = 1;
+                        if (sData.length != oldVals.length) {
+                            isEq = 0;
+                        }
+                        isEq && sData.some((e, i) => {
+                            if (!isEqual(oldVals[i], e)) {
+                                isEq = 0;
+                                return true;
+                            }
+                        });
+
+                        // 不相等就触发callback
+                        if (!isEq) {
+                            tarExprObj.arr.forEach(callback => {
+                                callback.call(this, {
+                                    expr,
+                                    old: oldVals,
+                                    val: sData
+                                });
+                            });
+                        }
+
+                        // 解锁
+                        tarExprObj.isNextTick = 0;
+                    });
+                    break;
+            }
+
+            // 设置绑定update的函数
+            tarExprObj.updateFunc = updateFunc;
+        }
+
+        // 判断是否expr
+        if (watchType == "seekOri") {
+            let sData = this.seek(expr);
+            callback({
+                expr,
+                val: sData
+            });
+        }
+    },
+    // 注销watch
+    unwatch(expr, callback) {
+        // 调整参数
+        let arg1Type = getType(expr);
+        if (/function/.test(arg1Type)) {
+            callback = expr;
+            expr = "";
+        }
+
+        let tarExprObj = this[WATCHHOST].get(expr);
+
+        if (tarExprObj) {
+            tarExprObj.arr.delete(callback);
+
+            // 判断arr是否清空，是的话回收update事件绑定
+            if (!tarExprObj.arr.length) {
+                this.off('update', tarExprObj.updateFunc);
+                delete tarExprObj.updateFunc;
+                delete this[WATCHHOST].delete(expr);
+            }
+        }
+
+        return this;
+    },
+    // 同步数据的方法
+    sync() {},
+    unsync() {}
 });
 
 

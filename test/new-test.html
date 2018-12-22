@@ -43,6 +43,18 @@
         console.log("update =>", e);
     });
 
+    a.watch(e => {
+        console.log('watch=>', e);
+    });
+
+    a.watch('obj', e => {
+        console.log('watchKey=>', e);
+    });
+
+    a.watch('[val]', e => {
+        console.log('watchSeek=>', e);
+    });
+
     console.log(a);
 
     a[1].emit('haha');
@@ -51,6 +63,7 @@
     a[1].b = {
         val: "I am b"
     };
+    a.obj.val = "change val"
 </script>
 
 </html>

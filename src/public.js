@@ -11,6 +11,25 @@ let {
     assign
 } = Object;
 
+//改良异步方法
+const nextTick = (() => {
+    let isTick = false;
+    let nextTickArr = [];
+    return (fun) => {
+        if (!isTick) {
+            isTick = true;
+            setTimeout(() => {
+                for (let i = 0; i < nextTickArr.length; i++) {
+                    nextTickArr[i]();
+                }
+                nextTickArr = [];
+                isTick = false;
+            }, 0);
+        }
+        nextTickArr.push(fun);
+    };
+})();
+
 // 克隆object
 const cloneObject = obj => JSON.parse(JSON.stringify(obj));
 
@@ -25,13 +44,18 @@ const setNotEnumer = (tar, obj) => {
     }
 }
 
+// 判断两个值是否相等
+let isEqual = (d1, d2) => d1 === d2;
+
 // common
 // 事件寄宿对象key
 const EVES = "_eves_" + getRandomId();
 // 是否在数组方法执行中key
 const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 // 存放modifyId的寄宿对象key
-const MODIFYHOST = "_modify_" + getRandomId();
+const MODIFYIDHOST = "_modify_" + getRandomId();
+// watch寄宿对象
+const WATCHHOST = "_watch_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;

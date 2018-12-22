@@ -1,17 +1,17 @@
 ((glo) => {
-    //<!--public-->
+//<!--public-->
 
-    //<!--class-->
+//<!--class-->
 
-    //<!--event-->
+//<!--event-->
 
-    //<!--entrend-->
+//<!--entrend-->
 
-    //<!--array-->
+//<!--array-->
 
-    //<!--handler-->
+//<!--handler-->
 
-    //<!--main-->
+//<!--main-->
 
     glo.stanz = (obj) => createXData(obj);
 

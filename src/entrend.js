@@ -14,15 +14,18 @@ const entrend = (options) => {
         modifyId = getRandomId();
     } else {
         // 查看是否已经存在这个modifyId了，存在就不折腾
-        if (target[MODIFYHOST].has(modifyId)) {
+        if (target[MODIFYIDHOST].has(modifyId)) {
             return;
         };
     }
 
+    // 事件实例生成
+    let eveObj = new XDataEvent('update', receiver);
+
     switch (genre) {
         case "handleSet":
             // 获取旧的值
-            let oldVal = target[key];
+            var oldVal = target[key];
 
             // 如果相等的话，就不要折腾了
             if (oldVal === value) {
@@ -41,9 +44,6 @@ const entrend = (options) => {
                 hostkey: key
             });
 
-            // 事件实例生成
-            let eveObj = new XDataEvent('update', receiver);
-
             // 添加修正数据
             eveObj.modify = {
                 // change 改动
@@ -54,10 +54,35 @@ const entrend = (options) => {
                 oldVal,
                 modifyId
             };
+            break;
+        case "handleDelete":
+            // 没有值也不折腾了
+            if (!target.hasOwnProperty(key)) {
+                return true;
+            }
 
-            target.emit(eveObj);
+            // 获取旧的值
+            var oldVal = target[key];
+
+            // 删除值
+            delete target[key];
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: "delete",
+                key,
+                oldVal,
+                modifyId
+            };
+            break;
+        case "arrayMethod":
+
             break;
     }
+
+    target.emit(eveObj);
 
     return true;
 }

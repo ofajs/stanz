@@ -1,54 +1,4 @@
-((glo) => {
-// public function
-// 获取随机id
-const getRandomId = () => Math.random().toString(32).substr(2);
-let objectToString = Object.prototype.toString;
-const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
-const isUndefined = val => val === undefined;
 
-let {
-    defineProperty,
-    defineProperties,
-    assign
-} = Object;
-
-//改良异步方法
-const nextTick = (() => {
-    let isTick = false;
-    let nextTickArr = [];
-    return (fun) => {
-        if (!isTick) {
-            isTick = true;
-            setTimeout(() => {
-                for (let i = 0; i < nextTickArr.length; i++) {
-                    nextTickArr[i]();
-                }
-                nextTickArr = [];
-                isTick = false;
-            }, 0);
-        }
-        nextTickArr.push(fun);
-    };
-})();
-
-// 克隆object
-const cloneObject = obj => JSON.parse(JSON.stringify(obj));
-
-// 设置不可枚举的方法
-const setNotEnumer = (tar, obj) => {
-    for (let k in obj) {
-        defineProperty(tar, k, {
-            // enumerable: false,
-            writable: true,
-            value: obj[k]
-        });
-    }
-}
-
-// 判断两个值是否相等，主要针对xdata
-let isEqual = (d1, d2) => d1 === d2;
-
-//---xdata-start---
 
 // common
 // 事件寄宿对象key
@@ -1496,8 +1446,3 @@ defineProperties(XDataFn, {
     }
 });
 
-//---xdata-end---
-
-    glo.stanz = (obj) => createXData(obj);
-
-})(window);

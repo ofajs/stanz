@@ -13,6 +13,8 @@
 
 //<!--main-->
 
+//---xdata-end---
+
     glo.stanz = (obj) => createXData(obj);
 
 })(window);

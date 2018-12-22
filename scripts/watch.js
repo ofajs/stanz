@@ -36,6 +36,11 @@ let mainFun = async () => {
         if (err) throw err;
         console.log('stanz.js write succeed!' + count++);
     });
+
+    // 写入xdata.js
+    fs.writeFile('dist/xdata.js', basefile.match(/\/\/---xdata-start---([\d\D]+)\/\/---xdata-end---/)[1], 'utf8', (err) => {
+        if (err) throw err;
+    });
 }
 
 let readFileTimer;

@@ -583,11 +583,40 @@ const entrend = (options) => {
                 args
             } = options;
 
-            // 相应的数组方法
-            let arrayFunc = Array.prototype[methodName];
+            // 设置不可执行setHandler
+            receiver[RUNARRMETHOD] = 1;
 
-            // 运行方法
-            reData = arrayFunc.apply(receiver, args);
+            // 对sort方法要特殊处理，已应对sort函数参数的问题
+            if (methodName == "sort" && !(args[0] instanceof Array)) {
+                // 备份
+                let backupTarget = receiver.slice();
+
+                // 运行方法
+                reData = arrayFn[methodName].apply(receiver, args);
+
+                // 转换成数组
+                let newArg0 = [],
+                    putId = getRandomId();
+                backupTarget.forEach(e => {
+                    // 查找id
+                    let id = reData.indexOf(e);
+
+                    // 清空相应的数组内数据
+                    reData[id] = putId;
+
+                    // 加入新数组
+                    newArg0.push(id);
+                });
+
+                // 修正参数
+                args = [newArg0];
+            } else {
+                // 运行方法
+                reData = arrayFn[methodName].apply(receiver, args);
+            }
+
+            // 复原状态
+            delete receiver[RUNARRMETHOD];
 
             // 添加修正数据
             eveObj.modify = {
@@ -621,38 +650,26 @@ const entrend = (options) => {
     }
 });
 
+// 设置 ArrayFn
+const arrayFn = {};
+
 // 几个会改变数据结构的方法
-['pop', 'push', 'reverse', 'splice', 'shift', 'unshift'].forEach(methodName => {
+['pop', 'push', 'reverse', 'splice', 'shift', 'unshift', 'sort'].forEach(methodName => {
     // 原来的数组方法
     let arrayFnFunc = Array.prototype[methodName];
+
+    arrayFn[methodName] = arrayFnFunc;
 
     // 存在方法的情况下加入
     if (arrayFnFunc) {
         defineProperty(XDataFn, methodName, {
             writable: true,
             value(...args) {
-                // 设置不可执行setHandler
-                this[RUNARRMETHOD] = 1;
-
                 // 获取到_entrendModifyId就立刻删除
                 let modifyId = this._entrendModifyId;
                 if (modifyId) {
                     delete this._entrendModifyId;
                 }
-
-                // 临时寄存对象
-                // let tempObj = {
-                //     genre: "arrayMethod",
-                //     args,
-                //     modifyId,
-                //     methodName,
-                //     // 返回的数据
-                //     reData: "",
-                // };
-
-                // this.__runtemp = tempObj;
-
-                // return tempObj.reData;
 
                 // 其他方式就要通过主体entrend调整
                 return entrend({
@@ -667,11 +684,23 @@ const entrend = (options) => {
     }
 });
 
+assign(arrayFn, {
+    // 改良的sort方法，可以直接传入置换顺序对象
+    sort(func) {
+        if (func instanceof Array) {
+            debugger
+        } else {
+            // 参数和原生sort无区别，直接代入
+            return Array.prototype.sort.call(this, func);
+        }
+    }
+});
+
 let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
+        if (/^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
             return Reflect.set(target, key, value, receiver);
         }
 
@@ -694,7 +723,7 @@ let XDataHandler = {
     deleteProperty(target, key) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
+        if (/^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
             return Reflect.deleteProperty(target, key);
         }
 

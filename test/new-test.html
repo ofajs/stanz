@@ -68,6 +68,14 @@
     a.splice(1, 0, {
         val: "new one"
     });
+
+    let b = stanz([2, 3, 1, 4, 6, 5, 7]);
+    b.watch(e => {
+        console.log('watch b =>', e);
+    });
+    b.sort((a, b) => {
+        return a - b;
+    });
 </script>
 
 </html>

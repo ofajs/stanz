@@ -86,11 +86,40 @@ const entrend = (options) => {
                 args
             } = options;
 
-            // 相应的数组方法
-            let arrayFunc = Array.prototype[methodName];
+            // 设置不可执行setHandler
+            receiver[RUNARRMETHOD] = 1;
 
-            // 运行方法
-            reData = arrayFunc.apply(receiver, args);
+            // 对sort方法要特殊处理，已应对sort函数参数的问题
+            if (methodName == "sort" && !(args[0] instanceof Array)) {
+                // 备份
+                let backupTarget = receiver.slice();
+
+                // 运行方法
+                reData = arrayFn[methodName].apply(receiver, args);
+
+                // 转换成数组
+                let newArg0 = [],
+                    putId = getRandomId();
+                backupTarget.forEach(e => {
+                    // 查找id
+                    let id = reData.indexOf(e);
+
+                    // 清空相应的数组内数据
+                    reData[id] = putId;
+
+                    // 加入新数组
+                    newArg0.push(id);
+                });
+
+                // 修正参数
+                args = [newArg0];
+            } else {
+                // 运行方法
+                reData = arrayFn[methodName].apply(receiver, args);
+            }
+
+            // 复原状态
+            delete receiver[RUNARRMETHOD];
 
             // 添加修正数据
             eveObj.modify = {

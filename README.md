@@ -6,7 +6,7 @@
 
 大部分兼容stanz4，改良了少量用法，相比stanz4性能和扩展性提升；
 
-# stanz 4
+##stanz 4
 
 融合xml优势，添加数组型结构的操纵方法，全arrayLike式操作；同时拥有了json和xml优势；
 
@@ -14,7 +14,7 @@
 
 相比 stanz3 体积减少，功能增强；
 
-## stanz 3
+### stanz 3
 
 由于 stanz2 沿用了 `emitChange` 机制，导致同步数据的 `entrend` 容易出现问题，所以重构；
 

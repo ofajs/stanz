@@ -6,7 +6,7 @@
 
 大部分兼容stanz4，改良了少量用法，相比stanz4性能和扩展性提升；
 
-##stanz 4
+## stanz 4
 
 融合xml优势，添加数组型结构的操纵方法，全arrayLike式操作；同时拥有了json和xml优势；
 

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, 'normal test');
+    let tester = expect(8, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -39,7 +39,8 @@
     a.push(b);
 
     tester.ok(a[1][0].root == a, "root ok");
-    tester.ok(b.status == "destory", "destory ok");
+    tester.ok(b.root == a, "root ok 2");
+    tester.ok(b.hostkey == 2, "key ok");
 
     let c = stanz(["111", "222", "333"]);
     c.add("444");
@@ -52,6 +53,6 @@
     // 从别处拿走
     a.moveObj = b.aMoveObj;
     tester.ok(!b.aMoveObj, "move's delete ok");
-    tester.ok(a.moveObj.string === mobj.string, "move's add is equal");
+    tester.ok(a.moveObj === mobj, "move's add ok");
 
 })();

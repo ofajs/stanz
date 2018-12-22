@@ -56,12 +56,11 @@
     // 设置同样的值，不会触发update改动
     a.val = "I am a";
 
-    // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
-    // debugger
-    // a[0] = {
-    //     id: "B",
-    //     val: "0000"
-    // };
+    // 修改B，结构是一样的，也不会触发update
+    a[0] = {
+        id: "B",
+        val: "0000"
+    };
 
     a.off('update', errfun);
 

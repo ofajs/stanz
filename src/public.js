@@ -181,6 +181,9 @@ const createXData = (obj, options) => {
 
 // 清除xdata的方法
 let clearXData = (xdata) => {
+    if (!isXData(xdata)) {
+        return;
+    }
     // 干掉parent
     if (xdata.parent) {
         xdata.parent = null;
@@ -207,4 +210,20 @@ let clearXData = (xdata) => {
     xdata[EVES].clear();
 
     xdata[MODIFYIDHOST].clear();
+}
+
+// virData用的数据映射方法
+const mapData = (data, options) => {
+    if (!isUndefined(data[options.key])) {
+        data[options.toKey] = data[options.key];
+        delete data[options.key];
+    }
+
+    for (let k in data) {
+        let d = data[k];
+
+        if (d instanceof Object) {
+            mapData(d, options);
+        }
+    }
 }

@@ -149,7 +149,7 @@ setNotEnumer(XDataFn, {
                             trend
                         } = e;
 
-                        if (trend.fromKey !== expr) {
+                        if (trend.fromKey != expr) {
                             return;
                         }
 
@@ -430,6 +430,65 @@ setNotEnumer(XDataFn, {
         }
 
         return this;
+    },
+    virData(options) {
+        switch (options.type) {
+            case "map":
+                let cloneData = this.object;
+
+                // 重置数据
+                mapData(cloneData, options);
+
+                // 提取关键数据
+                let keyMapObj = {};
+                let reserveKeyMapObj = {};
+                keyMapObj[options.key] = options.toKey;
+                reserveKeyMapObj[options.toKey] = options.key;
+
+                // 转换为xdata
+                cloneData = createXData(cloneData);
+
+                let _thisUpdateFunc;
+                this.on('update', _thisUpdateFunc = e => {
+                    let {
+                        trend
+                    } = e;
+
+                    let tarKey = keyMapObj[trend.key];
+                    if (!isUndefined(tarKey)) {
+                        // 修正trend数据
+                        trend.key = tarKey;
+                        cloneData.entrend(trend);
+                    }
+                });
+
+                cloneData.on('update', e => {
+                    let {
+                        trend
+                    } = e;
+
+                    let tarKey = reserveKeyMapObj[trend.key];
+
+                    if (!isUndefined(tarKey)) {
+                        trend.key = tarKey;
+                        this.entrend(trend);
+                    }
+                });
+
+                // 修正remove方法
+                defineProperty(cloneData, "remove", {
+                    value(...args) {
+                        if (!args.length) {
+                            // 确认删除自身，清除this的函数
+                            this.off('update', _thisUpdateFunc);
+                        }
+                        XDataFn.remove.call(cloneData, ...args);
+                    }
+                });
+
+                return cloneData;
+                break;
+        }
     },
     // 删除相应Key的值
     removeByKey(key) {

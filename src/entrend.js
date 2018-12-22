@@ -128,16 +128,17 @@ const entrend = (options) => {
 
                 // 运行方法
                 reData = arrayFn[methodName].apply(receiver, args);
+                let backupReData = reData.slice();
 
                 // 转换成数组
                 let newArg0 = [],
                     putId = getRandomId();
                 backupTarget.forEach(e => {
                     // 查找id
-                    let id = reData.indexOf(e);
+                    let id = backupReData.indexOf(e);
 
                     // 清空相应的数组内数据
-                    reData[id] = putId;
+                    backupReData[id] = putId;
 
                     // 加入新数组
                     newArg0.push(id);

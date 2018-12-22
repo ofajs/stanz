@@ -67,7 +67,8 @@ setNotEnumer(XDataFn, {
             this.on({
                 event: eventName,
                 callback,
-                data
+                data,
+                count: 1
             });
         }
         return this;

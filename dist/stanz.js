@@ -182,6 +182,9 @@ const createXData = (obj, options) => {
 
 // 清除xdata的方法
 let clearXData = (xdata) => {
+    if (!isXData(xdata)) {
+        return;
+    }
     // 干掉parent
     if (xdata.parent) {
         xdata.parent = null;
@@ -208,6 +211,22 @@ let clearXData = (xdata) => {
     xdata[EVES].clear();
 
     xdata[MODIFYIDHOST].clear();
+}
+
+// virData用的数据映射方法
+const mapData = (data, options) => {
+    if (!isUndefined(data[options.key])) {
+        data[options.toKey] = data[options.key];
+        delete data[options.key];
+    }
+
+    for (let k in data) {
+        let d = data[k];
+
+        if (d instanceof Object) {
+            mapData(d, options);
+        }
+    }
 }
 
 function XData(obj, options = {}) {
@@ -441,7 +460,8 @@ setNotEnumer(XDataFn, {
             this.on({
                 event: eventName,
                 callback,
-                data
+                data,
+                count: 1
             });
         }
         return this;
@@ -659,16 +679,17 @@ const entrend = (options) => {
 
                 // 运行方法
                 reData = arrayFn[methodName].apply(receiver, args);
+                let backupReData = reData.slice();
 
                 // 转换成数组
                 let newArg0 = [],
                     putId = getRandomId();
                 backupTarget.forEach(e => {
                     // 查找id
-                    let id = reData.indexOf(e);
+                    let id = backupReData.indexOf(e);
 
                     // 清空相应的数组内数据
-                    reData[id] = putId;
+                    backupReData[id] = putId;
 
                     // 加入新数组
                     newArg0.push(id);
@@ -1038,7 +1059,7 @@ setNotEnumer(XDataFn, {
                             trend
                         } = e;
 
-                        if (trend.fromKey !== expr) {
+                        if (trend.fromKey != expr) {
                             return;
                         }
 
@@ -1319,6 +1340,65 @@ setNotEnumer(XDataFn, {
         }
 
         return this;
+    },
+    virData(options) {
+        switch (options.type) {
+            case "map":
+                let cloneData = this.object;
+
+                // 重置数据
+                mapData(cloneData, options);
+
+                // 提取关键数据
+                let keyMapObj = {};
+                let reserveKeyMapObj = {};
+                keyMapObj[options.key] = options.toKey;
+                reserveKeyMapObj[options.toKey] = options.key;
+
+                // 转换为xdata
+                cloneData = createXData(cloneData);
+
+                let _thisUpdateFunc;
+                this.on('update', _thisUpdateFunc = e => {
+                    let {
+                        trend
+                    } = e;
+
+                    let tarKey = keyMapObj[trend.key];
+                    if (!isUndefined(tarKey)) {
+                        // 修正trend数据
+                        trend.key = tarKey;
+                        cloneData.entrend(trend);
+                    }
+                });
+
+                cloneData.on('update', e => {
+                    let {
+                        trend
+                    } = e;
+
+                    let tarKey = reserveKeyMapObj[trend.key];
+
+                    if (!isUndefined(tarKey)) {
+                        trend.key = tarKey;
+                        this.entrend(trend);
+                    }
+                });
+
+                // 修正remove方法
+                defineProperty(cloneData, "remove", {
+                    value(...args) {
+                        if (!args.length) {
+                            // 确认删除自身，清除this的函数
+                            this.off('update', _thisUpdateFunc);
+                        }
+                        XDataFn.remove.call(cloneData, ...args);
+                    }
+                });
+
+                return cloneData;
+                break;
+        }
     },
     // 删除相应Key的值
     removeByKey(key) {

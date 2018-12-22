@@ -24,12 +24,12 @@
         }
     });
 
-    let virA = a.virData({
+    let virA = a.virData([{
         // 映射
         type: "map",
         key: "selected",
         toKey: "flash"
-    });
+    }]);
 
     tester.ok(virA.d.flash == 2, 'virData data ok');
 

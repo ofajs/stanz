@@ -55,6 +55,8 @@ const EVES = "_eves_" + getRandomId();
 const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 // 存放modifyId的寄宿对象key
 const MODIFYIDHOST = "_modify_" + getRandomId();
+// modifyId打扫器寄存变量
+const MODIFYTIMER = "_modify_timer_" + getRandomId();
 // watch寄宿对象
 const WATCHHOST = "_watch_" + getRandomId();
 // 同步数据寄宿对象key
@@ -178,6 +180,36 @@ const createXData = (obj, options) => {
     return redata;
 };
 
+// 清除xdata的方法
+let clearXData = (xdata) => {
+    // 干掉parent
+    if (xdata.parent) {
+        xdata.parent = null;
+    }
+    // 改变状态
+    xdata.status = "destory";
+    // 去掉hostkey
+    xdata.hostkey = null;
+
+    // 开始清扫所有绑定
+    // 先清扫 sync
+    let syncIt = xdata[SYNCHOST].keys();
+    let d = syncIt.next();
+    while (!d.done) {
+        let opp = d.value;
+        xdata.unsync(opp);
+        d = syncIt.next();
+    }
+
+    // 清扫 watch
+    xdata[WATCHHOST].clear();
+
+    // 清扫 on
+    xdata[EVES].clear();
+
+    xdata[MODIFYIDHOST].clear();
+}
+
 function XData(obj, options = {}) {
     let proxyThis = new Proxy(this, XDataHandler);
     // let proxyThis = this;
@@ -214,6 +246,8 @@ function XData(obj, options = {}) {
         [EVES]: new Map(),
         // modifyId存放寄宿对象
         [MODIFYIDHOST]: new Set(),
+        // modifyId清理器的断定变量
+        [MODIFYTIMER]: 0,
         // watch寄宿对象
         [WATCHHOST]: new Map(),
         // 同步数据寄宿对象
@@ -520,6 +554,9 @@ const entrend = (options) => {
     // 自身添加modifyId
     receiver[MODIFYIDHOST].add(modifyId);
 
+    // 准备打扫函数
+    clearModifyIdHost(receiver);
+
     // 返回的数据
     let reData = true;
 
@@ -534,6 +571,13 @@ const entrend = (options) => {
             // 如果相等的话，就不要折腾了
             if (oldVal === value) {
                 return true;
+            }
+
+            // 如果value是XData就删除原来的数据，自己变成普通对象
+            if (isXData(value)) {
+                let valueObject = value.object;
+                value.remove();
+                value = valueObject
             }
 
             let isFirst;
@@ -571,6 +615,9 @@ const entrend = (options) => {
             // 删除值
             delete target[key];
 
+            // 清理数据
+            clearXData(oldVal);
+
             // 添加修正数据
             eveObj.modify = {
                 // change 改动
@@ -586,6 +633,21 @@ const entrend = (options) => {
                 methodName,
                 args
             } = options;
+
+            // 根据方法对新添加参数修正
+            switch (methodName) {
+                case "splice":
+                case "push":
+                case "unshift":
+                    args = args.map(e => {
+                        if (isXData(e)) {
+                            let eObj = e.object;
+                            e.remove();
+                            e = eObj;
+                        }
+                        return createXData(e);
+                    });
+            }
 
             // 设置不可执行setHandler
             receiver[RUNARRMETHOD] = 1;
@@ -622,6 +684,18 @@ const entrend = (options) => {
             // 复原状态
             delete receiver[RUNARRMETHOD];
 
+            // 根据方法是否清除返回的数据
+            switch (methodName) {
+                case "splice":
+                case "pop":
+                case "shift":
+                    // 清理被裁剪的数据
+                    reData.forEach(e => {
+                        clearXData(e);
+                    });
+                    break;
+            }
+
             // 添加修正数据
             eveObj.modify = {
                 // change 改动
@@ -638,6 +712,48 @@ const entrend = (options) => {
     receiver.emit(eveObj);
 
     return reData;
+}
+
+// 清理modifyIdHost的方法，每次清理一半，少于2个就一口气清理
+const clearModifyIdHost = (xdata) => {
+    // 判断是否开始打扫了
+    if (xdata[MODIFYTIMER]) {
+        return;
+    }
+
+    // 琐起清洁器
+    xdata[MODIFYTIMER] = 1;
+
+    let clearFunc = () => {
+        // 获取存量长度
+        let {
+            size
+        } = xdata[MODIFYIDHOST];
+
+        if (size > 2) {
+            // 清理一半数量，从新跑回去清理函数
+            let halfSzie = Math.floor(size / 2);
+
+            // 清理一半数量的modifyId
+            xdata[MODIFYIDHOST].forEach((e, i) => {
+                if (i < halfSzie) {
+                    xdata[MODIFYIDHOST].delete(e);
+                }
+            });
+
+            // 计时递归
+            setTimeout(clearFunc, 3000);
+        } else {
+            // 小于两个就清理掉啦
+            xdata[MODIFYIDHOST].clear();
+            // 解锁
+            xdata[MODIFYTIMER] = 0;
+            // 清理函数
+            clearFunc = null;
+        }
+    }
+
+    setTimeout(clearFunc, 3000);
 }
 
 // 数组通用方法
@@ -1204,6 +1320,62 @@ setNotEnumer(XDataFn, {
 
         return this;
     },
+    // 删除相应Key的值
+    removeByKey(key) {
+        // 删除子数据
+        if (/\D/.test(key)) {
+            // 非数字
+            delete this[key];
+        } else {
+            // 纯数字，术语数组内元素，通过splice删除
+            this.splice(parseInt(key), 1);
+        }
+    },
+    // 删除值
+    remove(value) {
+        if (isUndefined(value)) {
+            // 删除自身
+            let {
+                parent
+            } = this;
+
+            if (parent) {
+                // 删除
+                parent.removeByKey(this.hostkey);
+            } else {
+                clearXData(this);
+            }
+        } else {
+            if (isXData(value)) {
+                (value.parent == this) && this.removeByKey(value.hostkey);
+            } else {
+                let tarId = this.indexOf(value);
+                if (tarId > -1) {
+                    this.removeByKey(tarId);
+                }
+            }
+        }
+    },
+    // push的去重版本
+    add(data) {
+        !this.includes(data) && this.push(data);
+    },
+    clone() {
+        return createXData(this.object);
+    },
+    reset(value) {
+        let valueKeys = Object.keys(value);
+
+        // 删除本身不存在的key
+        Object.keys(this).forEach(k => {
+            if (!valueKeys.includes(k) && k !== "length") {
+                delete this[k];
+            }
+        });
+
+        assign(this, value);
+        return this;
+    }
 });
 
 

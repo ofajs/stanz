@@ -431,6 +431,62 @@ setNotEnumer(XDataFn, {
 
         return this;
     },
+    // 删除相应Key的值
+    removeByKey(key) {
+        // 删除子数据
+        if (/\D/.test(key)) {
+            // 非数字
+            delete this[key];
+        } else {
+            // 纯数字，术语数组内元素，通过splice删除
+            this.splice(parseInt(key), 1);
+        }
+    },
+    // 删除值
+    remove(value) {
+        if (isUndefined(value)) {
+            // 删除自身
+            let {
+                parent
+            } = this;
+
+            if (parent) {
+                // 删除
+                parent.removeByKey(this.hostkey);
+            } else {
+                clearXData(this);
+            }
+        } else {
+            if (isXData(value)) {
+                (value.parent == this) && this.removeByKey(value.hostkey);
+            } else {
+                let tarId = this.indexOf(value);
+                if (tarId > -1) {
+                    this.removeByKey(tarId);
+                }
+            }
+        }
+    },
+    // push的去重版本
+    add(data) {
+        !this.includes(data) && this.push(data);
+    },
+    clone() {
+        return createXData(this.object);
+    },
+    reset(value) {
+        let valueKeys = Object.keys(value);
+
+        // 删除本身不存在的key
+        Object.keys(this).forEach(k => {
+            if (!valueKeys.includes(k) && k !== "length") {
+                delete this[k];
+            }
+        });
+
+        assign(this, value);
+        return this;
+    }
 });
 
 

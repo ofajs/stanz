@@ -54,6 +54,8 @@ const EVES = "_eves_" + getRandomId();
 const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 // 存放modifyId的寄宿对象key
 const MODIFYIDHOST = "_modify_" + getRandomId();
+// modifyId打扫器寄存变量
+const MODIFYTIMER = "_modify_timer_" + getRandomId();
 // watch寄宿对象
 const WATCHHOST = "_watch_" + getRandomId();
 // 同步数据寄宿对象key
@@ -176,3 +178,33 @@ const createXData = (obj, options) => {
 
     return redata;
 };
+
+// 清除xdata的方法
+let clearXData = (xdata) => {
+    // 干掉parent
+    if (xdata.parent) {
+        xdata.parent = null;
+    }
+    // 改变状态
+    xdata.status = "destory";
+    // 去掉hostkey
+    xdata.hostkey = null;
+
+    // 开始清扫所有绑定
+    // 先清扫 sync
+    let syncIt = xdata[SYNCHOST].keys();
+    let d = syncIt.next();
+    while (!d.done) {
+        let opp = d.value;
+        xdata.unsync(opp);
+        d = syncIt.next();
+    }
+
+    // 清扫 watch
+    xdata[WATCHHOST].clear();
+
+    // 清扫 on
+    xdata[EVES].clear();
+
+    xdata[MODIFYIDHOST].clear();
+}

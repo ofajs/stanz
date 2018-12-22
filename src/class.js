@@ -34,6 +34,8 @@ function XData(obj, options = {}) {
         [EVES]: new Map(),
         // modifyId存放寄宿对象
         [MODIFYIDHOST]: new Set(),
+        // modifyId清理器的断定变量
+        [MODIFYTIMER]: 0,
         // watch寄宿对象
         [WATCHHOST]: new Map(),
         // 同步数据寄宿对象

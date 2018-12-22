@@ -1,4 +1,5 @@
 ((glo) => {
+"use strict";
 // public function
 // 获取随机id
 const getRandomId = () => Math.random().toString(32).substr(2);
@@ -569,7 +570,7 @@ const entrend = (options) => {
     } else {
         // 查看是否已经存在这个modifyId了，存在就不折腾
         if (receiver[MODIFYIDHOST].has(modifyId)) {
-            return;
+            return true;
         };
     }
 

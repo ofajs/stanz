@@ -519,7 +519,7 @@ const entrend = (options) => {
     } else {
         // 查看是否已经存在这个modifyId了，存在就不折腾
         if (receiver[MODIFYIDHOST].has(modifyId)) {
-            return;
+            return true;
         };
     }
 

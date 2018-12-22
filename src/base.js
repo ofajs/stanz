@@ -1,4 +1,5 @@
 ((glo) => {
+"use strict";
 //<!--public-->
 
 //<!--class-->

@@ -56,6 +56,8 @@ const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 const MODIFYIDHOST = "_modify_" + getRandomId();
 // watch寄宿对象
 const WATCHHOST = "_watch_" + getRandomId();
+// 同步数据寄宿对象key
+const SYNCHOST = "_synchost_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;

@@ -6,9 +6,16 @@ let XDataHandler = {
             return Reflect.set(target, key, value, receiver);
         }
 
+        // 获取到_entrendModifyId就立刻删除
+        let modifyId = target._entrendModifyId;
+        if (modifyId) {
+            delete target._entrendModifyId;
+        }
+
         // 其他方式就要通过主体entrend调整
         return entrend({
             genre: "handleSet",
+            modifyId,
             target,
             key,
             value,
@@ -20,6 +27,12 @@ let XDataHandler = {
         // 数组函数运行中直接通过
         if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
             return Reflect.deleteProperty(target, key);
+        }
+
+        // 获取到_entrendModifyId就立刻删除
+        let modifyId = target._entrendModifyId;
+        if (modifyId) {
+            delete target._entrendModifyId;
         }
 
         // 获取receiver
@@ -42,6 +55,7 @@ let XDataHandler = {
 
         return entrend({
             genre: "handleDelete",
+            modifyId,
             target,
             key,
             receiver

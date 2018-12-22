@@ -57,6 +57,8 @@ const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
 const MODIFYIDHOST = "_modify_" + getRandomId();
 // watch寄宿对象
 const WATCHHOST = "_watch_" + getRandomId();
+// 同步数据寄宿对象key
+const SYNCHOST = "_synchost_" + getRandomId();
 
 // business function
 let isXData = obj => obj instanceof XData;
@@ -213,7 +215,9 @@ function XData(obj, options = {}) {
         // modifyId存放寄宿对象
         [MODIFYIDHOST]: new Set(),
         // watch寄宿对象
-        [WATCHHOST]: new Map()
+        [WATCHHOST]: new Map(),
+        // 同步数据寄宿对象
+        [SYNCHOST]: new Set()
     };
 
     // 设置不可枚举数据
@@ -512,6 +516,9 @@ const entrend = (options) => {
         };
     }
 
+    // 返回的数据
+    let reData = true;
+
     // 事件实例生成
     let eveObj = new XDataEvent('update', receiver);
 
@@ -571,13 +578,33 @@ const entrend = (options) => {
             };
             break;
         case "arrayMethod":
+            let {
+                methodName,
+                args
+            } = options;
+
+            // 相应的数组方法
+            let arrayFunc = Array.prototype[methodName];
+
+            // 运行方法
+            reData = arrayFunc.apply(receiver, args);
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: "arrayMethod",
+                methodName,
+                modifyId,
+                args
+            };
 
             break;
     }
 
-    target.emit(eveObj);
+    receiver.emit(eveObj);
 
-    return true;
+    return reData;
 }
 
 // 数组通用方法
@@ -594,6 +621,52 @@ const entrend = (options) => {
     }
 });
 
+// 几个会改变数据结构的方法
+['pop', 'push', 'reverse', 'splice', 'shift', 'unshift'].forEach(methodName => {
+    // 原来的数组方法
+    let arrayFnFunc = Array.prototype[methodName];
+
+    // 存在方法的情况下加入
+    if (arrayFnFunc) {
+        defineProperty(XDataFn, methodName, {
+            writable: true,
+            value(...args) {
+                // 设置不可执行setHandler
+                this[RUNARRMETHOD] = 1;
+
+                // 获取到_entrendModifyId就立刻删除
+                let modifyId = this._entrendModifyId;
+                if (modifyId) {
+                    delete this._entrendModifyId;
+                }
+
+                // 临时寄存对象
+                // let tempObj = {
+                //     genre: "arrayMethod",
+                //     args,
+                //     modifyId,
+                //     methodName,
+                //     // 返回的数据
+                //     reData: "",
+                // };
+
+                // this.__runtemp = tempObj;
+
+                // return tempObj.reData;
+
+                // 其他方式就要通过主体entrend调整
+                return entrend({
+                    genre: "arrayMethod",
+                    args,
+                    methodName,
+                    modifyId,
+                    receiver: this
+                });
+            }
+        });
+    }
+});
+
 let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
@@ -602,9 +675,16 @@ let XDataHandler = {
             return Reflect.set(target, key, value, receiver);
         }
 
+        // 获取到_entrendModifyId就立刻删除
+        let modifyId = target._entrendModifyId;
+        if (modifyId) {
+            delete target._entrendModifyId;
+        }
+
         // 其他方式就要通过主体entrend调整
         return entrend({
             genre: "handleSet",
+            modifyId,
             target,
             key,
             value,
@@ -616,6 +696,12 @@ let XDataHandler = {
         // 数组函数运行中直接通过
         if (/^_.+/.test(key) || target[RUNARRMETHOD]) {
             return Reflect.deleteProperty(target, key);
+        }
+
+        // 获取到_entrendModifyId就立刻删除
+        let modifyId = target._entrendModifyId;
+        if (modifyId) {
+            delete target._entrendModifyId;
         }
 
         // 获取receiver
@@ -638,6 +724,7 @@ let XDataHandler = {
 
         return entrend({
             genre: "handleDelete",
+            modifyId,
             target,
             key,
             receiver
@@ -910,8 +997,44 @@ setNotEnumer(XDataFn, {
 
         return this;
     },
+    entrend(options) {
+        // 目标数据
+        let target = this;
+
+        let {
+            modifyId
+        } = options;
+
+        if (!modifyId) {
+            throw "illegal trend data";
+        }
+
+        // 获取target
+        options.keys.forEach(k => {
+            target = target[k];
+        });
+
+        // 添加_entrendModifyId
+        target._entrendModifyId = modifyId;
+
+        switch (options.genre) {
+            case "arrayMethod":
+                target[options.methodName](...options.args);
+                break;
+            case "delete":
+                delete target[options.key];
+                break;
+            default:
+                target[options.key] = options.value;
+                break;
+        }
+
+        return this;
+    },
     // 同步数据的方法
-    sync() {},
+    sync(xdata, options, cover = false) {
+
+    },
     unsync() {}
 });
 

@@ -263,8 +263,44 @@ setNotEnumer(XDataFn, {
 
         return this;
     },
+    entrend(options) {
+        // 目标数据
+        let target = this;
+
+        let {
+            modifyId
+        } = options;
+
+        if (!modifyId) {
+            throw "illegal trend data";
+        }
+
+        // 获取target
+        options.keys.forEach(k => {
+            target = target[k];
+        });
+
+        // 添加_entrendModifyId
+        target._entrendModifyId = modifyId;
+
+        switch (options.genre) {
+            case "arrayMethod":
+                target[options.methodName](...options.args);
+                break;
+            case "delete":
+                delete target[options.key];
+                break;
+            default:
+                target[options.key] = options.value;
+                break;
+        }
+
+        return this;
+    },
     // 同步数据的方法
-    sync() {},
+    sync(xdata, options, cover = false) {
+
+    },
     unsync() {}
 });
 

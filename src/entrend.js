@@ -19,6 +19,9 @@ const entrend = (options) => {
         };
     }
 
+    // 返回的数据
+    let reData = true;
+
     // 事件实例生成
     let eveObj = new XDataEvent('update', receiver);
 
@@ -78,11 +81,31 @@ const entrend = (options) => {
             };
             break;
         case "arrayMethod":
+            let {
+                methodName,
+                args
+            } = options;
+
+            // 相应的数组方法
+            let arrayFunc = Array.prototype[methodName];
+
+            // 运行方法
+            reData = arrayFunc.apply(receiver, args);
+
+            // 添加修正数据
+            eveObj.modify = {
+                // change 改动
+                // set 新增值
+                genre: "arrayMethod",
+                methodName,
+                modifyId,
+                args
+            };
 
             break;
     }
 
-    target.emit(eveObj);
+    receiver.emit(eveObj);
 
-    return true;
+    return reData;
 }

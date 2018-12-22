@@ -37,7 +37,7 @@ function XData(obj, options = {}) {
         // watch寄宿对象
         [WATCHHOST]: new Map(),
         // 同步数据寄宿对象
-        [SYNCHOST]: new Set()
+        [SYNCHOST]: new Map()
     };
 
     // 设置不可枚举数据

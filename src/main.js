@@ -299,9 +299,138 @@ setNotEnumer(XDataFn, {
     },
     // 同步数据的方法
     sync(xdata, options, cover = false) {
+        let optionsType = getType(options);
 
+        let watchFunc, oppWatchFunc;
+
+        switch (optionsType) {
+            case "string":
+                this.watch(watchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        if (trend.fromKey == options) {
+                            xdata.entrend(trend);
+                        }
+                    });
+                });
+                xdata.watch(oppWatchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        if (trend.fromKey == options) {
+                            this.entrend(trend);
+                        }
+                    });
+                });
+                break;
+            case "array":
+                this.watch(watchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        if (options.includes(trend.fromKey)) {
+                            xdata.entrend(trend);
+                        }
+                    });
+                });
+                xdata.watch(oppWatchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        if (options.includes(trend.fromKey)) {
+                            this.entrend(trend);
+                        }
+                    });
+                });
+                break;
+            case "object":
+                // 映射key来绑定值
+                let resOptions = {};
+                Object.keys(options).forEach(k => {
+                    resOptions[options[k]] = k;
+                });
+
+                this.watch(watchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        trend = cloneObject(trend);
+                        let keysOne = trend.fromKey;
+
+                        if (options.hasOwnProperty(keysOne)) {
+                            if (isUndefined(trend.keys[0])) {
+                                trend.key = options[keysOne];
+                            } else {
+                                trend.keys[0] = options[keysOne];
+                            }
+                            xdata.entrend(trend);
+                        }
+                    });
+                });
+
+                xdata.watch(watchFunc = e => {
+                    e.modifys.forEach(trend => {
+
+                        trend = cloneObject(trend);
+
+                        let keysOne = trend.fromKey;
+
+                        if (resOptions.hasOwnProperty(keysOne)) {
+                            if (isUndefined(trend.keys[0])) {
+                                trend.key = resOptions[keysOne];
+                            } else {
+                                trend.keys[0] = resOptions[keysOne];
+                            }
+                            this.entrend(trend);
+                        }
+                    });
+                });
+
+                break;
+            default:
+                // undefined
+                this.watch(watchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        xdata.entrend(trend);
+                    });
+                });
+                xdata.watch(oppWatchFunc = e => {
+                    e.modifys.forEach(trend => {
+                        this.entrend(trend);
+                    });
+                });
+                break;
+        }
+
+        // 双方添加数据对称记录
+        this[SYNCHOST].set(xdata, {
+            // opp: xdata,
+            oppWatchFunc,
+            watchFunc
+        });
+        xdata[SYNCHOST].set(this, {
+            // opp: this,
+            oppWatchFunc: watchFunc,
+            watchFunc: oppWatchFunc
+        });
+
+        // 覆盖数据
+        cover && assign(xdata, this.object);
+
+        return this;
     },
-    unsync() {}
+    // 注销sync绑定
+    unsync(xdataObj) {
+        let syncData = this[SYNCHOST].get(xdataObj);
+
+        if (syncData) {
+            let {
+                oppWatchFunc,
+                watchFunc
+            } = syncData;
+
+            // 解除绑定的watch函数
+            this.unwatch(watchFunc);
+            xdataObj.unwatch(oppWatchFunc);
+            this[SYNCHOST].delete(xdataObj);
+            xdataObj[SYNCHOST].delete(this);
+        } else {
+            console.warn("not found => ", xdataObj);
+        }
+
+        return this;
+    },
 });
 
 

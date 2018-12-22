@@ -11,13 +11,17 @@ const entrend = (options) => {
 
     // 判断modifyId
     if (!modifyId) {
+        // 生成随机modifyId
         modifyId = getRandomId();
     } else {
         // 查看是否已经存在这个modifyId了，存在就不折腾
-        if (target[MODIFYIDHOST].has(modifyId)) {
+        if (receiver[MODIFYIDHOST].has(modifyId)) {
             return;
         };
     }
+
+    // 自身添加modifyId
+    receiver[MODIFYIDHOST].add(modifyId);
 
     // 返回的数据
     let reData = true;

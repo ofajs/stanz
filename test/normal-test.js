@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, 'normal test');
+    let tester = expect(9, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -53,5 +53,9 @@
     a.moveObj = b.aMoveObj;
     tester.ok(!b.aMoveObj, "move's delete ok");
     tester.ok(a.moveObj.string === mobj.string, "move's add is equal");
+
+    // 获取next
+    tester.ok(a[1].next === a[2], "next ok");
+    tester.ok(a[1].prev === a[0], "prev ok");
 
 })();

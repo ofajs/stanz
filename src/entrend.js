@@ -168,8 +168,6 @@ const entrend = (options) => {
 
             // 添加修正数据
             eveObj.modify = {
-                // change 改动
-                // set 新增值
                 genre: "arrayMethod",
                 methodName,
                 modifyId,

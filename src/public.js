@@ -197,12 +197,9 @@ let clearXData = (xdata) => {
 
     // 开始清扫所有绑定
     // 先清扫 sync
-    let syncIt = xdata[SYNCHOST].keys();
-    let d = syncIt.next();
-    while (!d.done) {
+    for (let d of xdata[SYNCHOST].keys()) {
         let opp = d.value;
         xdata.unsync(opp);
-        d = syncIt.next();
     }
 
     // 清扫 watch

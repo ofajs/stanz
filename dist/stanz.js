@@ -46,9 +46,6 @@ const setNotEnumer = (tar, obj) => {
     }
 }
 
-// 判断两个值是否相等，主要针对xdata
-let isEqual = (d1, d2) => d1 === d2;
-
 //---xdata-start---
 
 // common
@@ -1117,7 +1114,7 @@ setNotEnumer(XDataFn, {
                             isEq = 0;
                         }
                         isEq && sData.some((e, i) => {
-                            if (!isEqual(oldVals[i], e)) {
+                            if (!(oldVals[i] == e)) {
                                 isEq = 0;
                                 return true;
                             }

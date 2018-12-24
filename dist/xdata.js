@@ -1066,7 +1066,7 @@ setNotEnumer(XDataFn, {
                             isEq = 0;
                         }
                         isEq && sData.some((e, i) => {
-                            if (!isEqual(oldVals[i], e)) {
+                            if (!(oldVals[i] == e)) {
                                 isEq = 0;
                                 return true;
                             }

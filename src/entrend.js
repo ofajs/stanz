@@ -110,6 +110,10 @@ const entrend = (options) => {
                 case "unshift":
                     args = args.map(e => {
                         if (isXData(e)) {
+                            // 是xdata的话，干掉原来的数据
+                            if (!e.parent) {
+                                return e;
+                            }
                             let eObj = e.object;
                             e.remove();
                             e = eObj;

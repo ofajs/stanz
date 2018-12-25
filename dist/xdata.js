@@ -309,6 +309,14 @@ defineProperties(XDataEvent.prototype, {
                         modifyId
                     } = modify;
 
+                    // 修正args，将XData还原成object对象
+                    args = args.map(e => {
+                        if (isXData(e)) {
+                            return e.object;
+                        }
+                        return e;
+                    });
+
                     assign(reobj, {
                         methodName,
                         args,
@@ -616,6 +624,10 @@ const entrend = (options) => {
                 case "unshift":
                     args = args.map(e => {
                         if (isXData(e)) {
+                            // 是xdata的话，干掉原来的数据
+                            if (!e.parent) {
+                                return e;
+                            }
                             let eObj = e.object;
                             e.remove();
                             e = eObj;
@@ -796,11 +808,23 @@ assign(arrayFn, {
     }
 });
 
+// 私有属性正则
+const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
 let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (/^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
+        if (PRIREG.test(key)) {
+            return Reflect.set(target, key, value, receiver);
+        }
+
+        // 数组内组合，修改hostkey和parent
+        if (target.hasOwnProperty(RUNARRMETHOD)) {
+            if (isXData(value)) {
+                value.parent = receiver;
+                value.hostkey = key;
+                value.status = "binding";
+            }
             return Reflect.set(target, key, value, receiver);
         }
 
@@ -1350,7 +1374,8 @@ setNotEnumer(XDataFn, {
                     }
                 });
 
-                cloneData.on('update', e => {
+                let selfUpdataFunc;
+                cloneData.on('update', selfUpdataFunc = e => {
                     let {
                         trend
                     } = e;
@@ -1369,13 +1394,14 @@ setNotEnumer(XDataFn, {
                         if (!args.length) {
                             // 确认删除自身，清除this的函数
                             this.off('update', _thisUpdateFunc);
+                            cloneData.off('update', selfUpdataFunc);
+                            cloneData = null;
                         }
                         XDataFn.remove.call(cloneData, ...args);
                     }
                 });
 
                 return cloneData;
-                break;
         }
     },
     // 删除相应Key的值

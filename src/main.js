@@ -487,7 +487,8 @@ setNotEnumer(XDataFn, {
                     }
                 });
 
-                cloneData.on('update', e => {
+                let selfUpdataFunc;
+                cloneData.on('update', selfUpdataFunc = e => {
                     let {
                         trend
                     } = e;
@@ -506,13 +507,14 @@ setNotEnumer(XDataFn, {
                         if (!args.length) {
                             // 确认删除自身，清除this的函数
                             this.off('update', _thisUpdateFunc);
+                            cloneData.off('update', selfUpdataFunc);
+                            cloneData = null;
                         }
                         XDataFn.remove.call(cloneData, ...args);
                     }
                 });
 
                 return cloneData;
-                break;
         }
     },
     // 删除相应Key的值

@@ -1209,13 +1209,18 @@ setNotEnumer(XDataFn, {
         return this;
     },
     // 同步数据的方法
-    sync(xdata, options, cover = false) {
+    sync(xdata, options, cover) {
         let optionsType = getType(options);
 
         let watchFunc, oppWatchFunc;
 
         switch (optionsType) {
             case "string":
+                // 单键覆盖
+                if (cover) {
+                    xdata[options] = this[options];
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         if (trend.fromKey == options) {
@@ -1232,6 +1237,13 @@ setNotEnumer(XDataFn, {
                 });
                 break;
             case "array":
+                // 数组内的键覆盖
+                if (cover) {
+                    options.forEach(k => {
+                        xdata[k] = this[k];
+                    });
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         if (options.includes(trend.fromKey)) {
@@ -1248,11 +1260,23 @@ setNotEnumer(XDataFn, {
                 });
                 break;
             case "object":
+                let optionsKeys = Object.keys(options);
+
                 // 映射key来绑定值
                 let resOptions = {};
-                Object.keys(options).forEach(k => {
-                    resOptions[options[k]] = k;
-                });
+
+                // 映射对象内的数据合并
+                if (cover) {
+                    optionsKeys.forEach(k => {
+                        let oppK = options[k];
+                        xdata[oppK] = this[k];
+                        resOptions[oppK] = k;
+                    });
+                } else {
+                    optionsKeys.forEach(k => {
+                        resOptions[options[k]] = k;
+                    });
+                }
 
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
@@ -1291,6 +1315,10 @@ setNotEnumer(XDataFn, {
                 break;
             default:
                 // undefined
+                if (cover) {
+                    assign(xdata, this.object);
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         xdata.entrend(trend);
@@ -1315,9 +1343,6 @@ setNotEnumer(XDataFn, {
             oppWatchFunc: watchFunc,
             watchFunc: oppWatchFunc
         });
-
-        // 覆盖数据
-        cover && assign(xdata, this.object);
 
         return this;
     },

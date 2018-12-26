@@ -1,8 +1,20 @@
+// 私有属性正则
+const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
 let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (/^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
+        if (PRIREG.test(key)) {
+            return Reflect.set(target, key, value, receiver);
+        }
+
+        // 数组内组合，修改hostkey和parent
+        if (target.hasOwnProperty(RUNARRMETHOD)) {
+            if (isXData(value)) {
+                value.parent = receiver;
+                value.hostkey = key;
+                value.status = "binding";
+            }
             return Reflect.set(target, key, value, receiver);
         }
 

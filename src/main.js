@@ -183,45 +183,54 @@ setNotEnumer(XDataFn, {
                     });
                     break;
                 case "seekOri":
-                    // 判断是否进入nextTick
-                    if (tarExprObj.isNextTick) {
-                        return;
-                    }
-
                     // 先记录旧的数据
-                    let oldVals = this.seek(expr);
+                    tarExprObj.oldVals = this.seek(expr);
 
-                    // 锁上
-                    tarExprObj.isNextTick = 1;
-
-                    nextTick(() => {
-                        let sData = this.seek(expr);
-
-                        // 判断是否相等
-                        let isEq = 1;
-                        if (sData.length != oldVals.length) {
-                            isEq = 0;
+                    this.on('update', updateFunc = e => {
+                        // 判断是否进入nextTick
+                        if (tarExprObj.isNextTick) {
+                            return;
                         }
-                        isEq && sData.some((e, i) => {
-                            if (!(oldVals[i] == e)) {
+
+                        // 锁上
+                        tarExprObj.isNextTick = 1;
+
+                        nextTick(() => {
+                            let {
+                                oldVals
+                            } = tarExprObj;
+
+                            let sData = this.seek(expr);
+
+                            // 判断是否相等
+                            let isEq = 1;
+                            if (sData.length != oldVals.length) {
                                 isEq = 0;
-                                return true;
                             }
-                        });
-
-                        // 不相等就触发callback
-                        if (!isEq) {
-                            tarExprObj.arr.forEach(callback => {
-                                callback.call(this, {
-                                    expr,
-                                    old: oldVals,
-                                    val: sData
-                                });
+                            isEq && sData.some((e, i) => {
+                                if (!(oldVals[i] == e)) {
+                                    isEq = 0;
+                                    return true;
+                                }
                             });
-                        }
 
-                        // 解锁
-                        tarExprObj.isNextTick = 0;
+                            // 不相等就触发callback
+                            if (!isEq) {
+                                tarExprObj.arr.forEach(callback => {
+                                    callback.call(this, {
+                                        expr,
+                                        old: oldVals,
+                                        val: sData
+                                    });
+                                });
+                            }
+
+                            // 替换旧值
+                            tarExprObj.oldVals = sData;
+
+                            // 解锁
+                            tarExprObj.isNextTick = 0;
+                        });
                     });
                     break;
             }
@@ -254,7 +263,7 @@ setNotEnumer(XDataFn, {
             tarExprObj.arr.delete(callback);
 
             // 判断arr是否清空，是的话回收update事件绑定
-            if (!tarExprObj.arr.length) {
+            if (!tarExprObj.arr.size) {
                 this.off('update', tarExprObj.updateFunc);
                 delete tarExprObj.updateFunc;
                 delete this[WATCHHOST].delete(expr);
@@ -298,13 +307,18 @@ setNotEnumer(XDataFn, {
         return this;
     },
     // 同步数据的方法
-    sync(xdata, options, cover = false) {
+    sync(xdata, options, cover) {
         let optionsType = getType(options);
 
         let watchFunc, oppWatchFunc;
 
         switch (optionsType) {
             case "string":
+                // 单键覆盖
+                if (cover) {
+                    xdata[options] = this[options];
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         if (trend.fromKey == options) {
@@ -321,6 +335,13 @@ setNotEnumer(XDataFn, {
                 });
                 break;
             case "array":
+                // 数组内的键覆盖
+                if (cover) {
+                    options.forEach(k => {
+                        xdata[k] = this[k];
+                    });
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         if (options.includes(trend.fromKey)) {
@@ -337,11 +358,23 @@ setNotEnumer(XDataFn, {
                 });
                 break;
             case "object":
+                let optionsKeys = Object.keys(options);
+
                 // 映射key来绑定值
                 let resOptions = {};
-                Object.keys(options).forEach(k => {
-                    resOptions[options[k]] = k;
-                });
+
+                // 映射对象内的数据合并
+                if (cover) {
+                    optionsKeys.forEach(k => {
+                        let oppK = options[k];
+                        xdata[oppK] = this[k];
+                        resOptions[oppK] = k;
+                    });
+                } else {
+                    optionsKeys.forEach(k => {
+                        resOptions[options[k]] = k;
+                    });
+                }
 
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
@@ -380,6 +413,10 @@ setNotEnumer(XDataFn, {
                 break;
             default:
                 // undefined
+                if (cover) {
+                    assign(xdata, this.object);
+                }
+
                 this.watch(watchFunc = e => {
                     e.modifys.forEach(trend => {
                         xdata.entrend(trend);
@@ -404,9 +441,6 @@ setNotEnumer(XDataFn, {
             oppWatchFunc: watchFunc,
             watchFunc: oppWatchFunc
         });
-
-        // 覆盖数据
-        cover && assign(xdata, this.object);
 
         return this;
     },
@@ -462,7 +496,8 @@ setNotEnumer(XDataFn, {
                     }
                 });
 
-                cloneData.on('update', e => {
+                let selfUpdataFunc;
+                cloneData.on('update', selfUpdataFunc = e => {
                     let {
                         trend
                     } = e;
@@ -481,13 +516,14 @@ setNotEnumer(XDataFn, {
                         if (!args.length) {
                             // 确认删除自身，清除this的函数
                             this.off('update', _thisUpdateFunc);
+                            cloneData.off('update', selfUpdataFunc);
+                            cloneData = null;
                         }
                         XDataFn.remove.call(cloneData, ...args);
                     }
                 });
 
                 return cloneData;
-                break;
         }
     },
     // 删除相应Key的值

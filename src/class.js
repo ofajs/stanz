@@ -129,6 +129,14 @@ defineProperties(XDataEvent.prototype, {
                         modifyId
                     } = modify;
 
+                    // 修正args，将XData还原成object对象
+                    args = args.map(e => {
+                        if (isXData(e)) {
+                            return e.object;
+                        }
+                        return e;
+                    });
+
                     assign(reobj, {
                         methodName,
                         args,

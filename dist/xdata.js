@@ -1065,11 +1065,12 @@ setNotEnumer(XDataFn, {
                         nextTick(() => {
                             // 监听整个数据
                             tarExprObj.arr.forEach(callback => {
+                                let val = this[expr];
                                 callback.call(this, {
                                     expr,
-                                    val: this[expr],
+                                    val,
                                     modifys: Array.from(tarExprObj.modifys)
-                                });
+                                }, val);
                             });
 
                             // 事后清空modifys

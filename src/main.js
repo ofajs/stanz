@@ -467,23 +467,21 @@ setNotEnumer(XDataFn, {
         return this;
     },
     virData(options) {
+        // 转换为xdata
+        let cloneData = this.object;
+        mapData(cloneData, options);
+        cloneData = createXData(cloneData);
+
+        let _thisUpdateFunc, selfUpdataFunc;
         switch (options.type) {
-            case "map":
-                let cloneData = this.object;
-
-                // 重置数据
-                mapData(cloneData, options);
-
+            case "mapKey":
                 // 提取关键数据
-                let keyMapObj = {};
+                let keyMapObj = options.mapping;
                 let reserveKeyMapObj = {};
-                keyMapObj[options.key] = options.toKey;
-                reserveKeyMapObj[options.toKey] = options.key;
+                for (let k in keyMapObj) {
+                    reserveKeyMapObj[keyMapObj[k]] = k;
+                }
 
-                // 转换为xdata
-                cloneData = createXData(cloneData);
-
-                let _thisUpdateFunc;
                 this.on('update', _thisUpdateFunc = e => {
                     let {
                         trend
@@ -493,11 +491,9 @@ setNotEnumer(XDataFn, {
                     if (!isUndefined(tarKey)) {
                         // 修正trend数据
                         trend.key = tarKey;
-                        cloneData.entrend(trend);
                     }
+                    cloneData.entrend(trend);
                 });
-
-                let selfUpdataFunc;
                 cloneData.on('update', selfUpdataFunc = e => {
                     let {
                         trend
@@ -507,25 +503,72 @@ setNotEnumer(XDataFn, {
 
                     if (!isUndefined(tarKey)) {
                         trend.key = tarKey;
-                        this.entrend(trend);
                     }
+                    this.entrend(trend);
+                });
+                break;
+            case "mapValue":
+                var {
+                    mapping,
+                    key
+                } = options;
+                var reserveMapping = {};
+
+                Object.keys(mapping).forEach(k => {
+                    let k2 = mapping[k];
+                    !isUndefined(k2) && (reserveMapping[k2] = k);
                 });
 
-                // 修正remove方法
-                defineProperty(cloneData, "remove", {
-                    value(...args) {
-                        if (!args.length) {
-                            // 确认删除自身，清除this的函数
-                            this.off('update', _thisUpdateFunc);
-                            cloneData.off('update', selfUpdataFunc);
-                            cloneData = null;
+                this.on('update', _thisUpdateFunc = e => {
+                    let {
+                        trend
+                    } = e;
+
+                    if (trend.key == key) {
+                        let val = trend.value;
+                        if (mapping.hasOwnProperty(val)) {
+                            // 修正value
+                            trend.value = mapping[val];
                         }
-                        XDataFn.remove.call(cloneData, ...args);
                     }
-                });
+                    
+                    // 同步
+                    cloneData.entrend(trend);
 
-                return cloneData;
+                });
+                cloneData.on('update', selfUpdataFunc = e => {
+                    let {
+                        trend
+                    } = e;
+
+                    if (trend.key == key) {
+                        let val = trend.value;
+                        if (reserveMapping.hasOwnProperty(val)) {
+                            // 修正value
+                            trend.value = reserveMapping[val];
+                        }
+                    }
+
+                    // 同步
+                    this.entrend(trend);
+                });
+                break;
         }
+
+        // 修正remove方法
+        defineProperty(cloneData, "remove", {
+            value(...args) {
+                if (!args.length) {
+                    // 确认删除自身，清除this的函数
+                    this.off('update', _thisUpdateFunc);
+                    cloneData.off('update', selfUpdataFunc);
+                    _thisUpdateFunc = selfUpdataFunc = cloneData = null;
+                }
+                XDataFn.remove.call(cloneData, ...args);
+            }
+        });
+
+        return cloneData;
     },
     // 删除相应Key的值
     removeByKey(key) {

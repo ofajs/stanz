@@ -209,16 +209,38 @@ let clearXData = (xdata) => {
 
 // virData用的数据映射方法
 const mapData = (data, options) => {
-    if (!isUndefined(data[options.key])) {
-        data[options.toKey] = data[options.key];
-        delete data[options.key];
-    }
-
-    for (let k in data) {
-        let d = data[k];
-
-        if (d instanceof Object) {
-            mapData(d, options);
-        }
+    let {
+        key,
+        type,
+        mapping
+    } = options;
+    switch (type) {
+        case "mapKey":
+            Object.keys(data).forEach(k => {
+                let val = data[k];
+                if (mapping[k]) {
+                    data[mapping[k]] = val;
+                    delete data[k];
+                }
+                switch (getType(val)) {
+                    case "object":
+                        mapData(val, options);
+                        break;
+                }
+            });
+            break;
+        case "mapValue":
+            Object.keys(data).forEach(k => {
+                let val = data[k];
+                if (k == key && mapping[val]) {
+                    data[key] = mapping[val];
+                }
+                switch (getType(val)) {
+                    case "object":
+                        mapData(val, options);
+                        break;
+                }
+            });
+            break
     }
 }

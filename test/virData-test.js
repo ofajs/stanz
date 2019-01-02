@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'virData test');
+    let tester = expect(14, 'virData test');
 
     let a = stanz({
         val: "I am a",
@@ -41,7 +41,8 @@
             1: 101,
             2: 102,
             3: 103,
-            4: 104
+            4: 104,
+            5: 105
         }
     });
 
@@ -63,4 +64,17 @@
     tester.ok(virA.d.flash == 4, 'virData mapKey sync ok 2');
     tester.ok(virB.d.selected == 104, 'virData mapValue sync ok 2');
 
+    virB.d.selected = 105;
+
+    tester.ok(a.d.selected == 5, 'virData mapValue sync ok 3');
+    tester.ok(virA.d.flash == 5, 'virData mapKey sync ok 3');
+
+    a.push({
+        selected: 1,
+        val: "new obj"
+    });
+
+    tester.ok(a[2].selected == 1, "push ok 1");
+    tester.ok(virA[2].flash == 1, "push sync ok 1");
+    tester.ok(virB[2].selected == 101, "push sync ok 2");
 })();

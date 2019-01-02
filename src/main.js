@@ -472,22 +472,35 @@ setNotEnumer(XDataFn, {
         mapData(cloneData, options);
         cloneData = createXData(cloneData);
 
-        let _thisUpdateFunc, selfUpdataFunc;
-        switch (options.type) {
-            case "mapKey":
-                // 提取关键数据
-                let keyMapObj = options.mapping;
-                let reserveKeyMapObj = {};
-                for (let k in keyMapObj) {
-                    reserveKeyMapObj[keyMapObj[k]] = k;
-                }
+        let {
+            mapping,
+            type,
+            key
+        } = options;
 
+        let reserveMapping = {};
+
+        Object.keys(mapping).forEach(k => {
+            let k2 = mapping[k];
+            !isUndefined(k2) && (reserveMapping[k2] = k);
+        });
+
+        let _thisUpdateFunc, selfUpdataFunc;
+        switch (type) {
+            case "mapKey":
                 this.on('update', _thisUpdateFunc = e => {
                     let {
                         trend
                     } = e;
 
-                    let tarKey = keyMapObj[trend.key];
+                    // 修正trend的数据
+                    if (trend.args) {
+                        mapData(trend.args, options);
+                    } else if (trend.value) {
+                        mapData(trend.value, options);
+                    }
+
+                    let tarKey = mapping[trend.key];
                     if (!isUndefined(tarKey)) {
                         // 修正trend数据
                         trend.key = tarKey;
@@ -499,7 +512,21 @@ setNotEnumer(XDataFn, {
                         trend
                     } = e;
 
-                    let tarKey = reserveKeyMapObj[trend.key];
+                    if (trend.args) {
+                        mapData(trend.args, {
+                            type,
+                            // key,
+                            mapping: reserveMapping
+                        });
+                    } else if (trend.value) {
+                        mapData(trend.value, {
+                            type,
+                            // key,
+                            mapping: reserveMapping
+                        });
+                    }
+
+                    let tarKey = reserveMapping[trend.key];
 
                     if (!isUndefined(tarKey)) {
                         trend.key = tarKey;
@@ -508,21 +535,17 @@ setNotEnumer(XDataFn, {
                 });
                 break;
             case "mapValue":
-                var {
-                    mapping,
-                    key
-                } = options;
-                var reserveMapping = {};
-
-                Object.keys(mapping).forEach(k => {
-                    let k2 = mapping[k];
-                    !isUndefined(k2) && (reserveMapping[k2] = k);
-                });
-
                 this.on('update', _thisUpdateFunc = e => {
                     let {
                         trend
                     } = e;
+
+                    // 修正trend的数据
+                    if (trend.args) {
+                        mapData(trend.args, options);
+                    } else if (trend.value) {
+                        mapData(trend.value, options);
+                    }
 
                     if (trend.key == key) {
                         let val = trend.value;
@@ -531,7 +554,7 @@ setNotEnumer(XDataFn, {
                             trend.value = mapping[val];
                         }
                     }
-                    
+
                     // 同步
                     cloneData.entrend(trend);
 
@@ -540,6 +563,20 @@ setNotEnumer(XDataFn, {
                     let {
                         trend
                     } = e;
+
+                    if (trend.args) {
+                        mapData(trend.args, {
+                            type,
+                            key,
+                            mapping: reserveMapping
+                        });
+                    } else if (trend.value) {
+                        mapData(trend.value, {
+                            type,
+                            key,
+                            mapping: reserveMapping
+                        });
+                    }
 
                     if (trend.key == key) {
                         let val = trend.value;

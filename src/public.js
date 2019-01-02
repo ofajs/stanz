@@ -209,11 +209,16 @@ let clearXData = (xdata) => {
 
 // virData用的数据映射方法
 const mapData = (data, options) => {
+    if (!(data instanceof Object)) {
+        return data;
+    }
+
     let {
         key,
         type,
         mapping
     } = options;
+
     switch (type) {
         case "mapKey":
             Object.keys(data).forEach(k => {

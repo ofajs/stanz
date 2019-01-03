@@ -1195,7 +1195,7 @@ setNotEnumer(XDataFn, {
                                         expr,
                                         old: oldVals,
                                         val: sData
-                                    });
+                                    }, sData);
                                 });
                             }
 
@@ -1219,7 +1219,7 @@ setNotEnumer(XDataFn, {
             callback({
                 expr,
                 val: sData
-            });
+            }, sData);
         }
     },
     // 注销watch
@@ -1388,7 +1388,7 @@ setNotEnumer(XDataFn, {
             default:
                 // undefined
                 if (cover) {
-                    assign(xdata, this.object);
+                    xdata.extend(this.object);
                 }
 
                 this.watch(watchFunc = e => {
@@ -1635,6 +1635,9 @@ setNotEnumer(XDataFn, {
 
         assign(this, value);
         return this;
+    },
+    extend(...args) {
+        assign(this, ...args);
     }
 });
 

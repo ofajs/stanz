@@ -1,6 +1,6 @@
 ((glo) => {
-"use strict";
-// public function
+    "use strict";
+    // public function
 // 获取随机id
 const getRandomId = () => Math.random().toString(32).substr(2);
 let objectToString = Object.prototype.toString;
@@ -252,7 +252,7 @@ const mapData = (data, options) => {
     }
 }
 
-function XData(obj, options = {}) {
+    function XData(obj, options = {}) {
     let proxyThis = new Proxy(this, XDataHandler);
     // let proxyThis = this;
 
@@ -422,7 +422,7 @@ defineProperties(XDataEvent.prototype, {
     }
 });
 
-// 获取事件数组
+    // 获取事件数组
 const getEvesArr = (tar, eventName) => {
     let eves = tar[EVES];
     let tarSetter = eves.get(eventName);
@@ -598,7 +598,7 @@ setNotEnumer(XDataFn, {
     }
 });
 
-// 主体entrend方法
+    // 主体entrend方法
 const entrend = (options) => {
     let {
         target,
@@ -825,10 +825,10 @@ const clearModifyIdHost = (xdata) => {
         }
     }
 
-    setTimeout(clearFunc, 3000);
+    setTimeout(clearFunc, 10000);
 }
 
-// 数组通用方法
+    // 数组通用方法
 // 可运行的方法
 ['concat', 'every', 'filter', 'find', 'findIndex', 'forEach', 'map', 'slice', 'some', 'indexOf', 'includes'].forEach(methodName => {
     let arrayFnFunc = Array.prototype[methodName];
@@ -894,7 +894,7 @@ assign(arrayFn, {
     }
 });
 
-// 私有属性正则
+    // 私有属性正则
 const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
 let XDataHandler = {
     set(target, key, value, receiver) {
@@ -971,7 +971,7 @@ let XDataHandler = {
     }
 };
 
-setNotEnumer(XDataFn, {
+    setNotEnumer(XDataFn, {
     seek(expr) {
         // 代表式的组织化数据
         let exprObjArr = [];
@@ -1691,8 +1691,13 @@ defineProperties(XDataFn, {
     }
 });
 
-//---xdata-end---
+    //---xdata-end---
 
     glo.stanz = (obj) => createXData(obj);
 
-})(window);
+})((function () {
+    if (typeof exports === 'object') {
+        return exports;
+    }
+    return window;
+})());

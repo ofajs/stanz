@@ -1,21 +1,26 @@
 ((glo) => {
-"use strict";
-//<!--public-->
+    "use strict";
+    //<!--public-->
 
-//<!--class-->
+    //<!--class-->
 
-//<!--event-->
+    //<!--event-->
 
-//<!--entrend-->
+    //<!--entrend-->
 
-//<!--array-->
+    //<!--array-->
 
-//<!--handler-->
+    //<!--handler-->
 
-//<!--main-->
+    //<!--main-->
 
-//---xdata-end---
+    //---xdata-end---
 
     glo.stanz = (obj) => createXData(obj);
 
-})(window);
+})((function () {
+    if (typeof exports === 'object') {
+        return exports;
+    }
+    return window;
+})());

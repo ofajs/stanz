@@ -225,5 +225,5 @@ const clearModifyIdHost = (xdata) => {
         }
     }
 
-    setTimeout(clearFunc, 3000);
+    setTimeout(clearFunc, 10000);
 }

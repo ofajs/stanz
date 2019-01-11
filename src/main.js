@@ -493,6 +493,8 @@ setNotEnumer(XDataFn, {
                         trend
                     } = e;
 
+                    trend = cloneObject(trend);
+
                     // 修正trend的数据
                     if (trend.args) {
                         mapData(trend.args, options);
@@ -511,6 +513,8 @@ setNotEnumer(XDataFn, {
                     let {
                         trend
                     } = e;
+
+                    trend = cloneObject(trend);
 
                     if (trend.args) {
                         mapData(trend.args, {
@@ -540,6 +544,8 @@ setNotEnumer(XDataFn, {
                         trend
                     } = e;
 
+                    trend = cloneObject(trend);
+
                     // 修正trend的数据
                     if (trend.args) {
                         mapData(trend.args, options);
@@ -563,6 +569,8 @@ setNotEnumer(XDataFn, {
                     let {
                         trend
                     } = e;
+
+                    trend = cloneObject(trend);
 
                     if (trend.args) {
                         mapData(trend.args, {

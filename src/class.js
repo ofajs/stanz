@@ -170,7 +170,7 @@ defineProperties(XDataEvent.prototype, {
                     break;
             }
 
-            return reobj;
+            return Object.freeze(reobj);
         }
     }
 });

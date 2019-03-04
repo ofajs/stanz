@@ -698,6 +698,19 @@ setNotEnumer(XDataFn, {
     },
     extend(...args) {
         assign(this, ...args);
+    },
+    // 根据trend获取目标
+    getTarget(trend) {
+        let {
+            keys
+        } = trend;
+        let target = commonData;
+        if (keys.length) {
+            keys.forEach(k => {
+                target = target[k];
+            });
+        }
+        return target;
     }
 });
 

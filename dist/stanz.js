@@ -390,7 +390,8 @@ defineProperties(XDataEvent.prototype, {
                     var {
                         methodName,
                         args,
-                        modifyId
+                        modifyId,
+                        returnValue
                     } = modify;
 
                     // 修正args，将XData还原成object对象
@@ -405,6 +406,14 @@ defineProperties(XDataEvent.prototype, {
                         methodName,
                         args,
                         modifyId
+                    });
+
+                    defineProperties(reobj, {
+                        "returnValue": {
+                            get() {
+                                return returnValue instanceof Object ? cloneObject(returnValue) : returnValue;
+                            }
+                        }
                     });
                     break;
                 default:
@@ -782,7 +791,8 @@ const entrend = (options) => {
                 genre: "arrayMethod",
                 methodName,
                 modifyId,
-                args
+                args,
+                returnValue: reData
             };
 
             break;

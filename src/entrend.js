@@ -175,7 +175,8 @@ const entrend = (options) => {
                 genre: "arrayMethod",
                 methodName,
                 modifyId,
-                args
+                args,
+                returnValue: reData
             };
 
             break;

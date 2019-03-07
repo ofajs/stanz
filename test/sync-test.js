@@ -48,6 +48,10 @@
     // 改动
     a[2][0].val = "change [2][0]";
 
+    c.on("update", e => {
+        debugger
+    });
+
     // 删除某个数
     a.splice(1, 1, {
         val: "new [1]"

@@ -48,17 +48,17 @@ const setNotEnumer = (tar, obj) => {
 
 // common
 // 事件寄宿对象key
-const EVES = "_eves_" + getRandomId();
+const EVES = Symbol("xEves");
 // 是否在数组方法执行中key
-const RUNARRMETHOD = "_runarrmethod_" + getRandomId();
+const RUNARRMETHOD = Symbol("runArrMethod");
 // 存放modifyId的寄宿对象key
-const MODIFYIDHOST = "_modify_" + getRandomId();
+const MODIFYIDHOST = Symbol("modifyHost");
 // modifyId打扫器寄存变量
-const MODIFYTIMER = "_modify_timer_" + getRandomId();
+const MODIFYTIMER = Symbol("modifyTimer");
 // watch寄宿对象
-const WATCHHOST = "_watch_" + getRandomId();
+const WATCHHOST = Symbol("watchHost");
 // 同步数据寄宿对象key
-const SYNCHOST = "_synchost_" + getRandomId();
+const SYNCHOST = Symbol("syncHost");
 
 // business function
 let isXData = obj => obj instanceof XData;

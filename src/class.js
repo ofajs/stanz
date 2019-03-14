@@ -31,15 +31,15 @@ function XData(obj, options = {}) {
         // 设置数组长度
         length,
         // 事件寄宿对象
-        [EVES]: new Map(),
+        // [EVES]: new Map(),
         // modifyId存放寄宿对象
-        [MODIFYIDHOST]: new Set(),
+        // [MODIFYIDHOST]: new Set(),
         // modifyId清理器的断定变量
-        [MODIFYTIMER]: 0,
+        // [MODIFYTIMER]: 0,
         // watch寄宿对象
-        [WATCHHOST]: new Map(),
+        // [WATCHHOST]: new Map(),
         // 同步数据寄宿对象
-        [SYNCHOST]: new Map()
+        // [SYNCHOST]: new Map()
     };
 
     // 设置不可枚举数据
@@ -47,6 +47,22 @@ function XData(obj, options = {}) {
 
     // 设置专属值
     defineProperties(this, {
+        [EVES]: {
+            value: new Map()
+        },
+        [MODIFYIDHOST]: {
+            value: new Set()
+        },
+        [WATCHHOST]: {
+            value: new Map()
+        },
+        [SYNCHOST]: {
+            value: new Map()
+        },
+        [MODIFYTIMER]: {
+            writable: true,
+            value: 0
+        },
         status: {
             writable: true,
             value: options.parent ? "binding" : "root"
@@ -65,7 +81,6 @@ function XData(obj, options = {}) {
 }
 
 let XDataFn = XData.prototype = {};
-
 
 function XDataEvent(type, target) {
     let enumerable = true;

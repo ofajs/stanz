@@ -4,7 +4,7 @@ let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (PRIREG.test(key)) {
+        if (typeof key === "symbol" || PRIREG.test(key)) {
             return Reflect.set(target, key, value, receiver);
         }
 
@@ -37,7 +37,7 @@ let XDataHandler = {
     deleteProperty(target, key) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (/^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
+        if (typeof key === "symbol" || /^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
             return Reflect.deleteProperty(target, key);
         }
 

@@ -74,7 +74,12 @@ setNotEnumer(XDataFn, {
     watch(expr, callback) {
         // 调整参数
         let arg1Type = getType(expr);
-        if (/function/.test(arg1Type)) {
+        if (arg1Type === "object") {
+            Object.keys(expr).forEach(k => {
+                this.watch(k, expr[k]);
+            });
+            return;
+        } else if (/function/.test(arg1Type)) {
             callback = expr;
             expr = "";
         }
@@ -306,19 +311,23 @@ setNotEnumer(XDataFn, {
             target = target[k];
         });
 
-        // 添加_entrendModifyId
-        target._entrendModifyId = modifyId;
+        if (target) {
+            // 添加_entrendModifyId
+            target._entrendModifyId = modifyId;
 
-        switch (options.genre) {
-            case "arrayMethod":
-                target[options.methodName](...options.args);
-                break;
-            case "delete":
-                delete target[options.key];
-                break;
-            default:
-                target[options.key] = options.value;
-                break;
+            switch (options.genre) {
+                case "arrayMethod":
+                    target[options.methodName](...options.args);
+                    break;
+                case "delete":
+                    delete target[options.key];
+                    break;
+                default:
+                    target[options.key] = options.value;
+                    break;
+            }
+        } else {
+            console.warn(`data not found => `, this, options);
         }
 
         return this;
@@ -689,6 +698,19 @@ setNotEnumer(XDataFn, {
     },
     extend(...args) {
         assign(this, ...args);
+    },
+    // 根据trend获取目标
+    getTarget(trend) {
+        let {
+            keys
+        } = trend;
+        let target = commonData;
+        if (keys.length) {
+            keys.forEach(k => {
+                target = target[k];
+            });
+        }
+        return target;
     }
 });
 

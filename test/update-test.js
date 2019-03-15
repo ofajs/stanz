@@ -37,6 +37,7 @@
 
     // 监听数组变动
     a.one("update", e => {
+        console.log(e);
         tester.ok(JSON.stringify(e.keys) == "[1]", "push method keys ok");
         tester.ok(e.modify.genre == "arrayMethod", "push method genre ok");
         tester.ok(e.modify.methodName == "push", "push method methodName ok");

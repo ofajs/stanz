@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(10, 'normal test');
+    let tester = expect(12, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -64,4 +64,10 @@
     });
     tester.ok(a[1].hostkey == 1, "hostkey ok");
 
+    a[0].after({
+        val: "I am after append"
+    });
+
+    tester.ok(a.length == 5, 'length ok');
+    tester.ok(a[1].val == "I am after append", 'after ok');
 })();

@@ -367,7 +367,7 @@ console.log(selected3Arr);
 // =>[ obj.a ]
 ```
 
-## 混合 seek 属性的 watch 使用方法
+## 混合 seek型参数的 watch
 
 `watch` 方法可以使用 `seek` 的参数，达到动态监听值得变动；
 

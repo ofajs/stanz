@@ -25,6 +25,23 @@
 <script src="virData-test.js"></script>
 <script>
     console.timeEnd("all time");
+
+    let a = stanz({
+        val: "I am val",
+        b: {
+            val: "I am b"
+        }
+    });
+
+    // 这样是监听整个 a 对象
+    a.watch((e) => {
+        console.log("e记录了变动，变动数为 => ", e.modifys.length);
+        // => "触发了变动"
+    });
+
+    a.b.val = "change val1";
+    a.b.val = "change val2";
+    a.b.val = "change val3";
 </script>
 
 </html>

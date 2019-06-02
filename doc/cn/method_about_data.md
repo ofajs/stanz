@@ -1,4 +1,6 @@
-# stanz 方法介绍
+# stanz 方法介绍1
+
+stanz 数据绑定精华方法；
 
 ## sync
 
@@ -415,5 +417,80 @@ obj.b.selected = 1;
 
 当 `watch` 监听 `seek` 类型参数，会同步触发一次 watch callback；在后续操作 `[selected=1]` 的值发生改变时，才会重新触发 `watch` 监听的数据，并通过第二个参数返回相对应的监听值（放在数组里）；
 
+## virData
 
+生成虚拟数据，可以建立值映射的数据对象；
 
+```javascript
+let obj = stanz({
+    a: {
+        val: "I am a",
+        selected: 1
+    },
+    0: {
+        tag: "p-text",
+        val: "I am text"
+    },
+    1: {
+        tag: "p-ele",
+        val: "I am ele",
+        0: {
+            tag: "p-text",
+            val: "text 2"
+        },
+        1: {
+            tag: "p-pic",
+            url: "http://asd.com/p.png"
+        }
+    }
+});
+
+// 获取映射数据
+let mapData = obj.virData({
+    // 映射
+    type: "mapValue",
+    key: "tag",
+    mapping: {
+        "p-ele": "pre-ele",
+        "p-text": "pre-text",
+        "p-pic": "pre-pic"
+    }
+});
+
+// 新添加
+obj.push({
+    tag: "p-ele",
+    val: "new ele"
+});
+
+console.log(mapData);
+// =>
+// {
+//     "0": {
+//         "tag": "pre-text",
+//         "val": "I am text"
+//     },
+//     "1": {
+//         "0": {
+//             "tag": "pre-text",
+//             "val": "text 2"
+//         },
+//         "1": {
+//             "tag": "pre-pic",
+//             "url": "http://asd.com/p.png"
+//         },
+//         "tag": "pre-ele",
+//         "val": "I am ele"
+//     },
+//     "2": {
+//         "tag": "pre-ele",
+//         "val": "new ele"
+//     },
+//     "a": {
+//         "val": "I am a",
+//         "selected": 1
+//     }
+// }
+```
+
+mapData本身也是 stanz对象，和元数据存在着绑定；和 `sync` 方法绑定数据不同的地方，在于 `virData` 生成的数据和元数据的数据绑定是同步的；

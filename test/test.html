@@ -26,32 +26,25 @@
 <script>
     console.timeEnd("all time");
 
-    let obj = stanz({
-        a: {
-            val: "I am a",
-            selected: 1
-        },
-        b: {
-            val: "I am b",
-            selected: 0
-        },
-        c: {
-            val: "I am c",
-            selected: 0
+
+    let a = stanz({
+        val: "I am a",
+        data: {
+            title: "data title"
         }
     });
 
-    let count = 1;
-    obj.watch('[selected=1]', (e, val) => {
-        console.log(`count_${count} => `, val);
-        count++;
-    });
+    // 提前拿出来
+    let data = a.data;
 
-    console.log("second");
+    console.log(a.status);
+    console.log(a.data.status);
 
-    // 修改selected值
-    obj.a.selected = 0;
-    obj.b.selected = 1;
+    // 删除data
+    a.removeByKey("data");
+    // a.data.remove();
+
+    console.log(data.status);
 </script>
 
 </html>

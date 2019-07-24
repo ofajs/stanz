@@ -1,7 +1,9 @@
-/*!
- * stanz
+/**
+ * stanz 6.0.1
+ * a data synchronization library
  */
 ((root, factory) => {
+    "use strict"
     if (typeof exports === 'object') {
         module.exports = factory();
     } else if (typeof define === 'function' && define.amd) {
@@ -11,7 +13,6 @@
     }
 })(this, () => {
     "use strict";
-
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
     const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
@@ -1532,5 +1533,9 @@
         }
     });
 
-    return obj => createXData(obj)[PROXYTHIS];
+    let stanz = obj => createXData(obj)[PROXYTHIS];
+
+    stanz.v = 60001
+
+    return stanz;
 });

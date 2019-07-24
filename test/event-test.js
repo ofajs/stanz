@@ -20,8 +20,8 @@
         one: 1
     };
 
-    a.on({
-        event: 'haha',
+    a._on({
+        type: 'haha',
         callback: function (e, data) {
             // console.log(e);
             tester.ok(this === a, "this ok");

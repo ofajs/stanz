@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'update test');
+    let tester = expect(7, 'update test');
 
     let a = stanz({
         id: "A",
@@ -24,23 +24,23 @@
         }
     });
 
-    a.one("update", e => {
+    a.one("update", function (e) {
         // console.log(e);
         tester.ok(JSON.stringify(e.keys) == "[1,0]", "keys ok");
-        tester.ok(e.modify.genre == "change", "genre ok");
-        tester.ok(e.modify.key == "val", "key ok");
-        tester.ok(e.modify.value == "change childs 0", "value ok");
-        tester.ok(e.modify.oldVal == "childs 0", "oldVal ok");
+        tester.ok(e.modify.name == "setData", "setData ok");
+        let args = e.modify.args;
+        tester.ok(args[0] == "val", "key ok");
+        tester.ok(args[1] == "change childs 0", "value ok");
+        tester.ok(e.oldValue == "childs 0", "oldVal ok");
     });
 
     a[1][0].val = "change childs 0";
 
     // 监听数组变动
     a.one("update", e => {
-        console.log(e);
+        // console.log(e);
         tester.ok(JSON.stringify(e.keys) == "[1]", "push method keys ok");
-        tester.ok(e.modify.genre == "arrayMethod", "push method genre ok");
-        tester.ok(e.modify.methodName == "push", "push method methodName ok");
+        tester.ok(e.modify.name == "push", "push method methodName ok");
     });
 
     a[1].push({
@@ -50,6 +50,7 @@
 
     let errfun;
     a.one('update', errfun = e => {
+        debugger
         // 这个变动是不能触发的
         throw "error";
     });
@@ -66,11 +67,11 @@
 
     a.off('update', errfun);
 
-    a.one('update', e => {
-        tester.ok(e.modify.genre == "delete", "delete genre ok");
-    });
+    // a.one('update', e => {
+    //     tester.ok(e.modify.genre == "delete", "delete genre ok");
+    // });
 
-    delete a.nd.ndInner;
+    // delete a.nd.ndInner;
 
     // console.log(a);
 })();

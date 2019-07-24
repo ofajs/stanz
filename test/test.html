@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>stanz5 test</title>
+    <title>stanz test</title>
     <script src="ok.js"></script>
     <script src="../dist/stanz.js"></script>
 </head>
@@ -19,32 +19,23 @@
 <script src="normal-test.js"></script>
 <script src="event-test.js"></script>
 <script src="update-test.js"></script>
-<script src="seek-test.js"></script>
 <script src="watch-test.js"></script>
 <script src="sync-test.js"></script>
 <script src="virData-test.js"></script>
+<script src="remove-test.js"></script>
 <script>
     console.timeEnd("all time");
 
+    // let a = stanz([{ val: 100 }, { val: 300 }, { val: 500 }, { val: 400 }, { val: 200 }]);
 
-    let a = stanz({
-        val: "I am a",
-        data: {
-            title: "data title"
-        }
-    });
+    // let b = a.clone();
 
-    // 提前拿出来
-    let data = a.data;
+    // a.sync(b);
 
-    console.log(a.status);
-    console.log(a.data.status);
+    // a.sort((e, f) => {
+    //     return e.val - f.val;
+    // });
 
-    // 删除data
-    a.removeByKey("data");
-    // a.data.remove();
-
-    console.log(data.status);
 </script>
 
 </html>

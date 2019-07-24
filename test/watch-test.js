@@ -25,12 +25,12 @@
 
     // 整体watch
     a.watch((e) => {
-        tester.ok(e.modifys.length == 4, "watch modifys length ok");
+        tester.ok(e.trends.length == 4, "watch trends length ok");
     });
 
     // watch key
     a.watch("1", (e) => {
-        tester.ok(e.modifys.length == 3, "watch key modifys length ok");
+        tester.ok(e.trends.length == 3, "watch key trends length ok");
     });
 
     let cid = 0;
@@ -50,7 +50,7 @@
                 throw "error";
         }
         cid++;
-    });
+    }, true);
 
     // 同时修改，只会触发最后一个
     a[1][0].val = "change 1-0";

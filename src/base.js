@@ -1,26 +1,26 @@
-((glo) => {
+/*!
+ * stanz
+ */
+
+((d) => {
+    window.stanz = d;
+})((() => {
     "use strict";
+
     //<!--public-->
 
-    //<!--class-->
-
-    //<!--event-->
-
-    //<!--entrend-->
-
-    //<!--array-->
+    //<!--emiter-->
 
     //<!--handler-->
 
     //<!--main-->
 
-    //---xdata-end---
+    //<!--sync-->
 
-    glo.stanz = (obj) => createXData(obj);
+    //<!--reBuildArray-->
 
-})((function () {
-    if (typeof exports === 'object') {
-        return exports;
-    }
-    return window;
+    // test
+    window.XData = XData;
+
+    return obj => createXData(obj)[PROXYTHIS];
 })());

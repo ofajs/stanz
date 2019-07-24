@@ -1,5 +1,6 @@
 const fs = require('fs');
 const util = require('util');
+const jsbeautify = require('js-beautify').js
 
 const readFile = util.promisify(fs.readFile);
 
@@ -29,6 +30,10 @@ let mainFun = async () => {
     if (beforeCode == basefile) {
         return;
     }
+
+    // 格式化代码
+    basefile = jsbeautify(basefile);
+
     beforeCode = basefile;
 
     // 写入最终文件
@@ -38,9 +43,9 @@ let mainFun = async () => {
     });
 
     // 写入xdata.js
-    fs.writeFile('dist/xdata.js', basefile.match(/\/\/---xdata-start---([\d\D]+)\/\/---xdata-end---/)[1], 'utf8', (err) => {
-        if (err) throw err;
-    });
+    // fs.writeFile('dist/xdata.js', basefile.match(/\/\/---xdata-start---([\d\D]+)\/\/---xdata-end---/)[1], 'utf8', (err) => {
+    //     if (err) throw err;
+    // });
 }
 
 let readFileTimer;

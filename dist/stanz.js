@@ -1,10 +1,15 @@
 /*!
  * stanz
  */
-
-((d) => {
-    window.stanz = d;
-})((() => {
+((root, factory) => {
+    if (typeof exports === 'object') {
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        define(factory);
+    } else {
+        root.stanz = factory();
+    }
+})(this, () => {
     "use strict";
 
     const getRandomId = () => Math.random().toString(32).substr(2);
@@ -1527,8 +1532,5 @@
         }
     });
 
-    // test
-    window.XData = XData;
-
     return obj => createXData(obj)[PROXYTHIS];
-})());
+});

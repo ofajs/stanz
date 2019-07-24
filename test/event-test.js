@@ -22,7 +22,7 @@
 
     a._on({
         type: 'haha',
-        callback: function (e, data) {
+        callback(e, data) {
             // console.log(e);
             tester.ok(this === a, "this ok");
             tester.ok(e.data === bindDataOptions.data, 'binding data ok');

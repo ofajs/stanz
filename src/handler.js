@@ -1,76 +1,30 @@
-// 私有属性正则
-const PRIREG = /^_.+|^parent$|^hostkey$|^status$|^length$/;
+// get 可直接获取的正则
+// const GET_REG = /^_.+|^parent$|^index$|^length$|^object$/;
+const GET_REG = /^_.+|^index$|^length$|^object$/;
+// set 不能设置的Key的正则
+const SET_NO_REG = /^parent$|^index$|^length$|^object$/
+
 let XDataHandler = {
+    get(target, key, value, receiver) {
+        // 私有变量直接通过
+        if (typeof key === "symbol" || GET_REG.test(key)) {
+            return Reflect.get(target, key, value, receiver);
+        }
+
+        return target.getData(key);
+    },
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (typeof key === "symbol" || PRIREG.test(key)) {
+        if (typeof key === "symbol" || /^_.+/.test(key)) {
             return Reflect.set(target, key, value, receiver);
         }
 
-        // 数组内组合，修改hostkey和parent
-        if (target.hasOwnProperty(RUNARRMETHOD)) {
-            if (isXData(value)) {
-                value.parent = receiver;
-                value.hostkey = key;
-                value.status = "binding";
-            }
-            return Reflect.set(target, key, value, receiver);
+        if (SET_NO_REG.test(key)) {
+            console.warn(`you can't set this key in XData => `, key);
+            return false;
         }
 
-        // 获取到_entrendModifyId就立刻删除
-        let modifyId = target._entrendModifyId;
-        if (modifyId) {
-            delete target._entrendModifyId;
-        }
-
-        // 其他方式就要通过主体entrend调整
-        return entrend({
-            genre: "handleSet",
-            modifyId,
-            target,
-            key,
-            value,
-            receiver
-        });
-    },
-    deleteProperty(target, key) {
-        // 私有变量直接通过
-        // 数组函数运行中直接通过
-        if (typeof key === "symbol" || /^_.+/.test(key) || target.hasOwnProperty(RUNARRMETHOD)) {
-            return Reflect.deleteProperty(target, key);
-        }
-
-        // 获取到_entrendModifyId就立刻删除
-        let modifyId = target._entrendModifyId;
-        if (modifyId) {
-            delete target._entrendModifyId;
-        }
-
-        // 获取receiver
-        let receiver;
-
-        if (target.parent) {
-            receiver = target.parent[target.hostkey];
-        } else {
-            Object.values(target).some(e => {
-                if (isXData(e)) {
-                    receiver = e.parent;
-                    return true;
-                }
-            });
-
-            if (!receiver) {
-                receiver = new Proxy(target, XDataHandler);
-            }
-        }
-
-        return entrend({
-            genre: "handleDelete",
-            modifyId,
-            target,
-            key,
-            receiver
-        });
+        return target.setData(key, value)
     }
 };

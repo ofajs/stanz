@@ -1,26 +1,33 @@
-((glo) => {
+/**
+ * stanz 6.0.1
+ * a data synchronization library
+ */
+((root, factory) => {
+    "use strict"
+    if (typeof exports === 'object') {
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        define(factory);
+    } else {
+        root.stanz = factory();
+    }
+})(this, () => {
     "use strict";
     //<!--public-->
 
-    //<!--class-->
-
-    //<!--event-->
-
-    //<!--entrend-->
-
-    //<!--array-->
+    //<!--emiter-->
 
     //<!--handler-->
 
     //<!--main-->
 
-    //---xdata-end---
+    //<!--sync-->
 
-    glo.stanz = (obj) => createXData(obj);
+    //<!--reBuildArray-->
 
-})((function () {
-    if (typeof exports === 'object') {
-        return exports;
-    }
-    return window;
-})());
+    let stanz = obj => createXData(obj)[PROXYTHIS];
+
+    stanz.v = 60001
+
+    return stanz;
+});

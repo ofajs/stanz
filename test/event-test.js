@@ -20,9 +20,9 @@
         one: 1
     };
 
-    a.on({
-        event: 'haha',
-        callback: function (e, data) {
+    a._on({
+        type: 'haha',
+        callback(e, data) {
             // console.log(e);
             tester.ok(this === a, "this ok");
             tester.ok(e.data === bindDataOptions.data, 'binding data ok');

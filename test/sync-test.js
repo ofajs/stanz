@@ -32,7 +32,7 @@
 
     // 单项同步数据
     a.watch(e => {
-        e.modifys.forEach(trend => {
+        e.trends.forEach(trend => {
             b.entrend(trend)
         });
     });
@@ -42,8 +42,8 @@
 
     // 映射同步数据
     d.sync(a, {
-        temp: "2"
-    });
+        temp: 2
+    }, true);
 
     // 改动
     a[2][0].val = "change [2][0]";
@@ -69,13 +69,18 @@
     }, 100);
 
     // 删除记录
-    delete a.val;
+    // delete a.val;
+    a.remove("val");
 
     setTimeout(() => {
-        tester.ok(!('val' in a), 'delete ok');
-        tester.ok(!('val' in b), 'sync delete ok1');
-        tester.ok(!('val' in c), 'sync delete ok2');
+        tester.ok(!('val' in a), 'remove ok');
+        tester.ok(!('val' in b), 'sync remove ok1');
+        tester.ok(!('val' in c), 'sync remove ok2');
     }, 100);
+
+    // d.on("update", e => {
+    //     debugger
+    // });
 
 
     let sObj = stanz([{
@@ -100,7 +105,7 @@
         return a.val - b.val;
     });
 
-    console.log(sObj);
+    // console.log(sObj);
 
     setTimeout(() => {
         tester.ok(sObj[0].val == 111, 'sort ok');

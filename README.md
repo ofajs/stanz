@@ -1,4 +1,36 @@
-# stanz 5
+# stanz 6
+
+stanz 是一种 JavaScript 新的数据类型，没有复杂的状态容器操作，也能很好的同步数据业务；
+
+融合 `Object` 和 `Array` 的优点，并将数据同步功能集于一身；
+
+```javascript
+let a = stanz({
+    val: "I am a"
+});
+
+let b = stanz({
+    val: "I am b"
+});
+
+// 同步操作
+a.sync(b);
+
+a.val = "change the val";
+
+// 数组操作
+a.push({
+    name:"div"
+});
+
+setTimeout(() => {
+    console.log(a.val); // => "change the val"
+    console.log(b.val); // => "change the val"
+    console.log(a[0].name); // => "div"
+    console.log(b[0].name); // => "div"
+    console.log(a == b); // false
+});
+```
 
 ## 如何使用 stanz?
 
@@ -14,54 +46,33 @@
 
 然后下面开始使用。
 
-(当前项目 `dist/stanz.js` 文件)
+## stanz能干什么？
 
-## stanz 是干什么的？
-
-stanz 能够创建更容易同步数据的对象；没有复杂的状态容器操作，也能很好的同步数据业务；
+除了上面的数据同步功能，还能模拟类DOM功能，可以像操作DOM的方式操纵数据；
 
 ```javascript
 let a = stanz({
-    val:"I am val"
+    name: "div",
+    0: {
+        name: "span"
+    },
+    1: {
+        name: "i"
+    }
 });
 
-let b = stanz({
-    val:"b val"
+console.log(a[1].name); // => i
+console.log(a.length); // => 2
+
+a[0].after({
+    name: "p"
 });
 
-console.log(a.val); // => "I am val"
-console.log(b.val); // => "b val"
-
-// 绑定数据对象
-a.sync(b);
-
-a.val = "change a val";
-
-setTimeout(()=>{
-    console.log(a.val); // => "change a val"
-    console.log(b.val); // => "change a val"
-},0);
+console.log(a[1].name); // => p
+console.log(a.length); // => 3
 ```
 
-只要改变了数据，相应的数据对象也会同步数据；（数据同步过程是异步的）
-
-直接改变数据，就会同步到另一个数据上；没有订阅之类的操作；
-
-stanz 创建的是 ArrayLike 对象，既可以当 `Object` 使用，也可以当 `Array` 使用；
-
-```javascript
-let arr = stanz([200, 100, 400, 300]);
-
-arr.splice(1,1);
-
-console.log(arr); // => [200, 400, 300]
-
-arr.sort()
-
-console.log(arr); // => [200, 300, 400]
-```
-
-可以通过 object 创建数组结构，同时具有数组和对象两种功能
+可以通过 object 创建数组结构，同时具有数组和对象两种特性；
 
 ```javascript
 let arr = stanz({
@@ -109,12 +120,12 @@ let a = stanz({
 a.watch("val", (e, val) => {
     console.log(e, val);
     // val => "change val2"
-    // 这里的 watch 绑定的方法会异步触发，同线程改动中后，异步只会触发一次变动函数
+    // 这里的 watch 绑定的方法会异步触发，同线程改动中后，只会触发一次异步变动函数
 });
 
 // 这样是监听整个 a 对象
 a.watch((e) => {
-    console.log(e.modifys.length);
+    console.log(e.trends.length);
     // => 2
 });
 
@@ -132,19 +143,24 @@ let a = stanz({
     }
 });
 
+a.on("update",e=>{
+    console.log("update!!"); // 这里会同步触发3次
+});
+
 // 这样是监听整个 a 对象
 a.watch((e) => {
-    console.log("e记录了变动，变动数为 : ", e.modifys.length);
+    console.log("e记录了变动，变动数为 : ", e.trends.length);
     // => "e记录了变动，变动数为 : 3"
 });
 
+// 虽然改动的是a.b.val，但是 update 事件会向上冒泡
 a.b.val = "change val1";
 a.b.val = "change val2";
 a.b.val = "change val3";
 ```
 
+(当前项目 `dist/stanz.js` 文件)
+
 关于更多 `stanz` 的使用方法，参考下面文档；
 
 [stanz中文文档](doc/cn/)
-
-关于更多 `stanz` 的应用场景，请参考 [`Xhear`](https://github.com/kirakiray/Xhear)，[`Xhear`](https://github.com/kirakiray/Xhear) 就是基于 `stanz`开发，能够不使用预编译方案(nodejs webpack)，打造超大型的web应用；

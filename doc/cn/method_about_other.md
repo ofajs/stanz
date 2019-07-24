@@ -116,48 +116,13 @@ console.log(b.val); // => "I am a"
 console.log(a === b); // => false
 ```
 
-## removeByKey
-
-可以删除相应key的值；也能删除数组数据上的数据；
-
-```javascript
- let a = stanz({
-    val: "I am a",
-    0: {
-        val: "Its 0"
-    },
-    1: {
-        val: "Its 1"
-    },
-    2: {
-        val: "Its 2"
-    }
-});
-
-// 删除 val 
-a.removeByKey("val");
-// 删除第二个数据
-a.removeByKey(1);
-
-console.log(a);
-// =>
-// {
-//     "0": {
-//         "val": "Its 0"
-//     },
-//     "1": {
-//         "val": "Its 2"
-//     }
-// }
-```
-
 ## remove
 
 删除自身或者数组数据内的值；
 
 ```javascript
 let a = stanz({
-    val: "I am a",
+    val:"I am a",
     0: "Its0",
     1: {
         val: "Its 1"
@@ -171,23 +136,23 @@ let a = stanz({
 // a[1]删除自身
 a[1].remove();
 
-// 删除数组数据内的 Its0
-a.remove("Its0");
+// 删除 val
+a.remove("val");
 
 console.log(a);
 // =>
 // {
-//     "0": {
+//     0: "Its0",
+//     1: {
 //         "val": "Its 2"
 //     },
-//     "1": "Its3",
-//     "val": "I am a"
+//     2: "Its3",
 // }
 ```
 
 ## add
 
-数组方法 `push` 的去重版本；
+数组方法 `push` 的去重版本；模仿 `Map` 数据的操作；同样的也能使用 `delete` `has` 操作；
 
 ```javascript
 let a = stanz(["AA","BB"]);
@@ -257,33 +222,3 @@ console.log(a);
 ```
 
 用起来是不是跟jQ一样爽；
-
-## extend
-
-合并数据；
-
-```javascript
-let a = stanz({
-    val: "I am a"
-});
-
-a.extend({
-    val: "change a"
-});
-
-console.log(a.val); // => "change a"
-```
-
-作用和 `Object.assign` 一样；
-
-## reset
-
-重置数据的方法，应付特殊情况，尽可能不要使用，很影响性能；
-
-```javascript
-a.reset({
-    val: "change a"
-});
-```
-
-会先删除旧的所有值，再重新设置val;

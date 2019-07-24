@@ -38,35 +38,6 @@ setTimeout(()=>{
 
 sync的实现原理是基于 `watch` 方法； `watch` 方法本身也是异步的callback传递函数；基础 watch 后性能更好；
 
-### status属性
-
-`root` 代表自身数据根对象；
-
-`binding` 代表时子对象，绑定别的stanz对象上；
-
-`destory` 已被摧毁的对象，数据绑定和事件绑定之类的状态数据都会被回收；
-
-```javascript
-let a = stanz({
-    val: "I am a",
-    data: {
-        title: "data title"
-    }
-});
-
-// 提前拿出来
-let data = a.data;
-
-console.log(a.status); // root
-console.log(a.data.status); // => binding
-
-// 删除data
-a.removeByKey("data");
-// a.data.remove();
-
-console.log(data.status); // => destory
-```
-
 ## 注意事项
 
 ### 不要直接赋值其他已绑定父级的stanz对象

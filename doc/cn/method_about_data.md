@@ -225,7 +225,7 @@ a.watch("val", (e, val) => {
 
 // 这样是监听整个 a 对象，下面同步的修改数据n次，也只会异步触发一次变动函数
 a.watch((e) => {
-    console.log(e.modifys.length); // => 4 // 记录了4次的变动，详细信息请debug
+    console.log(e.trends.length); // => 4 // 记录了4次的变动，详细信息请debug
     console.log(a.val); // => "change val4"
 });
 
@@ -253,7 +253,7 @@ a.watch("val", (e, val) => {
 
 // 这样是监听整个 a 对象，下面同步的修改数据n次，也只会异步触发一次变动函数
 a.watch((e) => {
-    console.log(e.modifys.length); // => 4 // 记录了4次的变动，详细信息请debug
+    console.log(e.trends.length); // => 4 // 记录了4次的变动，详细信息请debug
     console.log(a.c.val); // => "change val4"
 });
 
@@ -271,7 +271,7 @@ a.c.watch("val", (e, val) => {
 });
 
 a.c.watch((e) => {
-    console.log(e.modifys.length); 
+    console.log(e.trends.length); 
 });
 ```
 
@@ -313,7 +313,7 @@ let wCall = (e, val) => {
 a.watch("val", wCall);
 
 let wSelfCall = (e) => {
-    console.log(e.modifys.length); 
+    console.log(e.trends.length); 
     console.log(a.c.val); 
 }
 a.watch(wSelfCall);
@@ -349,23 +349,10 @@ let obj = stanz({
 // 查找属性为selected == 1的对象，记住 = 后面不能出现字符引用
 let selected1Arr = obj.seek(`[selected=1]`);
 
-// 查找 selected == 1 && tag == child 的对象
-let selected2Arr = obj.seek(`[selected=1][tag=child]`);
-
-// 查找对象的 hostkey 为 a，selected == 1 的对象
-let selected3Arr = obj.seek(`a[selected=1]`);
-
 console.log(selected1Arr.length); // => 2
 console.log(selected1Arr);
 // selected1Arr 的两个值是 obj.a 和 obj.b.child
 // =>[ obj.a , obj.b.child ]
-
-console.log(selected2Arr.length); // => 1
-console.log(selected2Arr);
-// =>[ obj.b.child ]
-
-console.log(selected3Arr.length); // => 1
-console.log(selected3Arr);
 // =>[ obj.a ]
 ```
 
@@ -393,7 +380,7 @@ let count = 1;
 obj.watch('[selected=1]', (e, val) => {
     console.log(`count_${count} => `, val);
     count++;
-});
+},true);
 
 console.log("second");
 
@@ -415,7 +402,7 @@ obj.b.selected = 1;
 // }]
 ```
 
-当 `watch` 监听 `seek` 类型参数，会同步触发一次 watch callback；在后续操作 `[selected=1]` 的值发生改变时，才会重新触发 `watch` 监听的数据，并通过第二个参数返回相对应的监听值（放在数组里）；
+在后续操作 `[selected=1]` 的值发生改变时，会触发 `watch` 监听的数据，并通过第二个参数返回相对应的监听值（放在数组里）；
 
 ## virData
 
@@ -493,4 +480,4 @@ console.log(mapData);
 // }
 ```
 
-mapData本身也是 stanz对象，和元数据存在着绑定；和 `sync` 方法绑定数据不同的地方，在于 `virData` 生成的数据和元数据的数据绑定是同步的；
+mapData本身也是 stanz对象，和元数据存在着绑定；和 `sync` 方法绑定数据不同的地方，在于 `virData` 生成的数据和元数据的数据绑定是同步绑定的；

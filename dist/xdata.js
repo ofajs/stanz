@@ -1,20 +1,4 @@
-/**
- * stanz 6.0.1
- * a data synchronization library
- */
-((root, factory) => {
-    "use strict"
-    if (typeof exports === 'object') {
-        module.exports = factory();
-    } else if (typeof define === 'function' && define.amd) {
-        define(factory);
-    } else {
-        root.stanz = factory();
-    }
-})(this, () => {
-    "use strict";
 
-    //---xdata-start---
 
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
@@ -1536,11 +1520,4 @@
         }
     });
 
-    //---xdata-end---
-
-    let stanz = obj => createXData(obj)[PROXYTHIS];
-
-    stanz.v = 60001
-
-    return stanz;
-});
+    

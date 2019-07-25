@@ -13,6 +13,9 @@
     }
 })(this, () => {
     "use strict";
+
+    //---xdata-start---
+
     //<!--public-->
 
     //<!--emiter-->
@@ -24,6 +27,8 @@
     //<!--sync-->
 
     //<!--reBuildArray-->
+
+    //---xdata-end---
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 

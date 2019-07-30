@@ -204,7 +204,8 @@
                 // 父对象
                 parent: {
                     writable: true,
-                    value: options.parent
+                    value: options.parent,
+                    configurable: true
                 },
                 index: {
                     writable: true,

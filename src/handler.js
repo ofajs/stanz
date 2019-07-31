@@ -5,10 +5,10 @@ const GET_REG = /^_.+|^index$|^length$|^object$/;
 const SET_NO_REG = /^parent$|^index$|^length$|^object$/
 
 let XDataHandler = {
-    get(target, key, value, receiver) {
+    get(target, key, receiver) {
         // 私有变量直接通过
         if (typeof key === "symbol" || GET_REG.test(key)) {
-            return Reflect.get(target, key, value, receiver);
+            return Reflect.get(target, key, receiver);
         }
 
         return target.getData(key);

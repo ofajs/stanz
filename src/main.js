@@ -336,7 +336,7 @@ class XData extends XEmiter {
      */
     get prev() {
         if (!/\D/.test(this.index) && this.index > 0) {
-            return this.parent[this.index - 1];
+            return this.parent.getData(this.index - 1);
         }
     }
 
@@ -346,7 +346,7 @@ class XData extends XEmiter {
      */
     get next() {
         if (!/\D/.test(this.index)) {
-            return this.parent[this.index + 1];
+            return this.parent.getData(this.index + 1);
         }
     }
 

@@ -41,7 +41,8 @@ class XEmiter {
             },
             index: {
                 writable: true,
-                value: options.index
+                value: options.index,
+                configurable: true
             }
         });
     }

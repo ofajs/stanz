@@ -293,6 +293,10 @@ class XData extends XEmiter {
 
         // 遍历合并数组，并判断是否有非数字
         Object.keys(this).forEach(k => {
+            if (/^_/.test(k)) {
+                return;
+            }
+
             let val = this[k];
 
             if (val instanceof XData) {

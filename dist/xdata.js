@@ -799,9 +799,7 @@
             if (arg1Type === "function") {
                 let arr = [];
 
-                Object.keys(this).forEach(k => {
-                    let val = this[k];
-
+                let f = val => {
                     if (val instanceof XData) {
                         let isAgree = expr(val);
 
@@ -812,7 +810,18 @@
 
                         arr = [...arr, ...meetChilds];
                     }
+                }
+
+                // 专门为Xhear优化的操作
+                // 拆分后，Xhear也能为children进行遍历
+                Object.keys(this).forEach(k => {
+                    if (/\D/.test(k)) {
+                        f(this[k]);
+                    }
                 });
+                this.forEach(f);
+
+                f = null;
 
                 return arr;
             } else if (arg1Type === "string") {

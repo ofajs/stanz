@@ -16,13 +16,8 @@ let XDataHandler = {
     set(target, key, value, receiver) {
         // 私有变量直接通过
         // 数组函数运行中直接通过
-        if (typeof key === "symbol" || /^_.+/.test(key)) {
+        if (typeof key === "symbol") {
             return Reflect.set(target, key, value, receiver);
-        }
-
-        if (SET_NO_REG.test(key)) {
-            console.warn(`you can't set this key in XData => `, key);
-            return false;
         }
 
         return target.setData(key, value)

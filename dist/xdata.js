@@ -406,13 +406,8 @@
         set(target, key, value, receiver) {
             // 私有变量直接通过
             // 数组函数运行中直接通过
-            if (typeof key === "symbol" || /^_.+/.test(key)) {
+            if (typeof key === "symbol") {
                 return Reflect.set(target, key, value, receiver);
-            }
-
-            if (SET_NO_REG.test(key)) {
-                console.warn(`you can't set this key in XData => `, key);
-                return false;
             }
 
             return target.setData(key, value)
@@ -483,6 +478,15 @@
 
             // 数据合并
             Object.keys(obj).forEach(k => {
+                if (/^\_/.test(k)) {
+                    // this[k] = obj[k];
+                    Object.defineProperty(this, k, {
+                        configurable: true,
+                        writable: true,
+                        value: obj[k]
+                    });
+                    return;
+                }
                 // 值
                 let value = obj[k];
 
@@ -538,6 +542,20 @@
          * @param {Object} opts 设置当前数据
          */
         setData(key, value) {
+            if (SET_NO_REG.test(key)) {
+                console.warn(`you can't set this key in XData => `, key);
+                return false;
+            }
+
+            if (/^_.+/.test(key)) {
+                Object.defineProperty(this, key, {
+                    configurable: true,
+                    writable: true,
+                    value
+                })
+                return true;
+            }
+
             let _this = this[XDATASELF];
 
             if (getType(key) === "string") {
@@ -1054,9 +1072,11 @@
 
             // 获取相应目标，并运行方法
             let target = this.getTarget(keys);
-            target._modifyId = mid;
-            target[name](...args);
-            target._modifyId = null;
+            let targetSelf = target[XDATASELF];
+            targetSelf._modifyId = mid;
+            // target._modifyId = mid;
+            targetSelf[name](...args);
+            targetSelf._modifyId = null;
 
             return true;
         }

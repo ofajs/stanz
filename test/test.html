@@ -25,6 +25,19 @@
 <script src="remove-test.js"></script>
 <script>
     console.timeEnd("all time");
+
+    let a = stanz({
+        val: "I am val",
+        c1: {
+            val: "I am c1"
+        },
+        class: "a1 a2 a3",
+        _aaa: "asdasd",
+    });
+
+    a.watch(e => {
+        debugger
+    });
 </script>
 
 </html>

@@ -1,6 +1,6 @@
 // get 可直接获取的正则
 // const GET_REG = /^_.+|^parent$|^index$|^length$|^object$/;
-const GET_REG = /^_.+|^index$|^length$|^object$/;
+const GET_REG = /^_.+|^index$|^length$|^object$|^getData$|^setData$/;
 // set 不能设置的Key的正则
 const SET_NO_REG = /^parent$|^index$|^length$|^object$/
 

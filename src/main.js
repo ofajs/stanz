@@ -525,7 +525,8 @@ class XData extends XEmiter {
             case "watchKey":
                 // 监听key
                 updateMethod = e => {
-                    if (e.keys[0] == expr) {
+                    let { trend } = e;
+                    if (trend.fromKey == expr) {
                         cacheObj.trends.push(e.trend);
 
                         nextTick(() => {

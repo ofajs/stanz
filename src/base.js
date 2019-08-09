@@ -15,7 +15,6 @@
     "use strict";
 
     //---xdata-start---
-
     //<!--public-->
 
     //<!--emiter-->
@@ -27,12 +26,11 @@
     //<!--sync-->
 
     //<!--reBuildArray-->
-
     //---xdata-end---
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 60001
+    stanz.v = 60002
 
     return stanz;
 });

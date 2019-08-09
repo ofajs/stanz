@@ -1,5 +1,4 @@
 
-
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
     const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
@@ -190,6 +189,63 @@
     };
 
     /**
+     * 触发事件
+     * 不会触发冒泡
+     * @param {String|XEvent} eventName 触发的事件名
+     * @param {Object} emitData 触发事件的自定义数据
+     */
+    const emitHandler = (eventName, emitData, _this) => {
+        let event;
+        // 不是实例对象的话，重新生成
+        if (!(eventName instanceof XEvent)) {
+            event = new XEvent({
+                type: eventName,
+                target: _this[PROXYTHIS] || _this
+            });
+        } else {
+            event = eventName;
+            eventName = event.type;
+        }
+
+        let evesArr = getEventsArr(eventName, _this);
+
+        // 需要去除的事件对象
+        let needRmove = [];
+
+        // 修正currentTarget
+        event.currentTarget = _this[PROXYTHIS] || _this;
+
+        // 触发callback函数
+        evesArr.some(e => {
+            e.data && (event.data = e.data);
+            e.eventId && (event.eventId = e.eventId);
+            e.callback.call(_this[PROXYTHIS] || _this, event, emitData);
+            delete event.data;
+            delete event.eventId;
+
+            e.count--;
+
+            if (!e.count) {
+                needRmove.push(e);
+            }
+
+            if (event.cancel) {
+                return true;
+            }
+        });
+
+        delete event.currentTarget;
+
+        // 去除count为0的事件记录对象
+        needRmove.forEach(e => {
+            let id = evesArr.indexOf(e);
+            (id > -1) && evesArr.splice(id, 1);
+        });
+
+        return event;
+    }
+
+    /**
      * 事件触发器升级版，可设置父节点，会模拟冒泡操作
      * @class XEmiter
      * @constructor
@@ -205,11 +261,13 @@
                 // 父对象
                 parent: {
                     writable: true,
-                    value: options.parent
+                    value: options.parent,
+                    configurable: true
                 },
                 index: {
                     writable: true,
-                    value: options.index
+                    value: options.index,
+                    configurable: true
                 }
             });
         }
@@ -221,7 +279,7 @@
          * @param {Object} data 注册事件的自定义数据
          */
         on(type, callback, data) {
-            this._on({
+            this.addListener({
                 type,
                 data,
                 callback
@@ -235,7 +293,7 @@
          * @param {Object} data 注册事件的自定义数据
          */
         one(type, callback, data) {
-            this._on({
+            this.addListener({
                 count: 1,
                 type,
                 data,
@@ -247,7 +305,7 @@
          * 外部注册事件统一到内部的注册方法
          * @param {Object} opts 注册事件对象参数
          */
-        _on(opts = {}) {
+        addListener(opts = {}) {
             let {
                 type,
                 data,
@@ -256,6 +314,13 @@
                 count = Infinity,
                 eventId
             } = opts;
+
+            if (!type) {
+                throw {
+                    desc: "addListener no type",
+                    options: opts
+                };
+            }
 
             // 分解id参数
             let spIdArr = type.split('#');
@@ -310,52 +375,22 @@
 
         /**
          * 触发事件
+         * 不会触发冒泡
+         * @param {String|XEvent} eventName 触发的事件名
+         * @param {Object} emitData 触发事件的自定义数据
+         */
+        emitHandler(eventName, emitData) {
+            emitHandler(eventName, emitData, this);
+        }
+
+        /**
+         * 触发事件
+         * 带有冒泡状态
          * @param {String|XEvent} eventName 触发的事件名
          * @param {Object} emitData 触发事件的自定义数据
          */
         emit(eventName, emitData) {
-            let event;
-            // 不是实例对象的话，重新生成
-            if (!(eventName instanceof XEvent)) {
-                event = new XEvent({
-                    type: eventName,
-                    target: this[PROXYTHIS] || this
-                });
-            } else {
-                event = eventName;
-                eventName = event.type;
-            }
-
-            let evesArr = getEventsArr(eventName, this);
-
-            // 需要去除的事件对象
-            let needRmove = [];
-
-            // 修正currentTarget
-            event.currentTarget = this[PROXYTHIS] || this;
-
-            // 触发callback函数
-            evesArr.forEach(e => {
-                e.data && (event.data = e.data);
-                e.eventId && (event.eventId = e.eventId);
-                e.callback.call(this[PROXYTHIS] || this, event, emitData);
-                delete event.data;
-                delete event.eventId;
-
-                e.count--;
-
-                if (!e.count) {
-                    needRmove.push(e);
-                }
-            });
-
-            delete event.currentTarget;
-
-            // 去除count为0的事件记录对象
-            needRmove.forEach(e => {
-                let id = evesArr.indexOf(e);
-                (id > -1) && evesArr.splice(id, 1);
-            });
+            let event = emitHandler(eventName, emitData, this);
 
             // 判断父层并冒泡
             if (event.bubble && !event.cancel) {
@@ -377,27 +412,49 @@
      * @constructor
      * @param {String} type 事件名称
      */
-    class XEvent {
+    class XEvent extends XEmiter {
         constructor(opt) {
+            super();
             this.type = opt.type;
             this.target = opt.target;
-            this.bubble = true;
-            this.cancel = false;
+            this._bubble = true;
+            this._cancel = false;
             this.keys = [];
+        }
+
+        get bubble() {
+            return this._bubble;
+        }
+        set bubble(val) {
+            if (this._bubble === val) {
+                return;
+            }
+            this.emitHandler(`set-bubble`, val);
+            this._bubble = val;
+        }
+        get cancel() {
+            return this._cancel;
+        }
+        set cancel(val) {
+            if (this._cancel === val) {
+                return;
+            }
+            this.emitHandler(`set-cancel`, val);
+            this._cancel = val;
         }
     }
 
     // get 可直接获取的正则
     // const GET_REG = /^_.+|^parent$|^index$|^length$|^object$/;
-    const GET_REG = /^_.+|^index$|^length$|^object$/;
+    const GET_REG = /^_.+|^index$|^length$|^object$|^getData$|^setData$/;
     // set 不能设置的Key的正则
     const SET_NO_REG = /^parent$|^index$|^length$|^object$/
 
     let XDataHandler = {
-        get(target, key, value, receiver) {
+        get(target, key, receiver) {
             // 私有变量直接通过
             if (typeof key === "symbol" || GET_REG.test(key)) {
-                return Reflect.get(target, key, value, receiver);
+                return Reflect.get(target, key, receiver);
             }
 
             return target.getData(key);
@@ -405,13 +462,8 @@
         set(target, key, value, receiver) {
             // 私有变量直接通过
             // 数组函数运行中直接通过
-            if (typeof key === "symbol" || /^_.+/.test(key)) {
+            if (typeof key === "symbol") {
                 return Reflect.set(target, key, value, receiver);
-            }
-
-            if (SET_NO_REG.test(key)) {
-                console.warn(`you can't set this key in XData => `, key);
-                return false;
             }
 
             return target.setData(key, value)
@@ -482,6 +534,15 @@
 
             // 数据合并
             Object.keys(obj).forEach(k => {
+                if (/^\_/.test(k)) {
+                    // this[k] = obj[k];
+                    Object.defineProperty(this, k, {
+                        configurable: true,
+                        writable: true,
+                        value: obj[k]
+                    });
+                    return;
+                }
                 // 值
                 let value = obj[k];
 
@@ -537,6 +598,20 @@
          * @param {Object} opts 设置当前数据
          */
         setData(key, value) {
+            if (SET_NO_REG.test(key)) {
+                console.warn(`you can't set this key in XData => `, key);
+                return false;
+            }
+
+            if (/^_.+/.test(key)) {
+                Object.defineProperty(this, key, {
+                    configurable: true,
+                    writable: true,
+                    value
+                })
+                return true;
+            }
+
             let _this = this[XDATASELF];
 
             if (getType(key) === "string") {
@@ -713,6 +788,10 @@
 
             // 遍历合并数组，并判断是否有非数字
             Object.keys(this).forEach(k => {
+                if (/^_/.test(k)) {
+                    return;
+                }
+
                 let val = this[k];
 
                 if (val instanceof XData) {
@@ -756,7 +835,7 @@
          */
         get prev() {
             if (!/\D/.test(this.index) && this.index > 0) {
-                return this.parent[this.index - 1];
+                return this.parent.getData(this.index - 1);
             }
         }
 
@@ -766,7 +845,7 @@
          */
         get next() {
             if (!/\D/.test(this.index)) {
-                return this.parent[this.index + 1];
+                return this.parent.getData(this.index + 1);
             }
         }
 
@@ -794,9 +873,7 @@
             if (arg1Type === "function") {
                 let arr = [];
 
-                Object.keys(this).forEach(k => {
-                    let val = this[k];
-
+                let f = val => {
                     if (val instanceof XData) {
                         let isAgree = expr(val);
 
@@ -807,7 +884,18 @@
 
                         arr = [...arr, ...meetChilds];
                     }
+                }
+
+                // 专门为Xhear优化的操作
+                // 拆分后，Xhear也能为children进行遍历
+                Object.keys(this).forEach(k => {
+                    if (/\D/.test(k)) {
+                        f(this[k]);
+                    }
                 });
+                this.forEach(f);
+
+                f = null;
 
                 return arr;
             } else if (arg1Type === "string") {
@@ -911,7 +999,10 @@
                 case "watchKey":
                     // 监听key
                     updateMethod = e => {
-                        if (e.keys[0] == expr) {
+                        let {
+                            trend
+                        } = e;
+                        if (trend.fromKey == expr) {
                             cacheObj.trends.push(e.trend);
 
                             nextTick(() => {
@@ -1040,9 +1131,11 @@
 
             // 获取相应目标，并运行方法
             let target = this.getTarget(keys);
-            target._modifyId = mid;
-            target[name](...args);
-            target._modifyId = null;
+            let targetSelf = target[XDATASELF];
+            targetSelf._modifyId = mid;
+            // target._modifyId = mid;
+            targetSelf[name](...args);
+            targetSelf._modifyId = null;
 
             return true;
         }
@@ -1519,5 +1612,4 @@
             return this;
         }
     });
-
     

@@ -62,6 +62,15 @@ class XData extends XEmiter {
 
         // 数据合并
         Object.keys(obj).forEach(k => {
+            if (/^\_/.test(k)) {
+                // this[k] = obj[k];
+                Object.defineProperty(this, k, {
+                    configurable: true,
+                    writable: true,
+                    value: obj[k]
+                });
+                return;
+            }
             // 值
             let value = obj[k];
 
@@ -117,6 +126,20 @@ class XData extends XEmiter {
      * @param {Object} opts 设置当前数据
      */
     setData(key, value) {
+        if (SET_NO_REG.test(key)) {
+            console.warn(`you can't set this key in XData => `, key);
+            return false;
+        }
+
+        if (/^_.+/.test(key)) {
+            Object.defineProperty(this, key, {
+                configurable: true,
+                writable: true,
+                value
+            })
+            return true;
+        }
+
         let _this = this[XDATASELF];
 
         if (getType(key) === "string") {
@@ -293,6 +316,10 @@ class XData extends XEmiter {
 
         // 遍历合并数组，并判断是否有非数字
         Object.keys(this).forEach(k => {
+            if (/^_/.test(k)) {
+                return;
+            }
+
             let val = this[k];
 
             if (val instanceof XData) {
@@ -336,7 +363,7 @@ class XData extends XEmiter {
      */
     get prev() {
         if (!/\D/.test(this.index) && this.index > 0) {
-            return this.parent[this.index - 1];
+            return this.parent.getData(this.index - 1);
         }
     }
 
@@ -346,7 +373,7 @@ class XData extends XEmiter {
      */
     get next() {
         if (!/\D/.test(this.index)) {
-            return this.parent[this.index + 1];
+            return this.parent.getData(this.index + 1);
         }
     }
 
@@ -374,9 +401,7 @@ class XData extends XEmiter {
         if (arg1Type === "function") {
             let arr = [];
 
-            Object.keys(this).forEach(k => {
-                let val = this[k];
-
+            let f = val => {
                 if (val instanceof XData) {
                     let isAgree = expr(val);
 
@@ -387,7 +412,18 @@ class XData extends XEmiter {
 
                     arr = [...arr, ...meetChilds];
                 }
+            }
+
+            // 专门为Xhear优化的操作
+            // 拆分后，Xhear也能为children进行遍历
+            Object.keys(this).forEach(k => {
+                if (/\D/.test(k)) {
+                    f(this[k]);
+                }
             });
+            this.forEach(f);
+
+            f = null;
 
             return arr;
         } else if (arg1Type === "string") {
@@ -489,7 +525,8 @@ class XData extends XEmiter {
             case "watchKey":
                 // 监听key
                 updateMethod = e => {
-                    if (e.keys[0] == expr) {
+                    let { trend } = e;
+                    if (trend.fromKey == expr) {
                         cacheObj.trends.push(e.trend);
 
                         nextTick(() => {
@@ -613,9 +650,11 @@ class XData extends XEmiter {
 
         // 获取相应目标，并运行方法
         let target = this.getTarget(keys);
-        target._modifyId = mid;
-        target[name](...args);
-        target._modifyId = null;
+        let targetSelf = target[XDATASELF];
+        targetSelf._modifyId = mid;
+        // target._modifyId = mid;
+        targetSelf[name](...args);
+        targetSelf._modifyId = null;
 
         return true;
     }

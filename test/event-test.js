@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(10, 'event test');
+    let tester = expect(11, 'event test');
 
     let a = stanz({
         val: "I am a",
@@ -20,7 +20,7 @@
         one: 1
     };
 
-    a._on({
+    a.addListener({
         type: 'haha',
         callback(e, data) {
             // console.log(e);
@@ -66,4 +66,14 @@
     // 因为清空就没什么触发了
     a.emit('eveid_test');
 
+    // cancel test
+    a.on("cancel_test", e => {
+        tester.ok(true, "cancel ok");
+        e.cancel = true;
+    });
+    a.on("cancel_test", e => {
+        throw "cancel_test error";
+    });
+
+    a.emit("cancel_test");
 })();

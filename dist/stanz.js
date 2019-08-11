@@ -804,9 +804,10 @@
 
             // 遍历合并数组，并判断是否有非数字
             Object.keys(this).forEach(k => {
-                if (/^_/.test(k)) {
+                if (/^_/.test(k) || !/\D/.test(k)) {
                     return;
                 }
+                isPureArray = false;
 
                 let val = this[k];
 
@@ -815,9 +816,12 @@
                 }
 
                 obj[k] = val;
-                if (/\D/.test(k)) {
-                    isPureArray = false;
+            });
+            this.forEach((val, k) => {
+                if (val instanceof XData) {
+                    val = val.object;
                 }
+                obj[k] = val;
             });
 
             // 转换为数组格式

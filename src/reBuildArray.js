@@ -39,7 +39,7 @@
                     }
                 });
 
-                // 返回值，都是被删除的数据，内部数据清空并回收
+                // pop shift splice 的返回值，都是被删除的数据，内部数据清空并回收
                 let returnVal = arrayFnFunc.apply(_this, newArgs);
 
                 // 重置index
@@ -73,37 +73,35 @@
     }
 });
 
-Object.defineProperty(XData.prototype, "sort", {
-    /**
-     * 对数组进行排序操作
-     * @param {Function|Array} arg 排序参数
-     */
-    value(arg) {
-        let args = [arg];
-        let _this = this[XDATASELF];
-        let oldThis = Array.from(_this);
-        if (isFunction(arg)) {
-            Array.prototype.sort.call(_this, arg);
+Object.defineProperties(XData.prototype, {
+    sort: {
+        value(args) {
+            let args = [arg];
+            let _this = this[XDATASELF];
+            let oldThis = Array.from(_this);
+            if (isFunction(arg)) {
+                Array.prototype.sort.call(_this, arg);
 
-            // 重置index
-            // 记录重新调整的顺序
-            _this.forEach((e, i) => {
-                if (e instanceof XData) {
-                    e.index = i;
-                }
-            });
-            let orders = oldThis.map(e => e.index);
-            args = [orders];
-            oldThis = null;
-        } else if (arg instanceof Array) {
-            arg.forEach((aid, id) => {
-                let tarData = _this[aid] = oldThis[id];
-                tarData.index = aid;
-            });
+                // 重置index
+                // 记录重新调整的顺序
+                _this.forEach((e, i) => {
+                    if (e instanceof XData) {
+                        e.index = i;
+                    }
+                });
+                let orders = oldThis.map(e => e.index);
+                args = [orders];
+                oldThis = null;
+            } else if (arg instanceof Array) {
+                arg.forEach((aid, id) => {
+                    let tarData = _this[aid] = oldThis[id];
+                    tarData.index = aid;
+                });
+            }
+
+            emitUpdate(_this, "sort", args);
+
+            return this;
         }
-
-        emitUpdate(_this, "sort", args);
-
-        return this;
     }
 });

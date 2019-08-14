@@ -75,8 +75,8 @@
 
 Object.defineProperties(XData.prototype, {
     sort: {
-        value(args) {
-            let args = [arg];
+        value(arg) {
+            let args = [];
             let _this = this[XDATASELF];
             let oldThis = Array.from(_this);
             if (isFunction(arg)) {
@@ -97,6 +97,7 @@ Object.defineProperties(XData.prototype, {
                     let tarData = _this[aid] = oldThis[id];
                     tarData.index = aid;
                 });
+                args = [arg];
             }
 
             emitUpdate(_this, "sort", args);

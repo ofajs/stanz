@@ -115,6 +115,7 @@ class XData extends XEmiter {
             },
             // 当前实例数组长度
             length: {
+                configurable: true,
                 writable: true,
                 value: length
             }

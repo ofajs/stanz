@@ -603,6 +603,7 @@
                 },
                 // 当前实例数组长度
                 length: {
+                    configurable: true,
                     writable: true,
                     value: length
                 }
@@ -1600,8 +1601,8 @@
 
     Object.defineProperties(XData.prototype, {
         sort: {
-            value(args) {
-                let args = [arg];
+            value(arg) {
+                let args = [];
                 let _this = this[XDATASELF];
                 let oldThis = Array.from(_this);
                 if (isFunction(arg)) {
@@ -1622,6 +1623,7 @@
                         let tarData = _this[aid] = oldThis[id];
                         tarData.index = aid;
                     });
+                    args = [arg];
                 }
 
                 emitUpdate(_this, "sort", args);

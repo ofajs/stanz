@@ -219,7 +219,20 @@
         evesArr.some(e => {
             e.data && (event.data = e.data);
             e.eventId && (event.eventId = e.eventId);
-            e.callback.call(_this[PROXYTHIS] || _this, event, emitData);
+
+            // 中转确认对象
+            let middleObj = {
+                self: _this,
+                event,
+                emitData
+            };
+
+            let isRun = e.before ? e.before(middleObj) : 1;
+
+            isRun && e.callback.call(_this[PROXYTHIS] || _this, event, emitData);
+
+            e.after && e.after(middleObj);
+
             delete event.data;
             delete event.eventId;
 

@@ -10,6 +10,10 @@
                 val: "I am ndInner"
             }
         },
+        ud: {
+            val: "I am ud"
+        },
+        _unBubble: ["ud"],
         0: {
             id: "B",
             val: "0000"
@@ -23,6 +27,8 @@
             }
         }
     });
+
+    window.a = a;
 
     a.one("update", function (e) {
         // console.log(e);
@@ -50,13 +56,15 @@
 
     let errfun;
     a.one('update', errfun = e => {
-        debugger
         // 这个变动是不能触发的
-        throw "error";
+        tester.ok(false, `can't update`)
     });
 
     // 设置同样的值，不会触发update改动
     a.val = "I am a";
+
+    // ud属性在 _unBubble 内，所以不会冒泡
+    a.ud.val = "change ud val";
 
     // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
     // debugger
@@ -65,7 +73,7 @@
     //     val: "0000"
     // };
 
-    a.off('update', errfun);
+    // a.off('update', errfun);
 
     // a.one('update', e => {
     //     tester.ok(e.modify.genre == "delete", "delete genre ok");

@@ -306,6 +306,23 @@ class XData extends XEmiter {
         return createXData(cloneObject(this))[PROXYTHIS];
     }
 
+    // 在emitHandler后做中间件
+    emitHandler(eventName, emitData) {
+        let event = transToEvent(eventName, this);
+
+        // 过滤unBubble和update的数据
+        if (event.type === "update") {
+            let { _unBubble } = this;
+            if (_unBubble && _unBubble.includes(event.trend.fromKey)) {
+                return event;
+            }
+        }
+
+        XEmiter.prototype.emitHandler.call(this, event, emitData);
+
+        return event;
+    }
+
     /**
      * 转换为普通 object 对象
      * @property {Object} object

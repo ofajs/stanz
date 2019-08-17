@@ -21,12 +21,11 @@ const getEventsArr = (eventName, tar) => {
 };
 
 /**
- * 触发事件
- * 不会触发冒泡
- * @param {String|XEvent} eventName 触发的事件名
- * @param {Object} emitData 触发事件的自定义数据
+ * 转换为事件对象
+ * @param {String|XEvent} eventName 事件对象或事件名
+ * @param {Object} _this 目标元素
  */
-const emitHandler = (eventName, emitData, _this) => {
+const transToEvent = (eventName, _this) => {
     let event;
     // 不是实例对象的话，重新生成
     if (!(eventName instanceof XEvent)) {
@@ -38,55 +37,6 @@ const emitHandler = (eventName, emitData, _this) => {
         event = eventName;
         eventName = event.type;
     }
-
-    let evesArr = getEventsArr(eventName, _this);
-
-    // 需要去除的事件对象
-    let needRmove = [];
-
-    // 修正currentTarget
-    event.currentTarget = _this[PROXYTHIS] || _this;
-
-    // 触发callback函数
-    evesArr.some(e => {
-        e.data && (event.data = e.data);
-        e.eventId && (event.eventId = e.eventId);
-
-        // 中转确认对象
-        let middleObj = {
-            self: _this,
-            event,
-            emitData
-        };
-
-        let isRun = e.before ? e.before(middleObj) : 1;
-
-        isRun && e.callback.call(_this[PROXYTHIS] || _this, event, emitData);
-
-        e.after && e.after(middleObj);
-
-        delete event.data;
-        delete event.eventId;
-
-        e.count--;
-
-        if (!e.count) {
-            needRmove.push(e);
-        }
-
-        if (event.cancel) {
-            return true;
-        }
-    });
-
-    delete event.currentTarget;
-
-    // 去除count为0的事件记录对象
-    needRmove.forEach(e => {
-        let id = evesArr.indexOf(e);
-        (id > -1) && evesArr.splice(id, 1);
-    });
-
     return event;
 }
 
@@ -225,7 +175,58 @@ class XEmiter {
      * @param {Object} emitData 触发事件的自定义数据
      */
     emitHandler(eventName, emitData) {
-        emitHandler(eventName, emitData, this);
+        let event = transToEvent(eventName, this);
+        eventName = event.type;
+
+        let evesArr = getEventsArr(eventName, this);
+
+        // 需要去除的事件对象
+        let needRmove = [];
+
+        // 修正currentTarget
+        event.currentTarget = this[PROXYTHIS] || this;
+
+        // 触发callback函数
+        evesArr.some(e => {
+            e.data && (event.data = e.data);
+            e.eventId && (event.eventId = e.eventId);
+
+            // 中转确认对象
+            let middleObj = {
+                self: this,
+                event,
+                emitData
+            };
+
+            let isRun = e.before ? e.before(middleObj) : 1;
+
+            isRun && e.callback.call(this[PROXYTHIS] || this, event, emitData);
+
+            e.after && e.after(middleObj);
+
+            delete event.data;
+            delete event.eventId;
+
+            e.count--;
+
+            if (!e.count) {
+                needRmove.push(e);
+            }
+
+            if (event.cancel) {
+                return true;
+            }
+        });
+
+        delete event.currentTarget;
+
+        // 去除count为0的事件记录对象
+        needRmove.forEach(e => {
+            let id = evesArr.indexOf(e);
+            (id > -1) && evesArr.splice(id, 1);
+        });
+
+        return event;
     }
 
     /**
@@ -235,7 +236,7 @@ class XEmiter {
      * @param {Object} emitData 触发事件的自定义数据
      */
     emit(eventName, emitData) {
-        let event = emitHandler(eventName, emitData, this);
+        let event = this.emitHandler(eventName, emitData);
 
         // 判断父层并冒泡
         if (event.bubble && !event.cancel) {

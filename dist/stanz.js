@@ -1009,6 +1009,7 @@
 
             let updateMethod;
 
+            let callSelf = this[PROXYTHIS];
             switch (watchType) {
                 case "watchSelf":
                     // 监听自身
@@ -1016,18 +1017,18 @@
                         cacheObj.trends.push(e.trend);
 
                         nextTick(() => {
-                            callback.call(this, {
+                            callback.call(callSelf, {
                                 trends: Array.from(cacheObj.trends)
-                            }, this);
+                            }, callSelf);
 
                             cacheObj.trends.length = 0;
                         }, cacheObj);
                     };
 
                     if (ImmeOpt === true) {
-                        callback.call(this, {
+                        callback.call(callSelf, {
                             trends: []
-                        }, this);
+                        }, callSelf);
                     }
                     break;
                 case "watchKey":
@@ -1042,7 +1043,7 @@
                             nextTick(() => {
                                 let val = this[expr];
 
-                                callback.call(this, {
+                                callback.call(callSelf, {
                                     expr,
                                     val,
                                     trends: Array.from(cacheObj.trends)
@@ -1054,18 +1055,18 @@
                     };
 
                     if (ImmeOpt === true) {
-                        callback.call(this, {
+                        callback.call(callSelf, {
                             expr,
-                            val: this[expr],
+                            val: callSelf[expr],
                             trends: []
-                        }, this[expr]);
+                        }, callSelf[expr]);
                     }
                     break;
                 case "seekData":
-                    let oldVals = this.seek(expr);
+                    let oldVals = callSelf.seek(expr);
                     updateMethod = e => {
                         nextTick(() => {
-                            let tars = this.seek(expr);
+                            let tars = callSelf.seek(expr);
                             let isEqual = 1;
 
                             if (tars.length === oldVals.length) {
@@ -1080,7 +1081,7 @@
                             }
 
                             // 有变动就触发
-                            !isEqual && callback.call(this, {
+                            !isEqual && callback.call(callSelf, {
                                 expr,
                                 old: oldVals,
                                 val: tars
@@ -1091,7 +1092,7 @@
                     };
 
                     if (ImmeOpt === true) {
-                        callback.call(this, {
+                        callback.call(callSelf, {
                             expr,
                             old: oldVals,
                             val: oldVals

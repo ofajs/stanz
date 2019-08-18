@@ -312,8 +312,9 @@ class XData extends XEmiter {
 
         // 过滤unBubble和update的数据
         if (event.type === "update") {
-            let { _unBubble } = this;
-            if (_unBubble && _unBubble.includes(event.trend.fromKey)) {
+            let { _unBubble, _update } = this;
+            if (_update === false || (_unBubble && _unBubble.includes(event.trend.fromKey))) {
+                event.bubble = false;
                 return event;
             }
         }

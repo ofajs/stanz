@@ -14,6 +14,10 @@
             val: "I am ud"
         },
         _unBubble: ["ud"],
+        ud2: {
+            _update: false,
+            val: "I am ud2"
+        },
         0: {
             id: "B",
             val: "0000"
@@ -65,6 +69,9 @@
 
     // ud属性在 _unBubble 内，所以不会冒泡
     a.ud.val = "change ud val";
+
+    // ud2对象有 _update = false，内部也不会触发冒泡
+    a.ud2.val = "change ud 2";
 
     // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
     // debugger

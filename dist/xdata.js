@@ -17,8 +17,12 @@
                 inTick = true;
                 setTimeout(() => {
                     if (nextTickMap.size) {
-                        nextTickMap.forEach(cFun => {
-                            cFun();
+                        nextTickMap.forEach(({
+                            key,
+                            fun
+                        }) => {
+                            fun();
+                            nextTickMap.delete(key);
                         });
                     }
 
@@ -31,7 +35,10 @@
                 key = getRandomId();
             }
 
-            nextTickMap.set(key, fun);
+            nextTickMap.set(key, {
+                key,
+                fun
+            });
         };
     })();
 

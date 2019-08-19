@@ -16,8 +16,9 @@ const nextTick = (() => {
             inTick = true;
             setTimeout(() => {
                 if (nextTickMap.size) {
-                    nextTickMap.forEach(cFun => {
-                        cFun();
+                    nextTickMap.forEach(({ key, fun }) => {
+                        fun();
+                        nextTickMap.delete(key);
                     });
                 }
 
@@ -30,7 +31,7 @@ const nextTick = (() => {
             key = getRandomId();
         }
 
-        nextTickMap.set(key, fun);
+        nextTickMap.set(key, { key, fun });
     };
 })();
 

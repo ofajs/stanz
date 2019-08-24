@@ -435,9 +435,8 @@ let obj = stanz({
 // 获取映射数据
 let mapData = obj.virData({
     // 映射
-    type: "mapValue",
     key: "tag",
-    mapping: {
+    mapValue: {
         "p-ele": "pre-ele",
         "p-text": "pre-text",
         "p-pic": "pre-pic"

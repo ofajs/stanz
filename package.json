@@ -4,7 +4,8 @@
     "versionCode": 6000002,
     "description": "sync data lib",
     "scripts": {
-        "watch": "node scripts/watch.js"
+        "watch": "node scripts/watch.js",
+        "stest": "node --inspect stanzServer/runTest"
     },
     "author": "YAO",
     "license": "MIT",

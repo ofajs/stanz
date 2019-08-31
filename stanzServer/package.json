@@ -1,0 +1,14 @@
+{
+  "name": "stanzserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "stanzServer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "YAO",
+  "license": "MIT",
+  "dependencies": {
+    "faye-websocket": "^0.11.3"
+  }
+}

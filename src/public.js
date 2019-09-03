@@ -156,3 +156,30 @@ const createXData = (obj, options) => {
 
     return redata;
 };
+
+/**
+ * 将 stanz 转换的对象再转化为 children 结构的对象
+ * @param {Object} obj 目标对象
+ * @param {String} childKey 数组寄存属性
+ */
+const toNoStanz = (obj, childKey) => {
+    if (obj instanceof Array) {
+        return obj.map(e => toNoStanz(e, childKey));
+    } else if (obj instanceof Object) {
+        let newObj = {};
+        let childs = [];
+        Object.keys(obj).forEach(k => {
+            if (!/\D/.test(k)) {
+                childs.push(toNoStanz(obj[k], childKey));
+            } else {
+                newObj[k] = toNoStanz(obj[k]);
+            }
+        });
+        if (childs.length) {
+            newObj[childKey] = childs;
+        }
+        return newObj;
+    } else {
+        return obj;
+    }
+}

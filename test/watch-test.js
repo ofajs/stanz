@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, 'watch test');
+    let tester = expect(8, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -14,6 +14,11 @@
                 val: "childs 0",
                 selected: 0
             }
+        },
+        p1: {
+            p11: {
+                val: "I am p11"
+            }
         }
     });
 
@@ -25,7 +30,7 @@
 
     // 整体watch
     a.watch((e) => {
-        tester.ok(e.trends.length == 4, "watch trends length ok");
+        tester.ok(e.trends.length == 6, "watch trends length ok");
     });
 
     // watch key
@@ -52,9 +57,15 @@
         cid++;
     }, true);
 
+    a.watch("p1.p11.val", (e, val) => {
+        tester.ok(val === "change p1.p11.val 2", "watch point key ok");
+    });
+
     // 同时修改，只会触发最后一个
     a[1][0].val = "change 1-0";
     a[1][0].val = "change 1-0 2";
     a[0].selected = 0;
     a[1].selected = 1;
+    a.p1.p11.val = "change p1.p11.val";
+    a.p1.p11 = { val: "change p1.p11.val 2" };
 })();

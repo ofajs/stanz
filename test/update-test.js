@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, 'update test');
+    let tester = expect(8, 'update test');
 
     let a = stanz({
         id: "A",
@@ -72,6 +72,9 @@
 
     // ud2对象有 _update = false，内部也不会触发冒泡
     a.ud2.val = "change ud 2";
+
+    let obj = a.object;
+    tester.ok(!obj.ud && !obj.ud2, "unBubble and _update=false is Succeed");
 
     // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
     // debugger

@@ -189,6 +189,33 @@
         return redata;
     };
 
+    /**
+     * 将 stanz 转换的对象再转化为 children 结构的对象
+     * @param {Object} obj 目标对象
+     * @param {String} childKey 数组寄存属性
+     */
+    const toNoStanz = (obj, childKey) => {
+        if (obj instanceof Array) {
+            return obj.map(e => toNoStanz(e, childKey));
+        } else if (obj instanceof Object) {
+            let newObj = {};
+            let childs = [];
+            Object.keys(obj).forEach(k => {
+                if (!/\D/.test(k)) {
+                    childs.push(toNoStanz(obj[k], childKey));
+                } else {
+                    newObj[k] = toNoStanz(obj[k]);
+                }
+            });
+            if (childs.length) {
+                newObj[childKey] = childs;
+            }
+            return newObj;
+        } else {
+            return obj;
+        }
+    }
+
     // common
     const EVENTS = Symbol("events");
 
@@ -652,6 +679,19 @@
 
             let _this = this[XDATASELF];
 
+            // 是否 point key
+            if (/\./.test(key)) {
+                let kMap = key.split(".");
+                let lastId = kMap.length - 1;
+                kMap.some((k, i) => {
+                    if (i == lastId) {
+                        key = k;
+                        return true;
+                    }
+                    _this = _this[k];
+                });
+            }
+
             if (getType(key) === "string") {
                 let oldVal = _this[key];
 
@@ -836,6 +876,13 @@
             return event;
         }
 
+        // 转换为children属性机构的数据
+        noStanz(opts = {
+            childKey: "children"
+        }) {
+            return toNoStanz(this.object, opts.childKey);
+        }
+
         /**
          * 转换为普通 object 对象
          * @property {Object} object
@@ -845,20 +892,30 @@
 
             let isPureArray = true;
 
+            let {
+                _unBubble = []
+            } = this;
+
             // 遍历合并数组，并判断是否有非数字
             Object.keys(this).forEach(k => {
-                if (/^_/.test(k) || !/\D/.test(k)) {
+                if (/^_/.test(k) || !/\D/.test(k) || _unBubble.includes(k)) {
                     return;
                 }
-                isPureArray = false;
 
                 let val = this[k];
 
                 if (val instanceof XData) {
+                    // 禁止冒泡
+                    if (val._update === false) {
+                        return;
+                    }
+
                     val = val.object;
                 }
 
                 obj[k] = val;
+
+                isPureArray = false;
             });
             this.forEach((val, k) => {
                 if (val instanceof XData) {
@@ -1008,10 +1065,12 @@
             // 根据参数调整类型
             let watchType;
 
-            if (expr == "") {
+            if (expr === "") {
                 watchType = "watchSelf";
             } else if (/\[.+\]/.test(expr)) {
                 watchType = "seekData";
+            } else if (/\./.test(expr)) {
+                watchType = "watchPointKey";
             } else {
                 watchType = "watchKey";
             }
@@ -1089,6 +1148,46 @@
                             val: callSelf[expr],
                             trends: []
                         }, callSelf[expr]);
+                    }
+                    break;
+                case "watchPointKey":
+                    let pointKeyArr = expr.split(".");
+                    let firstKey = pointKeyArr[0];
+                    let oldVal = this.getTarget(pointKeyArr);
+
+                    updateMethod = e => {
+                        let {
+                            trend
+                        } = e;
+                        if (trend.fromKey == firstKey) {
+                            oldVal;
+                            let newVal;
+                            try {
+                                newVal = this.getTarget(pointKeyArr);
+                            } catch (e) {}
+                            if (newVal !== oldVal) {
+                                cacheObj.trends.push(trend);
+                                nextTick(() => {
+                                    newVal = this.getTarget(pointKeyArr);
+
+                                    (newVal !== oldVal) && callback.call(callSelf, {
+                                        expr,
+                                        old: oldVal,
+                                        val: newVal,
+                                        trends: Array.from(cacheObj.trends)
+                                    }, newVal);
+
+                                    cacheObj.trends.length = 0;
+                                }, cacheObj);
+                            }
+                        }
+                    }
+
+                    if (ImmeOpt === true) {
+                        callback.call(callSelf, {
+                            expr,
+                            val: oldVal
+                        }, oldVal);
                     }
                     break;
                 case "seekData":
@@ -1679,7 +1778,7 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 60002
+    stanz.v = 6001000
 
     return stanz;
 });

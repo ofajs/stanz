@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(13, 'normal test');
+    let tester = expect(14, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -74,4 +74,8 @@
     a.push(a.moveObj);
     tester.ok(a[5].string === mobj.string, "move's add is equal 2");
     tester.ok(a.length == 6, 'length ok2');
+
+    // point set 功能
+    a["d.val"] = "change d val";
+    tester.ok(a.d.val === "change d val", "point set ok");
 })();

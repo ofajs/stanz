@@ -143,6 +143,19 @@ class XData extends XEmiter {
 
         let _this = this[XDATASELF];
 
+        // 是否 point key
+        if (/\./.test(key)) {
+            let kMap = key.split(".");
+            let lastId = kMap.length - 1;
+            kMap.some((k, i) => {
+                if (i == lastId) {
+                    key = k;
+                    return true;
+                }
+                _this = _this[k];
+            });
+        }
+
         if (getType(key) === "string") {
             let oldVal = _this[key];
 
@@ -324,6 +337,13 @@ class XData extends XEmiter {
         return event;
     }
 
+    // 转换为children属性机构的数据
+    noStanz(opts = {
+        childKey: "children"
+    }) {
+        return toNoStanz(this.object, opts.childKey);
+    }
+
     /**
      * 转换为普通 object 对象
      * @property {Object} object
@@ -333,20 +353,28 @@ class XData extends XEmiter {
 
         let isPureArray = true;
 
+        let { _unBubble = [] } = this;
+
         // 遍历合并数组，并判断是否有非数字
         Object.keys(this).forEach(k => {
-            if (/^_/.test(k) || !/\D/.test(k)) {
+            if (/^_/.test(k) || !/\D/.test(k) || _unBubble.includes(k)) {
                 return;
             }
-            isPureArray = false;
 
             let val = this[k];
 
             if (val instanceof XData) {
+                // 禁止冒泡
+                if (val._update === false) {
+                    return;
+                }
+
                 val = val.object;
             }
 
             obj[k] = val;
+
+            isPureArray = false;
         });
         this.forEach((val, k) => {
             if (val instanceof XData) {
@@ -496,10 +524,12 @@ class XData extends XEmiter {
         // 根据参数调整类型
         let watchType;
 
-        if (expr == "") {
+        if (expr === "") {
             watchType = "watchSelf";
         } else if (/\[.+\]/.test(expr)) {
             watchType = "seekData";
+        } else if (/\./.test(expr)) {
+            watchType = "watchPointKey";
         } else {
             watchType = "watchKey";
         }
@@ -573,6 +603,44 @@ class XData extends XEmiter {
                         val: callSelf[expr],
                         trends: []
                     }, callSelf[expr]);
+                }
+                break;
+            case "watchPointKey":
+                let pointKeyArr = expr.split(".");
+                let firstKey = pointKeyArr[0];
+                let oldVal = this.getTarget(pointKeyArr);
+
+                updateMethod = e => {
+                    let { trend } = e;
+                    if (trend.fromKey == firstKey) {
+                        oldVal;
+                        let newVal;
+                        try {
+                            newVal = this.getTarget(pointKeyArr);
+                        } catch (e) { }
+                        if (newVal !== oldVal) {
+                            cacheObj.trends.push(trend);
+                            nextTick(() => {
+                                newVal = this.getTarget(pointKeyArr);
+
+                                (newVal !== oldVal) && callback.call(callSelf, {
+                                    expr,
+                                    old: oldVal,
+                                    val: newVal,
+                                    trends: Array.from(cacheObj.trends)
+                                }, newVal);
+
+                                cacheObj.trends.length = 0;
+                            }, cacheObj);
+                        }
+                    }
+                }
+
+                if (ImmeOpt === true) {
+                    callback.call(callSelf, {
+                        expr,
+                        val: oldVal
+                    }, oldVal);
                 }
                 break;
             case "seekData":

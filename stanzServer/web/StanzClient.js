@@ -1,5 +1,10 @@
 // 依赖 stanz.js
 ((glo, stanz) => {
+    // 发送数据
+    function send(ws, data) {
+        ws.send(JSON.stringify(data));
+    }
+
     glo.stanzFromClient = (serverUrl) => new Promise(res => {
         // 返回数据
         let sobj;
@@ -19,7 +24,12 @@
                     // 初始化数据
                     sobj = stanz(data.d);
                     sobj._clientData = {
-                        ws
+                        ws, sendmsg(d) {
+                            send(ws, {
+                                type: "msg",
+                                data: d
+                            });
+                        }, onmsg() { }
                     };
 
                     // 监听变动
@@ -33,10 +43,10 @@
                             return;
                         }
 
-                        ws.send(JSON.stringify({
+                        send(ws, {
                             type: "update",
                             trends
-                        }));
+                        });
                     });
 
                     res(sobj);
@@ -57,6 +67,9 @@
                         oldTrends.clear();
                     }, 3000);
                     break;
+                case "msg":
+                    sobj._clientData.onmsg(data.data);
+                    break;
             }
         };
 
@@ -67,9 +80,9 @@
 
         // 定时发送ping
         setInterval(() => {
-            ws.send(JSON.stringify({
+            send(ws, {
                 type: "ping"
-            }));
+            });
         }, 30000);
     })
 })(window, window.stanz);

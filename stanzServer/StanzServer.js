@@ -32,7 +32,7 @@ class StanzServer {
                 let ws = new WebSocket(request, socket, body);
                 let hostObj = new StanzHost(ws);
 
-                ws.on('message', function (event) {
+                ws.on('message', (event) => {
                     let data = JSON.parse(event.data);
                     switch (data.type) {
                         case "update":
@@ -48,6 +48,9 @@ class StanzServer {
                             break;
                         case "ping":
                             hostObj.send({ type: "pong" });
+                            break;
+                        case "msg":
+                            this.onmsg && this.onmsg(data.data, hostObj);
                             break;
                     }
                 });

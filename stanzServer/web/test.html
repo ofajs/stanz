@@ -17,6 +17,10 @@
                 window.sdata = sdata;
 
                 console.log("sdata => ", sdata);
+
+                sdata._clientData.onmsg = (d) => {
+                    console.log("rebackMsg => ", d);
+                }
             });
     </script>
 </body>

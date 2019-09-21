@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(14, 'normal test');
+    let tester = expect(15, 'normal test');
 
     let a = stanz({
         val: "I am a",
@@ -78,4 +78,14 @@
     // point set 功能
     a["d.val"] = "change d val";
     tester.ok(a.d.val === "change d val", "point set ok");
+
+    let ele = document.createElement("div");
+    ele.innerHTML = "test ele";
+    a.ele = ele;
+    a.eleObj = {
+        ele
+    };
+
+    // 断定是否正确
+    tester.ok(a.eleObj.ele === ele, "element set ok");
 })();

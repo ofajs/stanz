@@ -62,17 +62,18 @@ class XData extends XEmiter {
 
         // 数据合并
         Object.keys(obj).forEach(k => {
-            if (/^\_/.test(k)) {
+            // 值
+            let value = obj[k];
+
+            if (/^\_/.test(k) || value instanceof Element) {
                 // this[k] = obj[k];
                 Object.defineProperty(this, k, {
                     configurable: true,
                     writable: true,
-                    value: obj[k]
+                    value
                 });
                 return;
             }
-            // 值
-            let value = obj[k];
 
             if (!/\D/.test(k)) {
                 // 数字key进行length长度计算

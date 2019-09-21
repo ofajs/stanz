@@ -32,8 +32,6 @@
         }
     });
 
-    window.a = a;
-
     a.one("update", function (e) {
         // console.log(e);
         tester.ok(JSON.stringify(e.keys) == "[1,0]", "keys ok");

@@ -30,7 +30,7 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 6001001
+    stanz.v = 6001002
 
     return stanz;
 });

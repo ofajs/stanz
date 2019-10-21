@@ -675,6 +675,7 @@
                     }
                     _this = _this[k];
                 });
+                return true;
             }
 
             if (getType(key) === "string") {
@@ -705,6 +706,8 @@
                 emitUpdate(_this, "setData", [key, value], {
                     oldValue: oldVal
                 });
+
+                return true;
 
             } else if (key instanceof Object) {
                 let data = key;
@@ -1119,6 +1122,7 @@
                                 callback.call(callSelf, {
                                     expr,
                                     val,
+                                    old: cacheObj.trends[0].args[1],
                                     trends: Array.from(cacheObj.trends)
                                 }, val);
 

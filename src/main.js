@@ -163,7 +163,7 @@ class XData extends XEmiter {
 
             if (value === oldVal) {
                 // 一样还瞎折腾干嘛
-                return;
+                return true;
             }
 
             // 去除旧的依赖
@@ -510,7 +510,7 @@ class XData extends XEmiter {
      * 若 seek 的表达式，则监听表达式的值是否有变化
      * @param {string} expr 监听键值，可以是 keyName 可以是 seek表达式
      * @param {Function} callback 相应值变动后出发的callback
-     * @param {Boolean} ImmeOpt 是否即可触发callback
+     * @param {Boolean} ImmeOpt 是否立刻触发callback
      */
     watch(expr, callback, ImmeOpt) {
         // 调整参数

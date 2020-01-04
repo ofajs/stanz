@@ -563,6 +563,8 @@
         return value;
     }
 
+    const hasElement = typeof Element !== "undefined";
+
     /**
      * 事件触发器升级版，可设置父节点，会模拟冒泡操作
      * @class
@@ -585,7 +587,7 @@
                 // 值
                 let value = obj[k];
 
-                if (/^\_/.test(k) || value instanceof Element) {
+                if (/^\_/.test(k) || (hasElement && value instanceof Element)) {
                     // this[k] = obj[k];
                     Object.defineProperty(this, k, {
                         configurable: true,

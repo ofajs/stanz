@@ -4,7 +4,7 @@
   "description": "",
   "main": "stanzServer.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "serve": "node ./runTest.js"
   },
   "author": "YAO",
   "license": "MIT",

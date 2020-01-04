@@ -12,7 +12,8 @@ let server = new StanzServer({
         1: {
             val: "c1"
         }
-    }
+    },
+    d: "I am ddd"
 });
 
 // 启动服务器
@@ -32,5 +33,18 @@ server.onmsg = (d, hostObj) => {
         });
     }, 1000);
 }
+
+server.onpermit = async () => {
+    return {
+        unPush: ["a"],
+        // unPull: ["d"]
+        canPull: ["a", "b"]
+    }
+}
+setTimeout(() => {
+    server.stanz.a = "change aaa222";
+}, 5000);
+
+global.testServer = server;
 
 console.log("server =>", server);

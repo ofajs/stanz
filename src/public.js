@@ -11,10 +11,16 @@ const nextTick = (() => {
     // 定位对象寄存器
     let nextTickMap = new Map();
 
+    let pnext = setTimeout;
+
+    if (typeof process === "object" && process.nextTick) {
+        pnext = process.nextTick;
+    }
+
     return (fun, key) => {
         if (!inTick) {
             inTick = true;
-            setTimeout(() => {
+            pnext(() => {
                 if (nextTickMap.size) {
                     nextTickMap.forEach(({ key, fun }) => {
                         fun();
@@ -24,7 +30,7 @@ const nextTick = (() => {
 
                 nextTickMap.clear();
                 inTick = false;
-            }, 0);
+            });
         }
 
         if (!key) {

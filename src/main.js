@@ -157,6 +157,7 @@ class XData extends XEmiter {
                 }
                 _this = _this[k];
             });
+            _this.setData(key, value);
             return true;
         }
 

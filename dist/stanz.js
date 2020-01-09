@@ -1,5 +1,5 @@
 /**
- * stanz 6.0.1
+ * stanz 6.1.3
  * a data synchronization library
  */
 ((root, factory) => {
@@ -28,10 +28,16 @@
         // 定位对象寄存器
         let nextTickMap = new Map();
 
+        let pnext = setTimeout;
+
+        if (typeof process === "object" && process.nextTick) {
+            pnext = process.nextTick;
+        }
+
         return (fun, key) => {
             if (!inTick) {
                 inTick = true;
-                setTimeout(() => {
+                pnext(() => {
                     if (nextTickMap.size) {
                         nextTickMap.forEach(({
                             key,
@@ -44,7 +50,7 @@
 
                     nextTickMap.clear();
                     inTick = false;
-                }, 0);
+                });
             }
 
             if (!key) {
@@ -693,6 +699,7 @@
                     }
                     _this = _this[k];
                 });
+                _this.setData(key, value);
                 return true;
             }
 
@@ -1785,7 +1792,7 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 6001002
+    stanz.v = 6001003
 
     return stanz;
 });

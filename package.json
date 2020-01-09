@@ -1,7 +1,7 @@
 {
     "name": "stanz.js",
-    "version": "6.1.2",
-    "versionCode": 6001002,
+    "version": "6.1.3",
+    "versionCode": 6001003,
     "description": "sync data lib",
     "scripts": {
         "watch": "node scripts/watch.js",

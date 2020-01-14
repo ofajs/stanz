@@ -332,10 +332,17 @@ class XData extends XEmiter {
 
         // 过滤unBubble和update的数据
         if (event.type === "update") {
-            let { _unBubble, _update } = this;
-            if (_update === false || (_unBubble && _unBubble.includes(event.trend.fromKey))) {
+            let { _unBubble, _update, _unsync } = this;
+            let { fromKey } = event.trend;
+            if (_update === false || (_unBubble && _unBubble.includes(fromKey))) {
                 event.bubble = false;
                 return event;
+            }
+
+            if (_unsync && _unsync.includes(fromKey)) {
+                Object.defineProperty(event, "_unsync", {
+                    value: true
+                });
             }
         }
 
@@ -736,7 +743,12 @@ class XData extends XEmiter {
      * @param {Object} trend 趋势数据
      */
     entrend(trend) {
-        let { mid, keys, name, args } = trend;
+        let { mid, keys, name, args, _unsync } = trend;
+
+        if (_unsync) {
+            // 不同步的就返回
+            return;
+        }
 
         if (!mid) {
             throw {
@@ -744,13 +756,14 @@ class XData extends XEmiter {
             };
         }
 
-        if (getXDataProp(this, MODIFYIDS).includes(mid)) {
-            return false;
-        }
-
         // 获取相应目标，并运行方法
         let target = this.getTarget(keys);
         let targetSelf = target[XDATASELF];
+
+        if (getXDataProp(targetSelf, MODIFYIDS).includes(mid)) {
+            return false;
+        }
+
         targetSelf._modifyId = mid;
         // target._modifyId = mid;
         targetSelf[name](...args);
@@ -769,11 +782,19 @@ class XData extends XEmiter {
 class XDataTrend {
     constructor(xevent) {
         if (xevent instanceof XEvent) {
+            // 元对象数据会被修改，必须深克隆数据
             let { modify: { name, args, mid }, keys } = cloneObject(xevent);
+            let { _unsync } = xevent;
+            // let { modify: { name, args, mid }, keys, _unsync } = xevent;
+
+            if (_unsync) {
+                Object.defineProperty(this, "_unsync", { value: true });
+            }
 
             Object.assign(this, {
                 name, args, mid, keys
             });
+
         } else {
             Object.assign(this, xevent);
         }

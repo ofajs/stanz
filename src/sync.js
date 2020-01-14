@@ -161,7 +161,11 @@ const SyncMethods = {
                 break
             default:
                 if (isCoverRight) {
-                    xdata.setData(this.object);
+                    let obj = this.object;
+
+                    Object.keys(obj).forEach(k => {
+                        xdata.setData(k, obj[k]);
+                    });
                 }
 
                 leftFun = e => e.trends.forEach(trend => xdata.entrend(trend))

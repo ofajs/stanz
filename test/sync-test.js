@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(15, 'sync test');
+    let tester = expect(17, 'sync test');
 
     let a = stanz({
         val: "I am a",
@@ -17,7 +17,9 @@
                 val: "childs 0",
                 selected: 0
             }
-        }
+        },
+        val2: "I am val2",
+        _unsync: ["val2"]
     });
 
     // 克隆数据
@@ -32,9 +34,7 @@
 
     // 单项同步数据
     a.watch(e => {
-        e.trends.forEach(trend => {
-            b.entrend(trend)
-        });
+        e.trends.forEach(trend => b.entrend(trend));
     });
 
     // 同步数据
@@ -67,6 +67,14 @@
         tester.ok(b[1].val == "new [1]", 'entrend arrayMethod ok');
         tester.ok(c[1].val == "new [1]", 'sync arrayMethod ok 2');
     }, 100);
+
+    setTimeout(() => {
+        a.val2 = "change val2";
+        setTimeout(e => {
+            tester.ok(a.val2 === "change val2", "set a.val2 ok");
+            tester.ok(b.val2 === "I am val2" && c.val2 === "I am val2", "unsync val2 ok");
+        }, 10);
+    }, 110);
 
     // 删除记录
     // delete a.val;

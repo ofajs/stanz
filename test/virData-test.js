@@ -14,23 +14,26 @@
 
     a.sync(b, ["tag"]);
 
-    let vdata = a.virData(([key, value], opt) => {
-        if (key === "tag") {
-            return ["type", value];
-        }
-        return [key, value];
-    }, ([key, value], opt) => {
-        if (key === "type") {
-            return ["tag", value];
-        }
-        return [key, value];
-    });
+    // let vdata = a.virData(([key, value], opt) => {
+    //     if (key === "tag") {
+    //         return ["type", value];
+    //     }
+    //     return [key, value];
+    // }, ([key, value], opt) => {
+    //     if (key === "type") {
+    //         return ["tag", value];
+    //     }
+    //     return [key, value];
+    // });
+
 
     let vdata2 = a.virData({
         mapKey: {
             tag: "type"
         }
     });
+
+    let vdata = vdata2;
 
     let vdata3 = a.virData({
         key: "tag",

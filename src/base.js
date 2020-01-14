@@ -1,5 +1,5 @@
 /**
- * stanz 6.1.3
+ * stanz 6.1.4
  * a data synchronization library
  */
 ((root, factory) => {
@@ -30,7 +30,7 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 6001003
+    stanz.v = 6001004
 
     return stanz;
 });

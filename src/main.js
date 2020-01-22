@@ -332,15 +332,15 @@ class XData extends XEmiter {
 
         // 过滤unBubble和update的数据
         if (event.type === "update") {
-            let { _unBubble, _update, _unsync } = this;
+            let { _unBubble, _update, _unpush } = this;
             let { fromKey } = event.trend;
             if (_update === false || (_unBubble && _unBubble.includes(fromKey))) {
                 event.bubble = false;
                 return event;
             }
 
-            if (_unsync && _unsync.includes(fromKey)) {
-                Object.defineProperty(event, "_unsync", {
+            if (_unpush && _unpush.includes(fromKey)) {
+                Object.defineProperty(event, "_unpush", {
                     value: true
                 });
             }
@@ -743,9 +743,9 @@ class XData extends XEmiter {
      * @param {Object} trend 趋势数据
      */
     entrend(trend) {
-        let { mid, keys, name, args, _unsync } = trend;
+        let { mid, keys, name, args, _unpush } = trend;
 
-        if (_unsync) {
+        if (_unpush) {
             // 不同步的就返回
             return;
         }
@@ -784,11 +784,11 @@ class XDataTrend {
         if (xevent instanceof XEvent) {
             // 元对象数据会被修改，必须深克隆数据
             let { modify: { name, args, mid }, keys } = cloneObject(xevent);
-            let { _unsync } = xevent;
-            // let { modify: { name, args, mid }, keys, _unsync } = xevent;
+            let { _unpush } = xevent;
+            // let { modify: { name, args, mid }, keys, _unpush } = xevent;
 
-            if (_unsync) {
-                Object.defineProperty(this, "_unsync", { value: true });
+            if (_unpush) {
+                Object.defineProperty(this, "_unpush", { value: true });
             }
 
             Object.assign(this, {

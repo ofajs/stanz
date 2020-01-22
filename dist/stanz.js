@@ -877,7 +877,7 @@
                 let {
                     _unBubble,
                     _update,
-                    _unsync
+                    _unpush
                 } = this;
                 let {
                     fromKey
@@ -887,8 +887,8 @@
                     return event;
                 }
 
-                if (_unsync && _unsync.includes(fromKey)) {
-                    Object.defineProperty(event, "_unsync", {
+                if (_unpush && _unpush.includes(fromKey)) {
+                    Object.defineProperty(event, "_unpush", {
                         value: true
                     });
                 }
@@ -1304,10 +1304,10 @@
                 keys,
                 name,
                 args,
-                _unsync
+                _unpush
             } = trend;
 
-            if (_unsync) {
+            if (_unpush) {
                 // 不同步的就返回
                 return;
             }
@@ -1354,12 +1354,12 @@
                     keys
                 } = cloneObject(xevent);
                 let {
-                    _unsync
+                    _unpush
                 } = xevent;
-                // let { modify: { name, args, mid }, keys, _unsync } = xevent;
+                // let { modify: { name, args, mid }, keys, _unpush } = xevent;
 
-                if (_unsync) {
-                    Object.defineProperty(this, "_unsync", {
+                if (_unpush) {
+                    Object.defineProperty(this, "_unpush", {
                         value: true
                     });
                 }

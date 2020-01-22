@@ -19,7 +19,7 @@
             }
         },
         val2: "I am val2",
-        _unsync: ["val2"]
+        _unpush: ["val2"]
     });
 
     // 克隆数据

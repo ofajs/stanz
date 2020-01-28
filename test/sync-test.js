@@ -3,6 +3,9 @@
 
     let a = stanz({
         val: "I am a",
+        valObj: {
+            val: "I am valObj"
+        },
         0: {
             val: "0000",
             selected: 1
@@ -78,12 +81,13 @@
 
     // 删除记录
     // delete a.val;
-    a.remove("val");
+    // a.remove("val");
+    a.valObj.remove();
 
     setTimeout(() => {
-        tester.ok(!('val' in a), 'remove ok');
-        tester.ok(!('val' in b), 'sync remove ok1');
-        tester.ok(!('val' in c), 'sync remove ok2');
+        tester.ok(!('valObj' in a), 'remove ok');
+        tester.ok(!('valObj' in b), 'sync remove ok1');
+        tester.ok(!('valObj' in c), 'sync remove ok2');
     }, 100);
 
     // d.on("update", e => {

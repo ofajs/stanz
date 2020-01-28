@@ -529,8 +529,9 @@ class XData extends XEmiter {
             Object.keys(expr).forEach(k => {
                 this.watch(k, expr[k]);
             });
-            return;
+            return; 
         } else if (/function/.test(arg1Type)) {
+            ImmeOpt = callback;
             callback = expr;
             expr = "";
         }

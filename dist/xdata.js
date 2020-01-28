@@ -1065,6 +1065,7 @@
                 });
                 return;
             } else if (/function/.test(arg1Type)) {
+                ImmeOpt = callback;
                 callback = expr;
                 expr = "";
             }

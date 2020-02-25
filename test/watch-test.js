@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(8, 'watch test');
+    let tester = expect(9, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -68,4 +68,25 @@
     a[1].selected = 1;
     a.p1.p11.val = "change p1.p11.val";
     a.p1.p11 = { val: "change p1.p11.val 2" };
+
+    let b = stanz({
+        0: {
+            val: "i am zero"
+        },
+        b1: {
+            val: "i am b1"
+        },
+        c: {
+            val: "i am c"
+        }
+    });
+
+    b.watch(/[\d]/, e => {
+        tester.ok(e.trends.length === 2, "RegExp watch ok");
+    });
+
+    b[0].val = "change 0 val";
+    b["b1"].val = "change b1 val";
+    b["c"].val = "change c val";
+
 })();

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(17, 'sync test');
+    let tester = expect(18, 'sync test');
 
     let a = stanz({
         val: "I am a",
@@ -117,8 +117,6 @@
         return a.val - b.val;
     });
 
-    // console.log(sObj);
-
     setTimeout(() => {
         tester.ok(sObj[0].val == 111, 'sort ok');
         tester.ok(sObj[1].val == 222, 'sort ok 2');
@@ -127,5 +125,20 @@
         tester.ok(sObj2[1].val == 222, 'sort sync ok 3');
         tester.ok(sObj3[1].val == 222, 'sort sync ok 4');
     }, 100);
+
+    let k1 = stanz({
+        val: "i am k",
+        val2: "val2222"
+    });
+
+    let k2 = k1.clone();
+
+    k2._unpull = ["val"];
+
+    k1.val = "change k val";
+
+    setTimeout(() => {
+        tester.ok(k2.val === "i am k", "_unpull i is ok");
+    }, 10);
 
 })();

@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(8, 'update test');
+    let tester = expect(9, 'update test');
 
     let a = stanz({
         id: "A",
@@ -11,9 +11,9 @@
             }
         },
         ud: {
+            _unBubble: ["val"],
             val: "I am ud"
         },
-        _unBubble: ["ud"],
         ud2: {
             _update: false,
             val: "I am ud2"
@@ -62,17 +62,22 @@
         tester.ok(false, `can't update`)
     });
 
+
+    a.ud.one("update", e => {
+        tester.ok(true, `a.ud update`)
+    });
+
     // 设置同样的值，不会触发update改动
     a.val = "I am a";
 
-    // ud属性在 _unBubble 内，所以不会冒泡
+    // ud属性在 _unBubble 内，可以出发ud的update，但不会再向上冒泡
     a.ud.val = "change ud val";
 
     // ud2对象有 _update = false，内部也不会触发冒泡
     a.ud2.val = "change ud 2";
 
     let obj = a.object;
-    tester.ok(!obj.ud && !obj.ud2, "unBubble and _update=false is Succeed");
+    tester.ok(!obj.ud.val && !obj.ud2, "_unBubble and _update=false is Succeed");
 
     // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
     // debugger

@@ -1,15 +1,36 @@
 {
-    "name": "stanz.js",
+    "name": "stanz",
     "version": "6.1.5",
-    "versionCode": 6001005,
     "description": "sync data lib",
+    "main": "dist/stanz.js",
+    "directories": {
+        "doc": "doc",
+        "test": "test"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "js-beautify": "^1.10.0",
+        "uglify-es": "^3.3.9"
+    },
     "scripts": {
         "watch": "node scripts/watch.js",
         "stest": "node --inspect stanzServer/runTest"
     },
-    "author": "YAO",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kirakiray/stanz.git"
+    },
+    "author": {
+        "name": "YAO",
+        "email": "kirayao@hotmail.com",
+        "url": "https://kirakiray.com/"
+    },
     "license": "MIT",
-    "devDependencies": {
-        "js-beautify": "^1.10.0"
+    "bugs": {
+        "url": "https://github.com/kirakiray/stanz/issues"
+    },
+    "homepage": "https://github.com/kirakiray/stanz",
+    "watchjs": {
+        "startyear": "2018"
     }
 }

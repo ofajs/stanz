@@ -1,8 +1,3 @@
-/**
- * stanz 6.1.5
- * a data synchronization library
- * https://github.com/kirakiray/stanz
- */
 ((root, factory) => {
     "use strict"
     if (typeof exports === 'object') {
@@ -15,7 +10,7 @@
 })(this, () => {
     "use strict";
 
-    //---xdata-start---
+    //<o:start--xdata.js-->
     //<!--public-->
 
     //<!--emiter-->
@@ -27,11 +22,12 @@
     //<!--sync-->
 
     //<!--reBuildArray-->
-    //---xdata-end---
+    //<o:end--xdata.js-->
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 6001005
+    stanz.version = "{{version}}";
+    stanz.v = "{{versionCode}}";
 
     return stanz;
 });

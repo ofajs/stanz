@@ -1,7 +1,9 @@
-/**
- * stanz 6.1.5
- * a data synchronization library
+/*!
+ * stanz v6.1.5
  * https://github.com/kirakiray/stanz
+ * 
+ * (c) 2018-2020 YAO
+ * Released under the MIT License.
  */
 ((root, factory) => {
     "use strict"
@@ -15,7 +17,7 @@
 })(this, () => {
     "use strict";
 
-    //---xdata-start---
+    //<o:start--xdata.js-->
     const getRandomId = () => Math.random().toString(32).substr(2);
     let objectToString = Object.prototype.toString;
     const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
@@ -1846,11 +1848,12 @@
             }
         }
     });
-    //---xdata-end---
+    //<o:end--xdata.js-->
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.v = 6001005
+    stanz.version = "6.1.5";
+    stanz.v = 6001005;
 
     return stanz;
 });

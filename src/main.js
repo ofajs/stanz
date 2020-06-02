@@ -169,6 +169,10 @@ class XData extends XEmiter {
                 return true;
             }
 
+            if (oldVal instanceof XData) {
+                oldVal = oldVal.object;
+            }
+
             // 去除旧的依赖
             if (value instanceof XData) {
                 value = value[XDATASELF];
@@ -601,17 +605,25 @@ class XData extends XEmiter {
                     if ((watchType === "watchKeyReg" && expr.test(trend.fromKey)) || trend.fromKey == expr) {
                         cacheObj.trends.push(e.trend);
 
+                        if (!cacheObj.cacheOld) {
+                            // 获取旧值
+                            cacheObj._oldVal = e.oldValue instanceof XData ? e.oldValue.object : e.oldValue;
+                            cacheObj.cacheOld = true;
+                        }
+
                         nextTick(() => {
                             let val = this[expr];
 
                             callback.call(callSelf, {
                                 expr,
                                 val,
-                                old: cacheObj.trends[0].args[1],
+                                // old: cacheObj.trends[0].args[1],
+                                old: cacheObj._oldVal,
                                 trends: Array.from(cacheObj.trends)
                             }, val);
 
                             cacheObj.trends.length = 0;
+                            cacheObj._oldVal = cacheObj.cacheOld = false;
                         }, cacheObj);
                     }
                 };

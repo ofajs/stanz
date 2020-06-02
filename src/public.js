@@ -73,7 +73,14 @@ const emitUpdate = (target, name, args, assingData) => {
     // 设置modify数据
     event.modify = {
         name,
-        args: cloneObject(args),
+        args: args.map(e => {
+            if (e instanceof XData) {
+                return e.object;
+            } else if (e instanceof Object) {
+                return cloneObject(e);
+            }
+            return e;
+        }),
         mid
     };
 

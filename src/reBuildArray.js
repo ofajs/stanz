@@ -25,6 +25,8 @@
 
                 let _this = this[XDATASELF];
 
+                let oldValue = _this.object;
+
                 args.forEach(val => {
                     if (val instanceof XData) {
                         let xSelf = val[XDATASELF];
@@ -65,7 +67,9 @@
                         });
                 }
 
-                emitUpdate(_this, methodName, args);
+                emitUpdate(_this, methodName, args, {
+                    oldValue
+                });
 
                 return returnVal;
             }
@@ -78,8 +82,9 @@ Object.defineProperties(XData.prototype, {
         value(arg) {
             let args = [];
             let _this = this[XDATASELF];
+            let oldValue = _this.object;
             let oldThis = Array.from(_this);
-            if (isFunction(arg)) {
+            if (isFunction(arg) || !arg) {
                 Array.prototype.sort.call(_this, arg);
 
                 // 重置index
@@ -100,7 +105,9 @@ Object.defineProperties(XData.prototype, {
                 args = [arg];
             }
 
-            emitUpdate(_this, "sort", args);
+            emitUpdate(_this, "sort", args, {
+                oldValue
+            });
 
             return this;
         }

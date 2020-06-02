@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'update test');
+    let tester = expect(11, 'update test');
 
     let a = stanz({
         id: "A",
@@ -79,20 +79,16 @@
     let obj = a.object;
     tester.ok(!obj.ud.val && !obj.ud2, "_unBubble and _update=false is Succeed");
 
-    // stanz5开始，新对象也是新值，不能因为结构相同就不是，这样才更js
-    // debugger
-    // a[0] = {
-    //     id: "B",
-    //     val: "0000"
-    // };
+    // 监听子数组old值变化
+    let b = stanz({
+        arr: [222, 333, 111]
+    });
 
-    // a.off('update', errfun);
+    b.watch("arr", (e, arr) => {
+        tester.ok(JSON.stringify(e.old) === JSON.stringify([222, 333, 111]), "watch old object ok");
+        tester.ok(b.arr == arr, "value ok");
+    });
 
-    // a.one('update', e => {
-    //     tester.ok(e.modify.genre == "delete", "delete genre ok");
-    // });
-
-    // delete a.nd.ndInner;
-
-    // console.log(a);
+    b.arr.unshift(5555, 9);
+    b.arr.sort();
 })();

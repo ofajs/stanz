@@ -79,7 +79,14 @@ const emitUpdate = (target, name, args, assingData) => {
     // 设置modify数据
     event.modify = {
         name,
-        args: cloneObject(args),
+        args: args.map(e => {
+            if (e instanceof XData) {
+                return e.object;
+            } else if (e instanceof Object) {
+                return cloneObject(e);
+            }
+            return e;
+        }),
         mid
     };
 
@@ -694,6 +701,10 @@ class XData extends XEmiter {
                 return true;
             }
 
+            if (oldVal instanceof XData) {
+                oldVal = oldVal.object;
+            }
+
             // 去除旧的依赖
             if (value instanceof XData) {
                 value = value[XDATASELF];
@@ -1138,17 +1149,25 @@ class XData extends XEmiter {
                     if ((watchType === "watchKeyReg" && expr.test(trend.fromKey)) || trend.fromKey == expr) {
                         cacheObj.trends.push(e.trend);
 
+                        if (!cacheObj.cacheOld) {
+                            // 获取旧值
+                            cacheObj._oldVal = e.oldValue instanceof XData ? e.oldValue.object : e.oldValue;
+                            cacheObj.cacheOld = true;
+                        }
+
                         nextTick(() => {
                             let val = this[expr];
 
                             callback.call(callSelf, {
                                 expr,
                                 val,
-                                old: cacheObj.trends[0].args[1],
+                                // old: cacheObj.trends[0].args[1],
+                                old: cacheObj._oldVal,
                                 trends: Array.from(cacheObj.trends)
                             }, val);
 
                             cacheObj.trends.length = 0;
+                            cacheObj._oldVal = cacheObj.cacheOld = false;
                         }, cacheObj);
                     }
                 };
@@ -1747,6 +1766,8 @@ class VirData extends XData {
 
                 let _this = this[XDATASELF];
 
+                let oldValue = _this.object;
+
                 args.forEach(val => {
                     if (val instanceof XData) {
                         let xSelf = val[XDATASELF];
@@ -1787,7 +1808,9 @@ class VirData extends XData {
                         });
                 }
 
-                emitUpdate(_this, methodName, args);
+                emitUpdate(_this, methodName, args, {
+                    oldValue
+                });
 
                 return returnVal;
             }
@@ -1800,8 +1823,9 @@ Object.defineProperties(XData.prototype, {
         value(arg) {
             let args = [];
             let _this = this[XDATASELF];
+            let oldValue = _this.object;
             let oldThis = Array.from(_this);
-            if (isFunction(arg)) {
+            if (isFunction(arg) || !arg) {
                 Array.prototype.sort.call(_this, arg);
 
                 // 重置index
@@ -1822,7 +1846,9 @@ Object.defineProperties(XData.prototype, {
                 args = [arg];
             }
 
-            emitUpdate(_this, "sort", args);
+            emitUpdate(_this, "sort", args, {
+                oldValue
+            });
 
             return this;
         }

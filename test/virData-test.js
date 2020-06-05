@@ -52,7 +52,7 @@
     tester.ok(vdata.type === "span", "virData ok 3");
     setTimeout(() => {
         tester.ok(b.tag === "span", "sync ok");
-    });
+    },100);
 
     a.head = {
         tag: "head",

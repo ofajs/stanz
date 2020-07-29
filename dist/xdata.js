@@ -6,7 +6,8 @@ const isFunction = val => getType(val).includes("function");
 const cloneObject = obj => JSON.parse(JSON.stringify(obj));
 
 const nextTick = (() => {
-    if (document.currentScript.getAttribute("debug") !== null) {
+    let isDebug = document.currentScript.getAttribute("debug") !== null;
+    if (isDebug) {
         let nMap = new Map();
         return (fun, key) => {
             if (!key) {
@@ -42,7 +43,11 @@ const nextTick = (() => {
                         key,
                         fun
                     }) => {
-                        fun();
+                        try {
+                            fun();
+                        } catch (e) {
+                            console.error(e);
+                        }
                         nextTickMap.delete(key);
                     });
                 }

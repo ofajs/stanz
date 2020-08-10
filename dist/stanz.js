@@ -1,5 +1,5 @@
 /*!
- * stanz v6.1.6
+ * stanz v6.1.7
  * https://github.com/kirakiray/stanz
  * 
  * (c) 2018-2020 YAO
@@ -827,6 +827,32 @@
                     this.splice(parseInt(key), 1);
                 }
             }
+        }
+
+        /**
+         *  深度清除当前对象，所有子对象数据也会被深度清除
+         */
+        deepClear() {
+            // 清除非数字键
+            Object.keys(this).forEach(key => {
+                if (/\D/.test(key)) {
+                    let obj = this[key];
+
+                    if (obj instanceof XData) {
+                        obj.deepClear();
+                    }
+                }
+            });
+
+            // 数组键内深度清除对象
+            this.forEach(obj => {
+                if (obj instanceof XData) {
+                    obj.deepClear();
+                }
+            });
+
+            // 清除自身
+            clearXData(this);
         }
 
         /**
@@ -1899,8 +1925,8 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.version = "6.1.6";
-    stanz.v = 6001006;
+    stanz.version = "6.1.7";
+    stanz.v = 6001007;
 
     return stanz;
 });

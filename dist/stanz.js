@@ -166,8 +166,11 @@
         }
         let _this = xobj[XDATASELF];
         if (_this) {
-            _this.index = undefined;
-            _this.parent = undefined;
+            try {
+                // 防止index和parent被重定向导致失败
+                _this.index = undefined;
+                _this.parent = undefined;
+            } catch (e) {}
         }
 
         // 解除virData绑定

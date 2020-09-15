@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(9, 'watch test');
+    let tester = expect(10, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -88,5 +88,27 @@
     b[0].val = "change 0 val";
     b["b1"].val = "change b1 val";
     b["c"].val = "change c val";
+
+    const d = stanz({
+        val: "I am d"
+    });
+
+    // 只会执行一次
+    d.watchUntil(`val == 1`).then(e => {
+        tester.ok(e === true && d.val == '1', "watchUntil is ok");
+    });
+
+    d.val = 2;
+
+    setTimeout(() => {
+        d.val = "1";
+        setTimeout(() => {
+            d.val = "3";
+            setTimeout(() => {
+                // 因为只会执行一次，所以不会触发这个了
+                d.val = 1;
+            }, 100);
+        }, 100);
+    }, 500);
 
 })();

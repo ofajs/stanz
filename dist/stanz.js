@@ -1,5 +1,5 @@
 /*!
- * stanz v6.1.7
+ * stanz v6.1.8
  * https://github.com/kirakiray/stanz
  * 
  * (c) 2018-2020 YAO
@@ -1371,6 +1371,29 @@
         }
 
         /**
+         * 监听表达式为正确时就返回成功
+         * @param {String} expr 监听表达式
+         */
+        watchUntil(expr) {
+            if (/[^=]=[^=]/.test(expr)) {
+                throw 'cannot use single =';
+            }
+            return new Promise(resolve => {
+                let f;
+                let exprFun = new Function(`with(this){
+                return ${expr}
+            }`).bind(this);
+                this.watch(f = () => {
+                    let reVal = exprFun();
+                    if (reVal) {
+                        this.unwatch(f);
+                        resolve(reVal);
+                    }
+                });
+            });
+        }
+
+        /**
          * 趋势数据的入口，用于同步数据
          * @param {Object} trend 趋势数据
          */
@@ -1928,8 +1951,8 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.version = "6.1.7";
-    stanz.v = 6001007;
+    stanz.version = "6.1.8";
+    stanz.v = 6001008;
 
     return stanz;
 });

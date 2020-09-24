@@ -771,7 +771,7 @@ class XData extends XEmiter {
 
             // 清除数据绑定
             if (cacheObj) {
-                this.off("update", cacheObj.updateMethod);
+                cacheObj.updateMethod && this.off("update", cacheObj.updateMethod);
                 targetHostObj.delete(cacheObj);
                 (!targetHostObj.size) && (getXDataProp(this, WATCHHOST).delete(expr));
             }

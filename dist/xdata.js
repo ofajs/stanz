@@ -402,7 +402,11 @@ class XEmiter {
             let tarId = evesArr.findIndex(e => e.callback == callback);
             (tarId > -1) && evesArr.splice(tarId, 1);
         } else {
-            this[EVENTS] && this[EVENTS].delete(eventName);
+            // this[EVENTS] && this[EVENTS].delete(eventName);
+            // 防止误操作，必须填入event
+            throw {
+                desc: `off must have callback`
+            };
         }
     }
 
@@ -1341,7 +1345,7 @@ class XData extends XEmiter {
 
             // 清除数据绑定
             if (cacheObj) {
-                this.off("update", cacheObj.updateMethod);
+                cacheObj.updateMethod && this.off("update", cacheObj.updateMethod);
                 targetHostObj.delete(cacheObj);
                 (!targetHostObj.size) && (getXDataProp(this, WATCHHOST).delete(expr));
             }

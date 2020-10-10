@@ -1,5 +1,5 @@
 /*!
- * stanz v6.1.8
+ * stanz v6.1.9
  * https://github.com/kirakiray/stanz
  * 
  * (c) 2018-2020 YAO
@@ -191,7 +191,7 @@
         // 清除sync
         if (_this[SYNCSHOST]) {
             for (let [oppXdata, e] of _this[SYNCSHOST]) {
-                _this.unsync(oppXdata);
+                xobj.unsync(oppXdata);
             }
         }
 
@@ -595,6 +595,8 @@
     // virData寄存器
     const VIRDATAHOST = Symbol("VirDataHost");
 
+    const STANZID = Symbol("StanzID");
+
     /**
      * 获取对象内置数据
      * 这个操作是为了节省内存用的
@@ -676,12 +678,22 @@
                 }
             });
 
+            const xid = getRandomId();
+
             Object.defineProperties(this, {
                 [XDATASELF]: {
                     get: () => this
                 },
                 [PROXYTHIS]: {
                     value: proxyThis
+                },
+                [STANZID]: {
+                    value: xid
+                },
+                xid: {
+                    get() {
+                        return xid;
+                    }
                 },
                 // [WATCHHOST]: {
                 //     value: new Map()
@@ -1957,8 +1969,8 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.version = "6.1.8";
-    stanz.v = 6001008;
+    stanz.version = "6.1.9";
+    stanz.v = 6001009;
 
     return stanz;
 });

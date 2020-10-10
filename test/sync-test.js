@@ -75,7 +75,7 @@
         a.val2 = "change val2";
         setTimeout(e => {
             tester.ok(a.val2 === "change val2", "set a.val2 ok");
-            tester.ok(b.val2 === "I am val2" && c.val2 === "I am val2", "unsync val2 ok");
+            tester.ok(b.val2 === "I am val2" && c.val2 === "I am val2", "no sync val2 ok");
         }, 10);
     }, 110);
 

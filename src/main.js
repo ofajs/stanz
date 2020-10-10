@@ -15,6 +15,8 @@ const SYNCSHOST = Symbol("SyncHost");
 // virData寄存器
 const VIRDATAHOST = Symbol("VirDataHost");
 
+const STANZID = Symbol("StanzID");
+
 /**
  * 获取对象内置数据
  * 这个操作是为了节省内存用的
@@ -96,12 +98,22 @@ class XData extends XEmiter {
             }
         });
 
+        const xid = getRandomId();
+
         Object.defineProperties(this, {
             [XDATASELF]: {
                 get: () => this
             },
             [PROXYTHIS]: {
                 value: proxyThis
+            },
+            [STANZID]: {
+                value: xid
+            },
+            xid: {
+                get() {
+                    return xid;
+                }
             },
             // [WATCHHOST]: {
             //     value: new Map()

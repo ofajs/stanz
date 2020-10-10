@@ -160,7 +160,7 @@ const clearXData = (xobj) => {
     // 清除sync
     if (_this[SYNCSHOST]) {
         for (let [oppXdata, e] of _this[SYNCSHOST]) {
-            _this.unsync(oppXdata);
+            xobj.unsync(oppXdata);
         }
     }
 

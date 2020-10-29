@@ -491,7 +491,11 @@ class XData extends XEmiter {
     getTarget(keys) {
         let target = this;
         if (keys.length) {
-            keys.forEach(k => {
+            keys.some(k => {
+                if (!target) {
+                    console.warn("getTarget failure");
+                    return true;
+                }
                 target = target[k];
             });
         }
@@ -606,7 +610,10 @@ class XData extends XEmiter {
         }
 
         let cacheObj = {
-            trends: [], callback, expr
+            trends: [], callback, expr,
+            push(t) {
+                this.trends.push(t);
+            }
         };
 
         targetHostObj.add(cacheObj);
@@ -618,7 +625,7 @@ class XData extends XEmiter {
             case "watchSelf":
                 // 监听自身
                 updateMethod = e => {
-                    cacheObj.trends.push(e.trend);
+                    cacheObj.push(e.trend);
 
                     nextTick(() => {
                         callback.call(callSelf, {
@@ -641,7 +648,7 @@ class XData extends XEmiter {
                 updateMethod = e => {
                     let { trend } = e;
                     if ((watchType === "watchKeyReg" && expr.test(trend.fromKey)) || trend.fromKey == expr) {
-                        cacheObj.trends.push(e.trend);
+                        cacheObj.push(e.trend);
 
                         if (!cacheObj.cacheOld) {
                             // 获取旧值
@@ -688,7 +695,7 @@ class XData extends XEmiter {
                             newVal = this.getTarget(pointKeyArr);
                         } catch (e) { }
                         if (newVal !== oldVal) {
-                            cacheObj.trends.push(trend);
+                            cacheObj.push(trend);
                             nextTick(() => {
                                 newVal = this.getTarget(pointKeyArr);
 
@@ -843,16 +850,18 @@ class XData extends XEmiter {
 
         // 获取相应目标，并运行方法
         let target = this.getTarget(keys);
-        let targetSelf = target[XDATASELF];
 
-        if (getXDataProp(targetSelf, MODIFYIDS).includes(mid)) {
-            return false;
+        if (target) {
+            let targetSelf = target[XDATASELF];
+            if (getXDataProp(targetSelf, MODIFYIDS).includes(mid)) {
+                return false;
+            }
+
+            targetSelf._modifyId = mid;
+            // target._modifyId = mid;
+            targetSelf[name](...args);
+            targetSelf._modifyId = null;
         }
-
-        targetSelf._modifyId = mid;
-        // target._modifyId = mid;
-        targetSelf[name](...args);
-        targetSelf._modifyId = null;
 
         return true;
     }

@@ -1059,7 +1059,11 @@ class XData extends XEmiter {
     getTarget(keys) {
         let target = this;
         if (keys.length) {
-            keys.forEach(k => {
+            keys.some(k => {
+                if (!target) {
+                    console.warn("getTarget failure");
+                    return true;
+                }
                 target = target[k];
             });
         }
@@ -1176,7 +1180,10 @@ class XData extends XEmiter {
         let cacheObj = {
             trends: [],
             callback,
-            expr
+            expr,
+            push(t) {
+                this.trends.push(t);
+            }
         };
 
         targetHostObj.add(cacheObj);
@@ -1188,7 +1195,7 @@ class XData extends XEmiter {
             case "watchSelf":
                 // 监听自身
                 updateMethod = e => {
-                    cacheObj.trends.push(e.trend);
+                    cacheObj.push(e.trend);
 
                     nextTick(() => {
                         callback.call(callSelf, {
@@ -1213,7 +1220,7 @@ class XData extends XEmiter {
                         trend
                     } = e;
                     if ((watchType === "watchKeyReg" && expr.test(trend.fromKey)) || trend.fromKey == expr) {
-                        cacheObj.trends.push(e.trend);
+                        cacheObj.push(e.trend);
 
                         if (!cacheObj.cacheOld) {
                             // 获取旧值
@@ -1262,7 +1269,7 @@ class XData extends XEmiter {
                             newVal = this.getTarget(pointKeyArr);
                         } catch (e) {}
                         if (newVal !== oldVal) {
-                            cacheObj.trends.push(trend);
+                            cacheObj.push(trend);
                             nextTick(() => {
                                 newVal = this.getTarget(pointKeyArr);
 
@@ -1425,16 +1432,18 @@ class XData extends XEmiter {
 
         // 获取相应目标，并运行方法
         let target = this.getTarget(keys);
-        let targetSelf = target[XDATASELF];
 
-        if (getXDataProp(targetSelf, MODIFYIDS).includes(mid)) {
-            return false;
+        if (target) {
+            let targetSelf = target[XDATASELF];
+            if (getXDataProp(targetSelf, MODIFYIDS).includes(mid)) {
+                return false;
+            }
+
+            targetSelf._modifyId = mid;
+            // target._modifyId = mid;
+            targetSelf[name](...args);
+            targetSelf._modifyId = null;
         }
-
-        targetSelf._modifyId = mid;
-        // target._modifyId = mid;
-        targetSelf[name](...args);
-        targetSelf._modifyId = null;
 
         return true;
     }
@@ -1844,6 +1853,16 @@ class VirData extends XData {
     }
 });
 
+// 触发updateIndex事件
+const emitXDataIndex = (e, index, oldIndex) => {
+    if (index !== oldIndex) {
+        e.emitHandler("updateIndex", {
+            oldIndex,
+            index
+        });
+    }
+}
+
 // 几个会改变数据结构的方法
 ['pop', 'push', 'reverse', 'splice', 'shift', 'unshift'].forEach(methodName => {
     // 原来的数组方法
@@ -1879,7 +1898,9 @@ class VirData extends XData {
                 // 重置index
                 _this.forEach((e, i) => {
                     if (e instanceof XData) {
+                        let oldIndex = e.index;
                         e.index = i;
+                        emitXDataIndex(e, i, oldIndex);
                     }
                 });
 
@@ -1923,7 +1944,9 @@ Object.defineProperties(XData.prototype, {
                 // 记录重新调整的顺序
                 _this.forEach((e, i) => {
                     if (e instanceof XData) {
+                        let oldIndex = e.index;
                         e.index = i;
+                        emitXDataIndex(e, i, oldIndex);
                     }
                 });
                 let orders = oldThis.map(e => e.index);
@@ -1932,7 +1955,9 @@ Object.defineProperties(XData.prototype, {
             } else if (arg instanceof Array) {
                 arg.forEach((aid, id) => {
                     let tarData = _this[aid] = oldThis[id];
+                    let oldIndex = tarData.index;
                     tarData.index = aid;
+                    emitXDataIndex(tarData, aid, oldIndex);
                 });
                 args = [arg];
             }

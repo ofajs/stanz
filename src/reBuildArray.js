@@ -12,6 +12,16 @@
     }
 });
 
+// 触发updateIndex事件
+const emitXDataIndex = (e, index, oldIndex) => {
+    if (index !== oldIndex) {
+        e.emitHandler("updateIndex", {
+            oldIndex,
+            index
+        });
+    }
+}
+
 // 几个会改变数据结构的方法
 ['pop', 'push', 'reverse', 'splice', 'shift', 'unshift'].forEach(methodName => {
     // 原来的数组方法
@@ -47,7 +57,9 @@
                 // 重置index
                 _this.forEach((e, i) => {
                     if (e instanceof XData) {
+                        let oldIndex = e.index;
                         e.index = i;
+                        emitXDataIndex(e, i, oldIndex);
                     }
                 });
 
@@ -91,7 +103,9 @@ Object.defineProperties(XData.prototype, {
                 // 记录重新调整的顺序
                 _this.forEach((e, i) => {
                     if (e instanceof XData) {
+                        let oldIndex = e.index;
                         e.index = i;
+                        emitXDataIndex(e, i, oldIndex);
                     }
                 });
                 let orders = oldThis.map(e => e.index);
@@ -100,7 +114,9 @@ Object.defineProperties(XData.prototype, {
             } else if (arg instanceof Array) {
                 arg.forEach((aid, id) => {
                     let tarData = _this[aid] = oldThis[id];
+                    let oldIndex = tarData.index;
                     tarData.index = aid;
+                    emitXDataIndex(tarData, aid, oldIndex);
                 });
                 args = [arg];
             }

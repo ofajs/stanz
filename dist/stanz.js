@@ -1,8 +1,8 @@
 /*!
- * stanz v6.1.10
+ * stanz v6.1.11
  * https://github.com/kirakiray/stanz
  * 
- * (c) 2018-2020 YAO
+ * (c) 2018-2021 YAO
  * Released under the MIT License.
  */
 ((root, factory) => {
@@ -89,7 +89,7 @@
     })();
 
     // 触发update事件
-    const emitUpdate = (target, name, args, assingData) => {
+    const emitUpdate = (target, name, args, assingData, beforeCall) => {
         let mid;
 
         if (target._modifyId) {
@@ -130,6 +130,8 @@
             }),
             mid
         };
+
+        beforeCall && (beforeCall(event));
 
         // 冒泡update
         target.emit(event);
@@ -1994,8 +1996,8 @@
 
     let stanz = obj => createXData(obj)[PROXYTHIS];
 
-    stanz.version = "6.1.10";
-    stanz.v = 6001010;
+    stanz.version = "6.1.11";
+    stanz.v = 6001011;
 
     return stanz;
 });

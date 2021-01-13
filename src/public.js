@@ -63,7 +63,7 @@ const nextTick = (() => {
 })();
 
 // 触发update事件
-const emitUpdate = (target, name, args, assingData) => {
+const emitUpdate = (target, name, args, assingData, beforeCall) => {
     let mid;
 
     if (target._modifyId) {
@@ -104,6 +104,8 @@ const emitUpdate = (target, name, args, assingData) => {
         }),
         mid
     };
+
+    beforeCall && (beforeCall(event));
 
     // 冒泡update
     target.emit(event);

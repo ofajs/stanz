@@ -3,7 +3,7 @@ let objectToString = Object.prototype.toString;
 const getType = value => objectToString.call(value).toLowerCase().replace(/(\[object )|(])/g, '');
 const isUndefined = val => val === undefined;
 const isFunction = val => getType(val).includes("function");
-const cloneObject = obj => JSON.parse(JSON.stringify(obj));
+const cloneObject = obj => obj instanceof XData ? obj.object : JSON.parse(JSON.stringify(obj));
 
 const nextTick = (() => {
     let isDebug = document.currentScript.getAttribute("debug") !== null;
@@ -23,42 +23,44 @@ const nextTick = (() => {
         };
     }
 
-    let inTick = false;
-
     // 定位对象寄存器
     let nextTickMap = new Map();
 
-    let pnext = setTimeout;
+    let pnext = (func) => Promise.resolve().then(() => func())
 
     if (typeof process === "object" && process.nextTick) {
         pnext = process.nextTick;
     }
 
+    let inTick = false;
     return (fun, key) => {
-        if (!inTick) {
-            inTick = true;
-            pnext(() => {
-                if (nextTickMap.size) {
-                    nextTickMap.forEach(({ key, fun }) => {
-                        try {
-                            fun();
-                        } catch (e) {
-                            console.error(e);
-                        }
-                        nextTickMap.delete(key);
-                    });
-                }
-
-                nextTickMap.clear();
-                inTick = false;
-            });
-        }
-
         if (!key) {
             key = getRandomId();
         }
 
         nextTickMap.set(key, { key, fun });
+
+        if (inTick) {
+            return;
+        }
+
+        inTick = true;
+
+        pnext(() => {
+            if (nextTickMap.size) {
+                nextTickMap.forEach(({ key, fun }) => {
+                    try {
+                        fun();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    nextTickMap.delete(key);
+                });
+            }
+
+            nextTickMap.clear();
+            inTick = false;
+        });
     };
 })();
 
@@ -175,8 +177,22 @@ const clearXData = (xobj) => {
         });
         _this[VIRDATAHOST].splice(0);
     }
+
+    // 触发清除事件
+    _this.emit("clearxdata");
+
     _this[WATCHHOST] && _this[WATCHHOST].clear();
     _this[EVENTS] && _this[EVENTS].clear();
+    // _this[WATCHEXPRHOST] && _this[WATCHEXPRHOST].clear();
+
+    // 子数据也全部回收
+    // Object.keys(_this).forEach(key => {
+    //     let val = _this[key];
+    //     if (/\D/.test(key) && val instanceof XData) {
+    //         clearXData(val);
+    //     }
+    // });
+    // _this.forEach(e => clearXData(e));
 }
 
 /**

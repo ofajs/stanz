@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(10, 'watch test');
+    let tester = expect(7, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -37,25 +37,6 @@
     a.watch("1", (e) => {
         tester.ok(e.trends.length == 3, "watch key trends length ok");
     });
-
-    let cid = 0;
-    let callFunc;
-    a.watch('[selected=1]', callFunc = e => {
-        switch (cid) {
-            case 0:
-                tester.ok(e.val[0] == a[0], "watch ok 1");
-                break;
-            case 1:
-                tester.ok(e.old[0] == a[0], "watch old ok");
-                tester.ok(e.val[0] == a[1], "watch ok 2");
-                a.unwatch('[selected=1]', callFunc);
-                break;
-            case 2:
-                // unwatch test
-                throw "error";
-        }
-        cid++;
-    }, true);
 
     a.watch("p1.p11.val", (e, val) => {
         tester.ok(val === "change p1.p11.val 2", "watch point key ok");

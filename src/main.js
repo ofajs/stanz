@@ -15,7 +15,11 @@ const SYNCSHOST = Symbol("SyncHost");
 // virData寄存器
 const VIRDATAHOST = Symbol("VirDataHost");
 
+// watchExpr寄存器
+// const WATCHEXPRHOST = Symbol("watchExprHost");
+
 const STANZID = Symbol("StanzID");
+
 
 /**
  * 获取对象内置数据
@@ -507,68 +511,10 @@ class XData extends XEmiter {
     }
 
     /**
-     * 查询符合条件的对象
-     * @param {String|Function} expr 需要查询的对象特征
-     */
-    seek(expr) {
-        let arg1Type = getType(expr);
-
-        if (arg1Type === "function") {
-            let arr = [];
-
-            let f = val => {
-                if (val instanceof XData) {
-                    let isAgree = expr(val);
-
-                    isAgree && (arr.push(val));
-
-                    // 深入查找是否有符合的
-                    let meetChilds = val.seek(expr);
-
-                    arr = [...arr, ...meetChilds];
-                }
-            }
-
-            // 专门为Xhear优化的操作
-            // 拆分后，Xhear也能为children进行遍历
-            Object.keys(this).forEach(k => {
-                if (/\D/.test(k)) {
-                    f(this[k]);
-                }
-            });
-            this.forEach(f);
-
-            f = null;
-
-            return arr;
-        } else if (arg1Type === "string") {
-            // 判断是否符合条件
-            if (/^\[.+\]$/) {
-                expr = expr.replace(/[\[\]]/g, "");
-
-                let exprArr = expr.split("=");
-
-                let fun;
-
-                if (exprArr.length == 2) {
-                    let [key, value] = exprArr;
-                    fun = data => data[key] == value;
-                } else {
-                    let [key] = exprArr;
-                    fun = data => Object.keys(data).includes(key);
-                }
-
-                return this.seek(fun);
-            }
-        }
-    }
-
-    /**
      * 监听当前对象的值
      * 若只传callback，就监听当前对象的所有变化
      * 若 keyName，则监听对象的相应 key 的值
-     * 若 seek 的表达式，则监听表达式的值是否有变化
-     * @param {string} expr 监听键值，可以是 keyName 可以是 seek表达式
+     * @param {string} expr 监听键值
      * @param {Function} callback 相应值变动后出发的callback
      * @param {Boolean} ImmeOpt 是否立刻触发callback
      */
@@ -577,7 +523,7 @@ class XData extends XEmiter {
         let arg1Type = getType(expr);
         if (arg1Type === "object") {
             Object.keys(expr).forEach(k => {
-                this.watch(k, expr[k]);
+                this.watch(k, expr[k], callback);
             });
             return;
         } else if (/function/.test(arg1Type)) {
@@ -593,8 +539,6 @@ class XData extends XEmiter {
             watchType = "watchSelf";
         } else if (expr instanceof RegExp) {
             watchType = "watchKeyReg";
-        } else if (/\[.+\]/.test(expr)) {
-            watchType = "seekData";
         } else if (/\./.test(expr)) {
             watchType = "watchPointKey";
         } else {
@@ -723,43 +667,6 @@ class XData extends XEmiter {
                     }, oldVal);
                 }
                 break;
-            case "seekData":
-                let oldVals = callSelf.seek(expr);
-                updateMethod = e => {
-                    nextTick(() => {
-                        let tars = callSelf.seek(expr);
-                        let isEqual = 1;
-
-                        if (tars.length === oldVals.length) {
-                            tars.some(e => {
-                                if (!oldVals.includes(e)) {
-                                    isEqual = 0;
-                                    return true;
-                                }
-                            });
-                        } else {
-                            isEqual = 0;
-                        }
-
-                        // 有变动就触发
-                        !isEqual && callback.call(callSelf, {
-                            expr,
-                            old: oldVals,
-                            val: tars
-                        }, tars);
-
-                        oldVals = tars;
-                    }, cacheObj);
-                };
-
-                if (ImmeOpt === true) {
-                    callback.call(callSelf, {
-                        expr,
-                        old: oldVals,
-                        val: oldVals
-                    }, oldVals);
-                }
-                break;
         }
 
         this.on("update", updateMethod);
@@ -802,6 +709,51 @@ class XData extends XEmiter {
 
         return this;
     }
+
+    /**
+     * 监听表达式内容，有变化则触发callback
+     * @param {String} expr 要监听的函数表达式
+     * @param {Function} callback 监听后返回的数据
+     */
+    // watchExpr(expr, callback) {
+    //     let exprHost = this[WATCHEXPRHOST] || (this[WATCHEXPRHOST] = new Map());
+
+    //     // 根据表达式获取数组对象
+    //     let targetExprHost = exprHost.get(expr);
+
+    //     if (targetExprHost) {
+    //         targetExprHost.push(callback);
+    //         return;
+    //     }
+
+    //     targetExprHost = [];
+
+    //     // 表达式生成函数
+    //     const exprFun = new Function(`
+    //     try{with(this){
+    //         return ${expr}
+    //     }}catch(err){
+    //         console.error({
+    //             desc:"Execution error",
+    //             expr:${expr},
+    //             target:this,
+    //             error:err
+    //         });
+    //     }`).bind(this);
+
+    //     let old_val;
+
+    //     this.watch(e => {
+    //         let reVal = exprFun();
+
+    //         if (old_val !== reVal) {
+    //             targetExprHost.forEach(func => {
+    //                 func(reVal, e);
+    //             })
+    //             old_val = reVal;
+    //         }
+    //     });
+    // }
 
     /**
      * 监听表达式为正确时就返回成功

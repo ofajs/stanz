@@ -137,8 +137,19 @@ const recyclModifys = (xobj) => {
     }, 3000)
 }
 
+const clearXMirror = (xobj) => {
+    xobj.index = undefined;
+    xobj.parent = undefined;
+    xobj[XMIRROR_SELF].mirrorHost.off("update", xobj[XMIRRIR_BIND_UPDATA]);
+    xobj[XMIRROR_SELF].mirrorHost = undefined;
+}
+
 // 清理XData数据
 const clearXData = (xobj) => {
+    if (xobj instanceof XMirror) {
+        clearXMirror(xobj);
+        return;
+    }
     if (!(xobj instanceof XData)) {
         return;
     }
@@ -201,6 +212,9 @@ const clearXData = (xobj) => {
  * @param {Object} options 附加信息，记录相对父层的数据
  */
 const createXData = (obj, options) => {
+    if (obj instanceof XMirror) {
+        return obj;
+    }
     let redata = obj;
     switch (getType(obj)) {
         case "object":

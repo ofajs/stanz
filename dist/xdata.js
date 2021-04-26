@@ -143,8 +143,19 @@ const recyclModifys = (xobj) => {
     }, 3000)
 }
 
+const clearXMirror = (xobj) => {
+    xobj.index = undefined;
+    xobj.parent = undefined;
+    xobj[XMIRROR_SELF].mirrorHost.off("update", xobj[XMIRRIR_BIND_UPDATA]);
+    xobj[XMIRROR_SELF].mirrorHost = undefined;
+}
+
 // 清理XData数据
 const clearXData = (xobj) => {
+    if (xobj instanceof XMirror) {
+        clearXMirror(xobj);
+        return;
+    }
     if (!(xobj instanceof XData)) {
         return;
     }
@@ -216,6 +227,9 @@ const clearXData = (xobj) => {
  * @param {Object} options 附加信息，记录相对父层的数据
  */
 const createXData = (obj, options) => {
+    if (obj instanceof XMirror) {
+        return obj;
+    }
     let redata = obj;
     switch (getType(obj)) {
         case "object":
@@ -670,7 +684,11 @@ class XData extends XEmiter {
                 }
             }
 
-            if (value instanceof Object) {
+            if (value instanceof XMirror) {
+                this[k] = value;
+                value.parent = this;
+                value.index = k;
+            } else if (value instanceof Object) {
                 this[k] = new XData(value, {
                     parent: this,
                     index: k
@@ -767,11 +785,21 @@ class XData extends XEmiter {
                 oldVal = oldVal.object;
             }
 
-            // 去除旧的依赖
-            if (value instanceof XData) {
-                value = value[XDATASELF];
-                value.remove();
-
+            if (value instanceof XMirror) {
+                if (value.parent) {
+                    // 去除旧的依赖
+                    value.remove();
+                }
+                value.parent = _this;
+                value.index = key;
+            } else if (value instanceof XData) {
+                if (value[XDATASELF]) {
+                    value = value[XDATASELF];
+                }
+                if (value.parent) {
+                    // 去除旧的依赖
+                    value.remove();
+                }
                 value.parent = _this;
                 value.index = key;
             } else if (value instanceof Object) {
@@ -862,6 +890,10 @@ class XData extends XEmiter {
                 if (obj instanceof XData) {
                     obj.deepClear();
                 }
+
+                if (obj instanceof XMirror) {
+                    clearXData(obj);
+                }
             }
         });
 
@@ -869,6 +901,9 @@ class XData extends XEmiter {
         this.forEach(obj => {
             if (obj instanceof XData) {
                 obj.deepClear();
+            }
+            if (obj instanceof XMirror) {
+                clearXData(obj);
             }
         });
 
@@ -1009,7 +1044,7 @@ class XData extends XEmiter {
 
             let val = this[k];
 
-            if (val instanceof XData) {
+            if (val instanceof XData || val instanceof XMirror) {
                 // 禁止冒泡
                 if (val._update === false) {
                     return;
@@ -1023,7 +1058,7 @@ class XData extends XEmiter {
             isPureArray = false;
         });
         this.forEach((val, k) => {
-            if (val instanceof XData) {
+            if (val instanceof XData || val instanceof XMirror) {
                 val = val.object;
             }
             obj[k] = val;
@@ -1076,6 +1111,13 @@ class XData extends XEmiter {
         if (!/\D/.test(this.index)) {
             return this.parent.getData(this.index + 1);
         }
+    }
+
+    /**
+     * 获取镜像对象；
+     */
+    get mirror() {
+        return new XMirror(this);
     }
 
     /**
@@ -1513,6 +1555,79 @@ class XDataTrend {
 }
 
 /**
+ * XData的镜像对象
+ * 镜像对象跟xdata公用一份，不会复制双份数据；
+ * 可嵌入到其他对象内而不影响使用
+ */
+// class XMirror extends XEmiter {
+class XMirror {
+    constructor(xdata) {
+        // super({});
+
+        this[XMIRROR_SELF] = this;
+        this.mirrorHost = xdata;
+        this.parent = undefined;
+        this.index = undefined;
+
+        let updateFunc = (e) => {
+            if (this.parent) {
+                emitUpdate(this.parent, "", [], {}, (e2) => {
+                    Object.assign(e2, {
+                        keys: cloneObject(e.keys),
+                        modify: cloneObject(e.modify),
+                        currentTarget: e.currentTarget,
+                        target: e.target,
+                        oldValue: e.oldValue
+                    });
+                    e2.keys.unshift(this.index);
+                });
+            }
+        }
+        xdata.on("update", updateFunc);
+
+        this[XMIRRIR_UPDATA_BINDER] = updateFunc;
+
+        return new Proxy(this, XMirrorHandler);
+    }
+
+    remove(key) {
+        return XData.prototype.remove.call(this, key);
+    }
+}
+
+// XMirror实例的
+const XMIRRIR_UPDATA_BINDER = Symbol("XMirrorUpdataBinder");
+const XMIRROR_SELF = Symbol("XMirror_self");
+
+// 可访问自身的key
+const XMIRRIR_CANSET_KEYS = new Set(["index", "parent", "remove", XMIRRIR_UPDATA_BINDER, XMIRROR_SELF]);
+
+// 绑定行为的方法名，在清除时同步清除绑定的方法
+// const XMIRRIR_RECORD_NAME = new Set(["on", "watch"]);
+
+const XMirrorHandler = {
+    get(target, key, receiver) {
+        if (XMIRRIR_CANSET_KEYS.has(key)) {
+            return target[key];
+        }
+        let r_val = target.mirrorHost[key];
+
+        if (isFunction(r_val)) {
+            r_val = r_val.bind(target.mirrorHost);
+        }
+
+        return r_val;
+    },
+    set(target, key, value, receiver) {
+        if (XMIRRIR_CANSET_KEYS.has(key)) {
+            target[key] = value;
+            return true;
+        }
+        return target.mirrorHost.setData(key, value);
+    }
+};
+
+/**
  * 根据key值同步数据
  * @param {String} key 要同步的key
  * @param {Trend} e 趋势数据
@@ -1829,7 +1944,8 @@ class VirData extends XData {
 
 // 触发updateIndex事件
 const emitXDataIndex = (e, index, oldIndex) => {
-    if (index !== oldIndex) {
+    if ((e instanceof XData || e instanceof XMirror) && index !== oldIndex) {
+        e.index = index;
         e.emitHandler("updateIndex", {
             oldIndex,
             index
@@ -1857,6 +1973,9 @@ const emitXDataIndex = (e, index, oldIndex) => {
                         let xSelf = val[XDATASELF];
                         xSelf.remove();
                         newArgs.push(xSelf);
+                    } else if (val instanceof XMirror) {
+                        val.parent = _this;
+                        newArgs.push(val);
                     } else {
                         // 转化内部数据
                         let newVal = createXData(val, {
@@ -1871,24 +1990,21 @@ const emitXDataIndex = (e, index, oldIndex) => {
 
                 // 重置index
                 _this.forEach((e, i) => {
-                    if (e instanceof XData) {
-                        let oldIndex = e.index;
-                        e.index = i;
-                        emitXDataIndex(e, i, oldIndex);
-                    }
+                    let oldIndex = e.index;
+                    emitXDataIndex(e, i, oldIndex);
                 });
 
                 // 删除returnVal的相关数据
                 switch (methodName) {
                     case "shift":
                     case "pop":
-                        if (returnVal instanceof XData) {
+                        if (returnVal instanceof XData || returnVal instanceof XMirror) {
                             clearXData(returnVal);
                         }
                         break;
                     case "splice":
                         returnVal.forEach(e => {
-                            if (e instanceof XData) {
+                            if (e instanceof XData || e instanceof XMirror) {
                                 clearXData(e);
                             }
                         });
@@ -1917,11 +2033,8 @@ Object.defineProperties(XData.prototype, {
                 // 重置index
                 // 记录重新调整的顺序
                 _this.forEach((e, i) => {
-                    if (e instanceof XData) {
-                        let oldIndex = e.index;
-                        e.index = i;
-                        emitXDataIndex(e, i, oldIndex);
-                    }
+                    let oldIndex = e.index;
+                    emitXDataIndex(e, i, oldIndex);
                 });
                 let orders = oldThis.map(e => e.index);
                 args = [orders];
@@ -1930,7 +2043,6 @@ Object.defineProperties(XData.prototype, {
                 arg.forEach((aid, id) => {
                     let tarData = _this[aid] = oldThis[id];
                     let oldIndex = tarData.index;
-                    tarData.index = aid;
                     emitXDataIndex(tarData, aid, oldIndex);
                 });
                 args = [arg];

@@ -14,7 +14,8 @@
 
 // 触发updateIndex事件
 const emitXDataIndex = (e, index, oldIndex) => {
-    if (index !== oldIndex) {
+    if ((e instanceof XData || e instanceof XMirror) && index !== oldIndex) {
+        e.index = index;
         e.emitHandler("updateIndex", {
             oldIndex,
             index
@@ -42,6 +43,9 @@ const emitXDataIndex = (e, index, oldIndex) => {
                         let xSelf = val[XDATASELF];
                         xSelf.remove();
                         newArgs.push(xSelf);
+                    } else if (val instanceof XMirror) {
+                        val.parent = _this;
+                        newArgs.push(val);
                     } else {
                         // 转化内部数据
                         let newVal = createXData(val, {
@@ -56,24 +60,21 @@ const emitXDataIndex = (e, index, oldIndex) => {
 
                 // 重置index
                 _this.forEach((e, i) => {
-                    if (e instanceof XData) {
-                        let oldIndex = e.index;
-                        e.index = i;
-                        emitXDataIndex(e, i, oldIndex);
-                    }
+                    let oldIndex = e.index;
+                    emitXDataIndex(e, i, oldIndex);
                 });
 
                 // 删除returnVal的相关数据
                 switch (methodName) {
                     case "shift":
                     case "pop":
-                        if (returnVal instanceof XData) {
+                        if (returnVal instanceof XData || returnVal instanceof XMirror) {
                             clearXData(returnVal);
                         }
                         break;
                     case "splice":
                         returnVal.forEach(e => {
-                            if (e instanceof XData) {
+                            if (e instanceof XData || e instanceof XMirror) {
                                 clearXData(e);
                             }
                         });
@@ -102,11 +103,8 @@ Object.defineProperties(XData.prototype, {
                 // 重置index
                 // 记录重新调整的顺序
                 _this.forEach((e, i) => {
-                    if (e instanceof XData) {
-                        let oldIndex = e.index;
-                        e.index = i;
-                        emitXDataIndex(e, i, oldIndex);
-                    }
+                    let oldIndex = e.index;
+                    emitXDataIndex(e, i, oldIndex);
                 });
                 let orders = oldThis.map(e => e.index);
                 args = [orders];
@@ -115,7 +113,6 @@ Object.defineProperties(XData.prototype, {
                 arg.forEach((aid, id) => {
                     let tarData = _this[aid] = oldThis[id];
                     let oldIndex = tarData.index;
-                    tarData.index = aid;
                     emitXDataIndex(tarData, aid, oldIndex);
                 });
                 args = [arg];

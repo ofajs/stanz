@@ -92,7 +92,12 @@ class XData extends XEmiter {
                 }
             }
 
-            if (value instanceof Object) {
+            if (value instanceof XMirror) {
+                this[k] = value;
+                value.parent = this;
+                value.index = k;
+            }
+            else if (value instanceof Object) {
                 this[k] = new XData(value, {
                     parent: this,
                     index: k
@@ -189,11 +194,21 @@ class XData extends XEmiter {
                 oldVal = oldVal.object;
             }
 
-            // 去除旧的依赖
-            if (value instanceof XData) {
-                value = value[XDATASELF];
-                value.remove();
-
+            if (value instanceof XMirror) {
+                if (value.parent) {
+                    // 去除旧的依赖
+                    value.remove();
+                }
+                value.parent = _this;
+                value.index = key;
+            } else if (value instanceof XData) {
+                if (value[XDATASELF]) {
+                    value = value[XDATASELF];
+                }
+                if (value.parent) {
+                    // 去除旧的依赖
+                    value.remove();
+                }
                 value.parent = _this;
                 value.index = key;
             } else if (value instanceof Object) {
@@ -284,6 +299,10 @@ class XData extends XEmiter {
                 if (obj instanceof XData) {
                     obj.deepClear();
                 }
+
+                if (obj instanceof XMirror) {
+                    clearXData(obj);
+                }
             }
         });
 
@@ -291,6 +310,9 @@ class XData extends XEmiter {
         this.forEach(obj => {
             if (obj instanceof XData) {
                 obj.deepClear();
+            }
+            if (obj instanceof XMirror) {
+                clearXData(obj);
             }
         });
 
@@ -423,7 +445,7 @@ class XData extends XEmiter {
 
             let val = this[k];
 
-            if (val instanceof XData) {
+            if (val instanceof XData || val instanceof XMirror) {
                 // 禁止冒泡
                 if (val._update === false) {
                     return;
@@ -437,7 +459,7 @@ class XData extends XEmiter {
             isPureArray = false;
         });
         this.forEach((val, k) => {
-            if (val instanceof XData) {
+            if (val instanceof XData || val instanceof XMirror) {
                 val = val.object;
             }
             obj[k] = val;
@@ -490,6 +512,13 @@ class XData extends XEmiter {
         if (!/\D/.test(this.index)) {
             return this.parent.getData(this.index + 1);
         }
+    }
+
+    /**
+     * 获取镜像对象；
+     */
+    get mirror() {
+        return new XMirror(this);
     }
 
     /**

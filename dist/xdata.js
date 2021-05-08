@@ -835,7 +835,17 @@ class XData extends XEmiter {
      * @param {String} keyName 获取当前实例相应 key 的数据
      */
     getData(keyName) {
-        let target = this[keyName];
+        let target;
+        if (keyName.includes && keyName.includes(".")) {
+            let attrNameArr = keyName.split(".");
+            target = this;
+            do {
+                let key = attrNameArr.shift();
+                target = target[key];
+            } while (attrNameArr.length)
+        } else {
+            target = this[keyName]
+        }
 
         if (target instanceof XData) {
             target = target[PROXYTHIS];
@@ -1263,15 +1273,22 @@ class XData extends XEmiter {
                 break;
             case "watchPointKey":
                 let pointKeyArr = expr.split(".");
-                let firstKey = pointKeyArr[0];
                 let oldVal = this.getTarget(pointKeyArr);
+                oldVal = oldVal instanceof XData ? oldVal.object : oldVal;
 
                 updateMethod = e => {
                     let {
                         trend
                     } = e;
-                    if (trend.fromKey == firstKey) {
-                        oldVal;
+
+                    let trendKeys = trend.keys.slice();
+
+                    // 补充回trend缺失的末尾key（由于setData会导致末尾Key的失去）
+                    if (trendKeys.length < pointKeyArr.length) {
+                        trendKeys.push(trend.finalSetterKey)
+                    }
+
+                    if (JSON.stringify(pointKeyArr) === JSON.stringify(trendKeys.slice(0, pointKeyArr.length))) {
                         let newVal;
                         try {
                             newVal = this.getTarget(pointKeyArr);
@@ -1284,7 +1301,7 @@ class XData extends XEmiter {
                                 (newVal !== oldVal) && callback.call(callSelf, {
                                     expr,
                                     old: oldVal,
-                                    val: newVal,
+                                    // val: newVal instanceof XData ? newVal[PROXYTHIS] : newVal,
                                     trends: Array.from(cacheObj.trends)
                                 }, newVal);
 

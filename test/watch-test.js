@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(7, 'watch test');
+    let tester = expect(8, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -81,6 +81,7 @@
 
     d.val = 2;
 
+
     setTimeout(() => {
         d.val = "1";
         setTimeout(() => {
@@ -91,5 +92,20 @@
             }, 100);
         }, 100);
     }, 500);
+
+    let a2 = stanz({
+        obj: {
+            a: 2,
+            arr: [{ val: 1 }, { val: 2 }, { val: 3 }, { val: 4 }]
+        }
+    });
+
+    a2.watch("obj.arr", e => {
+        tester.ok(e.expr == "obj.arr" && e.trends.length == 2, "watch point key ok 2");
+    });
+
+    a2.obj.a = 3;
+    a2.obj.arr.reverse();
+    a2.obj.arr[0].val = 400;
 
 })();

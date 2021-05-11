@@ -88,4 +88,5 @@
 
     // 断定是否正确
     tester.ok(a.eleObj.ele === ele, "element set ok");
+
 })();

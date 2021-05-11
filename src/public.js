@@ -140,7 +140,8 @@ const recyclModifys = (xobj) => {
 const clearXMirror = (xobj) => {
     xobj.index = undefined;
     xobj.parent = undefined;
-    xobj[XMIRROR_SELF].mirrorHost.off("update", xobj[XMIRRIR_BIND_UPDATA]);
+    // xobj[XMIRROR_SELF].mirrorHost.off("update", xobj[XMIRRIR_BIND_UPDATA]);
+    xobj[XMIRROR_SELF].mirrorHost.off("update", xobj[XMIRRIR_UPDATA_BINDER]);
     xobj[XMIRROR_SELF].mirrorHost = undefined;
 }
 

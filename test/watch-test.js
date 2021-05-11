@@ -1,5 +1,5 @@
 (() => {
-    let tester = expect(8, 'watch test');
+    let tester = expect(9, 'watch test');
 
     let a = stanz({
         val: "I am a",
@@ -107,5 +107,23 @@
     a2.obj.a = 3;
     a2.obj.arr.reverse();
     a2.obj.arr[0].val = 400;
+
+
+
+
+    let g_val = "";
+    let g = stanz({
+        get val() {
+            return g_val;
+        },
+        set val(val) {
+            g_val = val;
+        }
+    });
+    g.watch("val", e => {
+        tester.ok(e.trends.length == 1 && e.val == "change val" && e.old === "", "watch get set object ok");
+    });
+
+    g.val = "change val";
 
 })();

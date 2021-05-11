@@ -69,11 +69,20 @@ class XData extends XEmiter {
         let length = 0;
 
         // 数据合并
-        Object.keys(obj).forEach(k => {
-            // 值
-            let value = obj[k];
+        // Object.keys(obj).forEach(k => {
+        let descsObj = Object.getOwnPropertyDescriptors(obj);
+        Object.keys(descsObj).forEach(k => {
+            // let value = obj[k];
+            let { value, get, set } = descsObj[k];
 
-            if (/^\_/.test(k) || (hasElement && value instanceof Element)) {
+            if (get || set) {
+                Object.defineProperty(this, k, {
+                    configurable: true,
+                    enumerable: true,
+                    get, set,
+                });
+                return;
+            } else if (/^\_/.test(k) || (hasElement && value instanceof Element)) {
                 // this[k] = obj[k];
                 Object.defineProperty(this, k, {
                     configurable: true,
@@ -182,7 +191,8 @@ class XData extends XEmiter {
             return true;
         }
 
-        if (getType(key) === "string") {
+        let key_type = getType(key);
+        if (key_type === "string" || key_type === "number") {
             let oldVal = _this[key];
 
             if (value === oldVal) {
@@ -449,7 +459,7 @@ class XData extends XEmiter {
 
         // 遍历合并数组，并判断是否有非数字
         Object.keys(this).forEach(k => {
-            if (/^_/.test(k) || !/\D/.test(k) || _unBubble.includes(k)) {
+            if (/^_/.test(k) || !/\D/.test(k) || _unBubble.includes(k) || k === "length") {
                 return;
             }
 

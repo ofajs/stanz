@@ -13,7 +13,7 @@ const MODIFYIDS = Symbol("ModifyIDS");
 const SYNCSHOST = Symbol("SyncHost");
 
 // virData寄存器
-const VIRDATAHOST = Symbol("VirDataHost");
+// const VIRDATAHOST = Symbol("VirDataHost");
 
 // watchExpr寄存器
 // const WATCHEXPRHOST = Symbol("watchExprHost");
@@ -834,6 +834,58 @@ class XData extends XEmiter {
                 }
             }, true);
         });
+    }
+
+    // 6.2.2 重构seek方法，允许函数传入；字符串传入的话，则转为函数执行；
+    /**
+     * 深度查找子对象数据
+     * @param {Function|String} expr 查找函数或函数表达式
+     * @param {Boolean} seekSelf 自身是否纳入查找范围
+     */
+    seek(expr, seekSelf = true) {
+        if (!isFunction(expr)) {
+            expr = new Function(`with(this){return ${expr}}`);
+        }
+
+        let arr = [];
+
+        let f2 = (val) => {
+            try {
+                let bool = expr.call(val, val)
+
+                if (bool) {
+                    arr.push(val);
+                }
+            } catch (e) { }
+        }
+
+        if (seekSelf) {
+            f2(this);
+        }
+
+        // 鉴定的方法
+        let f = (val) => {
+            f2(val);
+
+            if (val instanceof XData) {
+                arr.push(...val.seek(expr, false));
+            }
+        }
+
+        Object.keys(this).forEach(key => {
+            if (!/\D/.test(key)) {
+                return;
+            }
+
+            f(this[key]);
+        });
+
+        this.forEach(val => f(val));
+
+        // 手动回收
+        f2 = f = null;
+
+        return arr;
     }
 
     /**

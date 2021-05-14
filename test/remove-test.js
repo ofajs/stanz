@@ -19,13 +19,13 @@
 
     a.sync(clone_a);
 
-    let vdata1 = a.virData({
-        mapKey: {
-            val: "haha"
-        }
-    });
+    // let vdata1 = a.virData({
+    //     mapKey: {
+    //         val: "haha"
+    //     }
+    // });
 
-    vdata1.remove();
+    // vdata1.remove();
 
     a.remove();
 })();

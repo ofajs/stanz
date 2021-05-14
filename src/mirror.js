@@ -42,6 +42,7 @@ class XMirror {
 // XMirror实例的
 const XMIRRIR_UPDATA_BINDER = Symbol("XMirrorUpdataBinder");
 const XMIRROR_SELF = Symbol("XMirror_self");
+// const XMIRROR_SELF = "XMIRROR_SELF";
 
 // 可访问自身的key
 const XMIRRIR_CANSET_KEYS = new Set(["index", "parent", "remove", XMIRRIR_UPDATA_BINDER, XMIRROR_SELF]);
@@ -54,12 +55,17 @@ const XMirrorHandler = {
         if (XMIRRIR_CANSET_KEYS.has(key)) {
             return target[key];
         }
-        let r_val = target.mirrorHost[key];
-
-        if (isFunction(r_val)) {
-            r_val = r_val.bind(target.mirrorHost);
+        let r_val;
+        if (typeof key === "symbol") {
+            r_val = target.mirrorHost[key];
+        } else {
+            r_val = target.mirrorHost.getData(key);
         }
 
+        if (isFunction(r_val)) {
+            r_val = r_val.bind(target.mirrorHost[PROXYTHIS]);
+        }
+ 
         return r_val;
     },
     set(target, key, value, receiver) {

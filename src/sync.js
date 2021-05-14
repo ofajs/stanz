@@ -57,65 +57,65 @@ const getNewSyncValue = (value) => {
     return value;
 };
 
-const virDataTrans = (self, target, callback) => {
-    Object.keys(self).forEach(key => {
-        let val = self[key];
+// const virDataTrans = (self, target, callback) => {
+//     Object.keys(self).forEach(key => {
+//         let val = self[key];
 
-        if (val instanceof Object) {
-            if (!target[key]) {
-                if (target.setData) {
-                    target.setData(key, {})
-                } else {
-                    target[key] = {};
-                }
-            }
+//         if (val instanceof Object) {
+//             if (!target[key]) {
+//                 if (target.setData) {
+//                     target.setData(key, {})
+//                 } else {
+//                     target[key] = {};
+//                 }
+//             }
 
-            let vdata = target[key];
+//             let vdata = target[key];
 
-            virDataTrans(val, vdata, callback);
-        } else {
-            let keyValue = callback([key, val], {
-                self, target
-            });
-            if (keyValue) {
-                let [newKey, newValue] = keyValue;
-                target[newKey] = newValue;
-            }
-        }
-    });
-}
+//             virDataTrans(val, vdata, callback);
+//         } else {
+//             let keyValue = callback([key, val], {
+//                 self, target
+//             });
+//             if (keyValue) {
+//                 let [newKey, newValue] = keyValue;
+//                 target[newKey] = newValue;
+//             }
+//         }
+//     });
+// }
 
-const entrendByCall = (target, e, callback) => {
-    let { trend } = e;
-    if (trend) {
-        switch (trend.name) {
-            case "setData":
-                let value = trend.args[1];
-                if (value instanceof Object) {
-                    let obj = {};
-                    virDataTrans(value, obj, callback);
-                    trend.args[1] = obj;
-                } else if (!isUndefined(value)) {
-                    trend.args = callback(trend.args, {
-                        event: e
-                    });
-                }
-                break;
-            default:
-                // 其他数组的话，修正参数
-                trend.args = trend.args.map(value => {
-                    let nVal = value;
-                    if (value instanceof Object) {
-                        nVal = {};
-                        virDataTrans(value, nVal, callback);
-                    }
-                    return nVal;
-                });
-                break;
-        }
-        target.entrend(trend);
-    }
-}
+// const entrendByCall = (target, e, callback) => {
+//     let { trend } = e;
+//     if (trend) {
+//         switch (trend.name) {
+//             case "setData":
+//                 let value = trend.args[1];
+//                 if (value instanceof Object) {
+//                     let obj = {};
+//                     virDataTrans(value, obj, callback);
+//                     trend.args[1] = obj;
+//                 } else if (!isUndefined(value)) {
+//                     trend.args = callback(trend.args, {
+//                         event: e
+//                     });
+//                 }
+//                 break;
+//             default:
+//                 // 其他数组的话，修正参数
+//                 trend.args = trend.args.map(value => {
+//                     let nVal = value;
+//                     if (value instanceof Object) {
+//                         nVal = {};
+//                         virDataTrans(value, nVal, callback);
+//                     }
+//                     return nVal;
+//                 });
+//                 break;
+//         }
+//         target.entrend(trend);
+//     }
+// }
 
 const SyncMethods = {
     /**
@@ -211,66 +211,66 @@ const SyncMethods = {
     /**
      * 生成虚拟数据
      */
-    virData(leftCall, rightCall) {
-        // 初始生成数据
-        let vdata = new VirData(this[XDATASELF], {});
-        let arg1Type = getType(leftCall);
-        let mapOpts = leftCall;
+    // virData(leftCall, rightCall) {
+    //     // 初始生成数据
+    //     let vdata = new VirData(this[XDATASELF], {});
+    //     let arg1Type = getType(leftCall);
+    //     let mapOpts = leftCall;
 
-        if (arg1Type == "object") {
-            if ("mapKey" in mapOpts) {
-                let mappingOpt = Object.entries(mapOpts.mapKey);
-                let mapping = new Map(mappingOpt);
-                let resMapping = new Map(mappingOpt.map(e => e.reverse()));
+    //     if (arg1Type == "object") {
+    //         if ("mapKey" in mapOpts) {
+    //             let mappingOpt = Object.entries(mapOpts.mapKey);
+    //             let mapping = new Map(mappingOpt);
+    //             let resMapping = new Map(mappingOpt.map(e => e.reverse()));
 
-                leftCall = ([key, value]) => {
-                    if (mapping.has(key)) {
-                        return [mapping.get(key), value];
-                    }
-                    return [key, value];
-                }
-                rightCall = ([key, value]) => {
-                    if (resMapping.has(key)) {
-                        return [resMapping.get(key), value];
-                    }
-                    return [key, value];
-                }
-            } else if ("mapValue" in mapOpts) {
-                let tarKey = mapOpts.key;
-                let mappingOpt = Object.entries(mapOpts.mapValue);
-                let mapping = new Map(mappingOpt);
-                let resMapping = new Map(mappingOpt.map(e => e.reverse()));
+    //             leftCall = ([key, value]) => {
+    //                 if (mapping.has(key)) {
+    //                     return [mapping.get(key), value];
+    //                 }
+    //                 return [key, value];
+    //             }
+    //             rightCall = ([key, value]) => {
+    //                 if (resMapping.has(key)) {
+    //                     return [resMapping.get(key), value];
+    //                 }
+    //                 return [key, value];
+    //             }
+    //         } else if ("mapValue" in mapOpts) {
+    //             let tarKey = mapOpts.key;
+    //             let mappingOpt = Object.entries(mapOpts.mapValue);
+    //             let mapping = new Map(mappingOpt);
+    //             let resMapping = new Map(mappingOpt.map(e => e.reverse()));
 
-                leftCall = ([key, value]) => {
-                    if (key === tarKey && mapping.has(value)) {
-                        return [key, mapping.get(value)];
-                    }
-                    return [key, value];
-                }
-                rightCall = ([key, value]) => {
-                    if (key === tarKey && resMapping.has(value)) {
-                        return [key, resMapping.get(value)];
-                    }
-                    return [key, value];
-                }
-            }
-        }
-        // 转换数据
-        virDataTrans(this, vdata, leftCall);
+    //             leftCall = ([key, value]) => {
+    //                 if (key === tarKey && mapping.has(value)) {
+    //                     return [key, mapping.get(value)];
+    //                 }
+    //                 return [key, value];
+    //             }
+    //             rightCall = ([key, value]) => {
+    //                 if (key === tarKey && resMapping.has(value)) {
+    //                     return [key, resMapping.get(value)];
+    //                 }
+    //                 return [key, value];
+    //             }
+    //         }
+    //     }
+    //     // 转换数据
+    //     virDataTrans(this, vdata, leftCall);
 
-        let leftUpdate, rightUpdate;
+    //     let leftUpdate, rightUpdate;
 
-        this.on("update", leftUpdate = e => entrendByCall(vdata, e, leftCall));
-        vdata.on("update", rightUpdate = e => entrendByCall(this, e, rightCall));
+    //     this.on("update", leftUpdate = e => entrendByCall(vdata, e, leftCall));
+    //     vdata.on("update", rightUpdate = e => entrendByCall(this, e, rightCall));
 
-        // 记录信息
-        getXDataProp(this, VIRDATAHOST).push({
-            data: vdata,
-            leftUpdate, rightUpdate
-        });
+    //     // 记录信息
+    //     getXDataProp(this, VIRDATAHOST).push({
+    //         data: vdata,
+    //         leftUpdate, rightUpdate
+    //     });
 
-        return vdata[PROXYTHIS];
-    }
+    //     return vdata[PROXYTHIS];
+    // }
 };
 
 Object.keys(SyncMethods).forEach(methodName => {
@@ -280,12 +280,12 @@ Object.keys(SyncMethods).forEach(methodName => {
     });
 });
 
-class VirData extends XData {
-    constructor(xdata, ...args) {
-        super(...args);
-        Object.defineProperty(this, "mappingXData", {
-            writable: true,
-            value: xdata
-        });
-    }
-}
+// class VirData extends XData {
+//     constructor(xdata, ...args) {
+//         super(...args);
+//         Object.defineProperty(this, "mappingXData", {
+//             writable: true,
+//             value: xdata
+//         });
+//     }
+// }

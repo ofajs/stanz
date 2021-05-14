@@ -164,14 +164,14 @@ const clearXData = (xobj) => {
     }
 
     // 解除virData绑定
-    if (xobj instanceof VirData) {
-        let { mappingXData } = xobj;
-        let tarHostData = mappingXData[VIRDATAHOST].find(e => e.data === _this);
-        let { leftUpdate, rightUpdate } = tarHostData;
-        xobj.off("update", rightUpdate);
-        mappingXData.off("update", leftUpdate);
-        _this.mappingXData = null;
-    }
+    // if (xobj instanceof VirData) {
+    //     let { mappingXData } = xobj;
+    //     let tarHostData = mappingXData[VIRDATAHOST].find(e => e.data === _this);
+    //     let { leftUpdate, rightUpdate } = tarHostData;
+    //     xobj.off("update", rightUpdate);
+    //     mappingXData.off("update", leftUpdate);
+    //     _this.mappingXData = null;
+    // }
 
     // 清除sync
     if (_this[SYNCSHOST]) {
@@ -180,15 +180,15 @@ const clearXData = (xobj) => {
         }
     }
 
-    if (_this[VIRDATAHOST]) {
-        _this[VIRDATAHOST].forEach(e => {
-            let { data, leftUpdate, rightUpdate } = e;
-            data.off("update", rightUpdate);
-            _this.off("update", leftUpdate);
-            data.mappingXData = null;
-        });
-        _this[VIRDATAHOST].splice(0);
-    }
+    // if (_this[VIRDATAHOST]) {
+    //     _this[VIRDATAHOST].forEach(e => {
+    //         let { data, leftUpdate, rightUpdate } = e;
+    //         data.off("update", rightUpdate);
+    //         _this.off("update", leftUpdate);
+    //         data.mappingXData = null;
+    //     });
+    //     _this[VIRDATAHOST].splice(0);
+    // }
 
     // 触发清除事件
     _this.emit("clearxdata");

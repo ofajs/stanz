@@ -26,7 +26,7 @@ const nextTick = (() => {
     // 定位对象寄存器
     let nextTickMap = new Map();
 
-    let pnext = (func) => Promise.resolve().then(() => func())
+    const pnext = (func) => Promise.resolve().then(() => func())
 
     if (typeof process === "object" && process.nextTick) {
         pnext = process.nextTick;
@@ -257,6 +257,27 @@ const toNoStanz = (obj, childKey) => {
         return newObj;
     } else {
         return obj;
+    }
+}
+
+// seekdata是否符合条件
+function judgeSeekData(val, expr) {
+    if (!(val instanceof XData)) {
+        return false;
+    }
+    try {
+        return expr.call(val, val)
+    } catch (e) {}
+}
+
+// 鉴定的方法
+let seekFunc = (val, expr, arr) => {
+    if (judgeSeekData(val, expr)) {
+        arr.push(val);
+    }
+
+    if (val instanceof XData) {
+        arr.push(...val.seek(expr, false));
     }
 }
 
@@ -1451,26 +1472,9 @@ class XData extends XEmiter {
 
         let arr = [];
 
-        let f2 = (val) => {
-            try {
-                let bool = expr.call(val, val)
-
-                if (bool) {
-                    arr.push(val);
-                }
-            } catch (e) {}
-        }
-
         if (seekSelf) {
-            f2(this);
-        }
-
-        // 鉴定的方法
-        let f = (val) => {
-            f2(val);
-
-            if (val instanceof XData) {
-                arr.push(...val.seek(expr, false));
+            if (judgeSeekData(this, expr)) {
+                arr.push(this)
             }
         }
 
@@ -1479,13 +1483,12 @@ class XData extends XEmiter {
                 return;
             }
 
-            f(this[key]);
+            seekFunc(this[key], expr, arr);
         });
 
-        this.forEach(val => f(val));
+        this.forEach(val => seekFunc(val, expr, arr));
 
-        // 手动回收
-        f2 = f = null;
+        // Object.values(this).forEach(val => seekFunc(val, expr, arr));
 
         return arr;
     }
@@ -1685,7 +1688,7 @@ const XMIRRIR_CANSET_KEYS = new Set(["index", "parent", "remove", XMIRRIR_UPDATA
 const XMirrorHandler = {
     get(target, key, receiver) {
         if (XMIRRIR_CANSET_KEYS.has(key)) {
-            return target[key];
+            return Reflect.get(target, key, receiver);
         }
         let r_val;
         if (typeof key === "symbol") {
@@ -1702,8 +1705,7 @@ const XMirrorHandler = {
     },
     set(target, key, value, receiver) {
         if (XMIRRIR_CANSET_KEYS.has(key)) {
-            target[key] = value;
-            return true;
+            return Reflect.set(target, key, value, receiver);
         }
         return target.mirrorHost.setData(key, value);
     }

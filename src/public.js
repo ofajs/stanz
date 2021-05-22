@@ -26,7 +26,7 @@ const nextTick = (() => {
     // 定位对象寄存器
     let nextTickMap = new Map();
 
-    let pnext = (func) => Promise.resolve().then(() => func())
+    const pnext = (func) => Promise.resolve().then(() => func())
 
     if (typeof process === "object" && process.nextTick) {
         pnext = process.nextTick;
@@ -251,5 +251,26 @@ const toNoStanz = (obj, childKey) => {
         return newObj;
     } else {
         return obj;
+    }
+}
+
+// seekdata是否符合条件
+function judgeSeekData(val, expr) {
+    if (!(val instanceof XData)) {
+        return false;
+    }
+    try {
+        return expr.call(val, val)
+    } catch (e) { }
+}
+
+// 鉴定的方法
+let seekFunc = (val, expr, arr) => {
+    if (judgeSeekData(val, expr)) {
+        arr.push(val);
+    }
+
+    if (val instanceof XData) {
+        arr.push(...val.seek(expr, false));
     }
 }

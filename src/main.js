@@ -849,26 +849,9 @@ class XData extends XEmiter {
 
         let arr = [];
 
-        let f2 = (val) => {
-            try {
-                let bool = expr.call(val, val)
-
-                if (bool) {
-                    arr.push(val);
-                }
-            } catch (e) { }
-        }
-
         if (seekSelf) {
-            f2(this);
-        }
-
-        // 鉴定的方法
-        let f = (val) => {
-            f2(val);
-
-            if (val instanceof XData) {
-                arr.push(...val.seek(expr, false));
+            if (judgeSeekData(this, expr)) {
+                arr.push(this)
             }
         }
 
@@ -877,13 +860,12 @@ class XData extends XEmiter {
                 return;
             }
 
-            f(this[key]);
+            seekFunc(this[key], expr, arr);
         });
 
-        this.forEach(val => f(val));
+        this.forEach(val => seekFunc(val, expr, arr));
 
-        // 手动回收
-        f2 = f = null;
+        // Object.values(this).forEach(val => seekFunc(val, expr, arr));
 
         return arr;
     }

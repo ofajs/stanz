@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>原始性能测试</title>
+    <script src="../dist/stanz.js"></script>
+</head>
+
+<body>
+    <button onclick="starttest()">开始测试</button>
+    <script>
+        // 创造一个复杂对象
+        function createTestObj(len) {
+            let childs = [];
+            let obj = {
+                childs
+            };
+            for (let i = 0; i < 100000; i++) {
+                childs.push({
+                    val: `I am ${i}`
+                    // val: `change val`
+                });
+            }
+            return obj;
+        }
+
+        let testObj = createTestObj();
+        let testObj2 = createTestObj();
+        let testObj3 = createTestObj();
+
+        let t3_handler = {
+            get(target, key, receiver) {
+                return Reflect.get(target, key, receiver)
+            },
+            set(target, key, value, receiver) {
+                if (/haha/.test(key)) {
+                    return false;
+                }
+                return Reflect.set(target, key, value, receiver);
+            }
+        }
+        let t3_childs = testObj3.childs.map(e => {
+            return new Proxy(e, t3_handler);
+        })
+
+        console.time("aa");
+
+        let t2 = stanz({ v: testObj });
+
+        console.timeEnd("aa");
+
+        console.time("b1");
+        t2.v.childs.forEach(e => {
+            // e.val = "change val";
+            let aa = e.val;
+        });
+        console.timeEnd("b1");
+
+
+        console.time("b2");
+        testObj2.childs.forEach(e => {
+            // e.val = "change val";
+            let aa = e.val;
+        });
+        console.timeEnd("b2");
+
+
+        console.time("b3");
+        t3_childs.forEach(e => {
+            // e.val = "change val";
+            let aa = e.val;
+        });
+        console.timeEnd("b3");
+
+        // let a = {};
+        // let b = new Map();
+
+        // let len = 3000000;
+
+        // for (let i = 0; i < len; i++) {
+        //     a[`k_${i}`] = {
+        //         val: "I am " + i
+        //     };
+        //     b.set(`k_${i}`, {
+        //         val: "I am " + i
+        //     });
+        // }
+
+        // function starttest() {
+        //     console.time("a_test");
+        //     for (let i = len - 1; i > 0; i--) {
+        //         a[`k_${i}`].val = "change val";
+        //     }
+        //     console.timeEnd("a_test");
+
+
+        //     console.time("b_test");
+        //     for (let i = len - 1; i > 0; i--) {
+        //         b.get(`k_${i}`).val = "change val";
+        //     }
+        //     console.timeEnd("b_test");
+        // }
+
+
+        // const getRandomId = () => Math.random().toString(32).substr(2) + Math.random().toString(32).substr(2);
+
+        // // generateId :: Integer -> String
+        // function generateId(len = 40) {
+        //     return Array.from(crypto.getRandomValues(new Uint8Array(len / 2)), dec => ('0' + dec.toString(16)).substr(-2)).join('');
+        // }
+
+        // console.time("a_test");
+        // for (let i = 0; i < 100000; i++) {
+        //     getRandomId();
+        // }
+        // console.timeEnd("a_test");
+
+
+        // console.time("b_test");
+        // for (let i = 0; i < 100000; i++) {
+        //     generateId();
+        // }
+        // console.timeEnd("b_test");
+
+    </script>
+</body>
+
+</html>

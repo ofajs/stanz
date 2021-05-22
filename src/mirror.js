@@ -53,7 +53,7 @@ const XMIRRIR_CANSET_KEYS = new Set(["index", "parent", "remove", XMIRRIR_UPDATA
 const XMirrorHandler = {
     get(target, key, receiver) {
         if (XMIRRIR_CANSET_KEYS.has(key)) {
-            return target[key];
+            return Reflect.get(target, key, receiver);
         }
         let r_val;
         if (typeof key === "symbol") {
@@ -65,13 +65,12 @@ const XMirrorHandler = {
         if (isFunction(r_val)) {
             r_val = r_val.bind(target.mirrorHost[PROXYTHIS]);
         }
- 
+
         return r_val;
     },
     set(target, key, value, receiver) {
         if (XMIRRIR_CANSET_KEYS.has(key)) {
-            target[key] = value;
-            return true;
+            return Reflect.set(target, key, value, receiver);
         }
         return target.mirrorHost.setData(key, value);
     }

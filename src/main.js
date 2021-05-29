@@ -1,122 +1,84 @@
-const WATCHS = Symbol("watchs");
-const CANUPDATE = Symbol("can_update");
 const XDATASELF = Symbol("self");
+const WATCHS = Symbol("watchs");
+const WATCHRELYS = Symbol("relys");
 
-// 获取事件对象
-const getEves = (target, ckey) => {
-    const watchs = target[WATCHS];
-    let eveSets = watchs.get(ckey);
+// 添加watch依赖对象
+const addWatchRely = (needDeepTarget, needAddTargets) => {
+    Object.values(needDeepTarget).forEach(target => {
+        if (isxdata(target)) {
+            let selfRelys = target[WATCHRELYS];
 
-    if (!eveSets) {
-        eveSets = new Map();
-        watchs.set(ckey, eveSets);
-    }
+            // 添加到依赖
+            needAddTargets.forEach(t => selfRelys.add(t));
 
-    return eveSets;
+            debugger
+        }
+    });
 }
 
-class Trend {
-    constructor(obj) {
-        Object.assign(this, obj);
-    }
-    get fromKey() {
-        if (this.keys.length) {
-            return this.keys[0];
-        }
-        if (this.methodName == "setData") {
-            return this.args[0];
-        }
-    }
+// 取消watch依赖对象
+const removeWatchRely = (target, relyarget) => {
+
 }
 
-// 触发update
-const emitUpdate = ({ target, methodName, args, keys = [], val, oldVal, mid }) => {
-    if (!target[CANUPDATE] || target._update === false) {
-        return;
-    }
+// 触发watch监听
+const emitWatch = (d, modifyData) => {
 
-    if (!mid) {
-        mid = getTimeId();
-    }
+    // d[WATCHRELYS].forEach(target => {
+    //     const watchs = target[WATCHS];
+    //     let { calls, modifys } = watchs;
+    //     modifys.push(modifyData);
 
-    let trendData = new Trend({
-        methodName,
-        args,
-        keys,
-        val,
-        oldVal,
-        mid
-    });
-
-    let { fromKey } = trendData;
-
-    if (target[WATCHS].get(fromKey)) {
-        let tWatchs = getEves(target, fromKey);
-
-        for (let [watchId, callback] of tWatchs) {
-            callback(trendData);
-        }
-    }
-
-    let selfWatchs = getEves(target, "");
-
-    selfWatchs.forEach(func => {
-        func(trendData);
-    });
-
-    // 向上冒泡
-    for (let [parent, index] of target.owner) {
-        let n_keys = keys.slice();
-        n_keys.unshift(index);
-        emitUpdate({
-            target: parent,
-            methodName,
-            args,
-            keys: n_keys,
-            val,
-            oldVal,
-            mid
-        });
-    }
-
-    return true;
+    //     nextTick(() => {
+    //         calls.forEach(f => f(modifys.slice()))
+    //         modifys.length = 0;
+    //     }, watchs);
+    // })
 }
 
 class XData {
     constructor(obj) {
-        if (isxdata(obj)) {
-            return obj;
+        let p_self;
+        if (obj.get) {
+            p_self = new Proxy(this, {
+                get: obj.get,
+                set: xdataHandler.set
+            });
+        } else {
+            p_self = new Proxy(this, xdataHandler);
         }
 
-        // 对象专属id
-        const xid = "x_" + getRandomId();
-
-        // 每个对象的专属id
         defineProperties(this, {
+            xid: {
+                // 对象专属id
+                value: "x_" + getRandomId()
+            },
             [XDATASELF]: {
                 value: this
             },
-            // 每个对象必有的id
-            xid: {
-                get: () => xid
-            },
-            // 所有父层对象存储的位置
-            // 拥有者对象
-            owner: {
-                value: new Map()
-            },
-            // 数组对象
-            length: {
-                writable: true,
-                value: 0
-            },
-            // 监听函数
             [WATCHS]: {
-                value: new Map()
+                // watch相关的寄宿对象数据
+                value: {
+                    // self: this,
+                    // 存放watch函数
+                    calls: new Map(),
+                    // 改动数据存放处
+                    modifys: []
+                }
             },
-            [CANUPDATE]: {
+            [WATCHRELYS]: {
+                // 需要被触发 watch 的上级对象
+                value: new Set()
+            },
+            length: {
+                // 数组长度
                 writable: true,
                 value: 0
+            },
+            _updata: {
+                // 能否触发更新数据事件
+                writable: true,
+                value: false
             }
         });
 
@@ -145,145 +107,74 @@ class XData {
             }
         });
 
+        this._updata = true;
+
         if (maxNum > -1) {
             this.length = maxNum + 1;
         }
 
-        if (obj.get) {
-            return new Proxy(this, {
-                get: obj.get,
-                set: xdataHandler.set
-            });
-        }
-
-        this[CANUPDATE] = 1;
-
-        return new Proxy(this, xdataHandler);
+        return p_self;
     }
 
-    /**
-     * 给对象设置值
-     * @param {String|Number|Symbol} key 设置在对象上的key
-     * @param {*} val 设置的值
-     */
-    setData(key, val) {
+    // 设置是数据
+    setData(key, value) {
         // 确认key是隐藏属性
         if (/^_/.test(key)) {
             defineProperties(this, {
                 [key]: {
                     writable: true,
                     configurable: true,
-                    value: val
+                    value
                 }
             })
             return true;
         }
 
-        if (val instanceof Object) {
-            val = new XData(val, this);
+        if (value instanceof Object) {
+            value = new XData(value);
 
-            // 设置父层的key
-            // val.owner.set(this, { key, self: this });
-            val.owner.set(this, key);
-            // val._parent = this;
-            // val._index = key;
+            if (this[WATCHS].calls.size) {
+                // 向子集添加watch对象数据
+                // addWatchRely(value, this);
+                debugger
+            }
         }
 
-        let oldVal = this[key];
+        let oldValue = this[key];
 
-        let reval = Reflect.set(this, key, val);
+        let reval = Reflect.set(this, key, value);
 
-        // change事件冒泡
-        emitUpdate({
-            target: this,
-            methodName: 'setData',
-            args: [key, val],
-            keys: [],
-            val,
-            oldVal
-        });
-
-        // if (isxdata(oldVal)) {
-        //     oldVal.owner.delete(this);
-        // }
+        if (this._updata) {
+            emitWatch(this, {
+                methodName: "setData",
+                key,
+                value,
+                oldValue,
+                xid: this.xid,
+                mid: getTimeId()
+            });
+        }
 
         return reval;
     }
 
-    /**
-     * 监听表达式是否符合条件
-     * @param {String} expr 监听表达式
-     * @param {Function} func 监听函数
-     * @return {String} 监听事件id
-     */
-    watch(expr, func) {
-        if (isFunction(expr) && !func) {
-            func = expr;
-            expr = "";
-        }
-
-        let eves = getEves(this, expr);
-
-        // 建档
-        let eid = "e_" + getRandomId();
-        eves.set(eid, func)
-
-        return eid;
-    }
-
-    /**
-     * 取消监听某个事件
-     * @param {String} wid 注销监听的id
-     */
-    unwatch(wid) {
-        let removeSucceed = false;
-        this[WATCHS].forEach(e => {
-            if (removeSucceed) return;
-
-            if (e.has(wid)) {
-                e.delete(wid);
-                removeSucceed = true;
-            }
-        });
-        if (!removeSucceed) {
-            console.warn(`unwatch fail => ${wid}`);
-        }
-        return removeSucceed;
-    }
-
+    // 去除数据
     remove(key) {
-        // 确认key是隐藏属性
-        if (/^_/.test(key) || typeof key === "symbol") {
-            return Reflect.deleteProperty(this, key);
-        }
 
-        if (key) {
-            // 删除相应子属性的值
-            let val = this[key];
-            if (isxdata(val)) {
-                // 清除父层痕
-                for (let [parent, index] of val.owner) {
-                    if (parent.xid === this.xid) {
-                        val.owner.delete(parent);
-                        Reflect.deleteProperty(parent, index);
-                        return emitUpdate({
-                            target: this,
-                            methodName: 'remove',
-                            args: [key],
-                            keys: [],
-                            val: undefined,
-                            oldVal: val
-                        });
-                    }
-                }
-            }
-            return true;
-        } else {
-            throw {
-                desc: "remove method need key",
-                target: this
-            };
-        }
+    }
+
+    watch(callback) {
+        let wid = "w_" + getRandomId();
+
+        this[WATCHS].calls.set(wid, callback);
+
+        addWatchRely(this, [this, ...this[WATCHRELYS]]);
+
+        return wid;
+    }
+
+    unwatch(wid) {
+        return this[WATCHS].calls.delete(wid);
     }
 }
 
@@ -300,6 +191,5 @@ const xdataHandler = {
     }
 }
 
-const createXData = (obj) => {
-    return new XData(obj);
-};
+
+const createXData = (obj) => new XData(obj);

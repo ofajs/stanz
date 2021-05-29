@@ -146,16 +146,20 @@ class XData {
 
         let proxy_self;
 
-        if (obj.get || obj.ownKeys) {
+        if (obj.get) {
             proxy_self = new Proxy(this, {
                 get: obj.get,
                 ownKeys: obj.ownKeys,
-                set: xdataHandler.set
+                getOwnPropertyDescriptor: obj.getOwnPropertyDescriptor,
+                set: xdataHandler.set,
             });
+
+            delete obj.get;
+            delete obj.ownKeys;
+            delete obj.getOwnPropertyDescriptor;
         } else {
             proxy_self = new Proxy(this, xdataHandler);
         }
-
 
         // 每个对象的专属id
         defineProperties(this, {
@@ -249,9 +253,9 @@ class XData {
             return true;
         }
 
-        // let valueType = getType(value);
-        // if (valueType == "array" || valueType == "object") {
-        if (value instanceof Object) {
+        let valueType = getType(value);
+        if (valueType == "array" || valueType == "object") {
+            // if (value instanceof Object) {
             value = new XData(value, this);
 
             // 设置父层的key
@@ -423,7 +427,8 @@ extend(XData.prototype, {
 
         // items修正
         items = items.map(e => {
-            if (e instanceof Object) {
+            let valueType = getType(e);
+            if (valueType == "array" || valueType == "object") {
                 e = new XData(e);
                 e.owner.add(self);
             }

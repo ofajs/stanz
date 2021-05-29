@@ -13,7 +13,7 @@
         }
     });
 
-    window.a = a;
+    // window.a = a;
 
     let i = 0;
     let wid = a.watchTick(e => {

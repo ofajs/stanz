@@ -17,7 +17,8 @@ extend(XData.prototype, {
 
         // items修正
         items = items.map(e => {
-            if (e instanceof Object) {
+            let valueType = getType(e);
+            if (valueType == "array" || valueType == "object") {
                 e = new XData(e);
                 e.owner.add(self);
             }

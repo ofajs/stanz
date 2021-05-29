@@ -1,84 +1,60 @@
 const XDATASELF = Symbol("self");
 const WATCHS = Symbol("watchs");
-const WATCHRELYS = Symbol("relys");
+const CANUPDATE = Symbol("can_update");
 
-// 添加watch依赖对象
-const addWatchRely = (needDeepTarget, needAddTargets) => {
-    Object.values(needDeepTarget).forEach(target => {
-        if (isxdata(target)) {
-            let selfRelys = target[WATCHRELYS];
+const emitUpdate = (target, opts) => {
+    // 触发callback
+    target[WATCHS].forEach(f => f(opts))
 
-            // 添加到依赖
-            needAddTargets.forEach(t => selfRelys.add(t));
-
-            debugger
-        }
-    });
-}
-
-// 取消watch依赖对象
-const removeWatchRely = (target, relyarget) => {
-
-}
-
-// 触发watch监听
-const emitWatch = (d, modifyData) => {
-
-    // d[WATCHRELYS].forEach(target => {
-    //     const watchs = target[WATCHS];
-    //     let { calls, modifys } = watchs;
-    //     modifys.push(modifyData);
-
-    //     nextTick(() => {
-    //         calls.forEach(f => f(modifys.slice()))
-    //         modifys.length = 0;
-    //     }, watchs);
-    // })
+    // 向上冒泡
+    target.owner.forEach(parent => emitUpdate(parent, opts));
 }
 
 class XData {
     constructor(obj) {
-        let p_self;
-        if (obj.get) {
-            p_self = new Proxy(this, {
+        if (isxdata(obj)) {
+            return obj;
+        }
+
+        let proxy_self;
+
+        if (obj.get || obj.ownKeys) {
+            proxy_self = new Proxy(this, {
                 get: obj.get,
+                ownKeys: obj.ownKeys,
                 set: xdataHandler.set
             });
         } else {
-            p_self = new Proxy(this, xdataHandler);
+            proxy_self = new Proxy(this, xdataHandler);
         }
 
+
+        // 每个对象的专属id
         defineProperties(this, {
-            xid: {
-                // 对象专属id
-                value: "x_" + getRandomId()
-            },
             [XDATASELF]: {
                 value: this
             },
-            [WATCHS]: {
-                // watch相关的寄宿对象数据
-                value: {
-                    // self: this,
-                    // 存放watch函数
-                    calls: new Map(),
-                    // 改动数据存放处
-                    modifys: []
-                }
+            // 每个对象必有的id
+            xid: {
+                value: "x_" + getRandomId()
             },
-            [WATCHRELYS]: {
-                // 需要被触发 watch 的上级对象
+            // 所有父层对象存储的位置
+            // 拥有者对象
+            owner: {
                 value: new Set()
             },
+            // 数组对象
             length: {
-                // 数组长度
                 writable: true,
                 value: 0
             },
-            _updata: {
-                // 能否触发更新数据事件
+            // 监听函数
+            [WATCHS]: {
+                value: new Map()
+            },
+            [CANUPDATE]: {
                 writable: true,
-                value: false
+                value: 0
             }
         });
 
@@ -107,16 +83,27 @@ class XData {
             }
         });
 
-        this._updata = true;
-
         if (maxNum > -1) {
             this.length = maxNum + 1;
         }
 
-        return p_self;
+        this[CANUPDATE] = 1;
+
+        return proxy_self;
     }
 
-    // 设置是数据
+    watch(callback) {
+        const wid = "e_" + getRandomId();
+
+        this[WATCHS].set(wid, callback);
+
+        return wid;
+    }
+
+    unwatch(wid) {
+        return this[WATCHS].delete(wid);
+    }
+
     setData(key, value) {
         // 确认key是隐藏属性
         if (/^_/.test(key)) {
@@ -130,51 +117,64 @@ class XData {
             return true;
         }
 
+        // let valueType = getType(value);
+        // if (valueType == "array" || valueType == "object") {
         if (value instanceof Object) {
-            value = new XData(value);
+            value = new XData(value, this);
 
-            if (this[WATCHS].calls.size) {
-                // 向子集添加watch对象数据
-                // addWatchRely(value, this);
-                debugger
-            }
+            // 设置父层的key
+            value.owner.add(this);
         }
 
-        let oldValue = this[key];
+        const oldVal = this[key];
 
         let reval = Reflect.set(this, key, value);
 
-        if (this._updata) {
-            emitWatch(this, {
-                methodName: "setData",
-                key,
-                value,
-                oldValue,
+        if (this[CANUPDATE]) {
+            // 改动冒泡
+            emitUpdate(this, {
                 xid: this.xid,
-                mid: getTimeId()
+                name: "setData",
+                args: [key, value]
             });
+        }
+
+        if (isxdata(oldVal)) {
+            oldVal.owner.delete(this);
         }
 
         return reval;
     }
 
-    // 去除数据
-    remove(key) {
+    delete(key) {
+        // 确认key是隐藏属性
+        if (/^_/.test(key) || typeof key === "symbol") {
+            return Reflect.deleteProperty(this, key);
+        }
 
-    }
+        if (!key) {
+            return false;
+        }
 
-    watch(callback) {
-        let wid = "w_" + getRandomId();
+        // 无proxy自身
+        const _this = this[XDATASELF];
 
-        this[WATCHS].calls.set(wid, callback);
+        let val = _this[key];
+        if (isxdata(val)) {
+            // 清除owner上的父层
+            val.owner.delete(_this);
+        }
 
-        addWatchRely(this, [this, ...this[WATCHRELYS]]);
+        let reval = Reflect.deleteProperty(_this, key);
 
-        return wid;
-    }
+        // 改动冒泡
+        emitUpdate(this, {
+            xid: this.xid,
+            name: "delete",
+            args: [key]
+        });
 
-    unwatch(wid) {
-        return this[WATCHS].calls.delete(wid);
+        return reval;
     }
 }
 
@@ -187,9 +187,10 @@ const xdataHandler = {
         return target.setData(key, value);
     },
     deleteProperty: function (target, key) {
-        return target.remove(key);
+        return target.delete(key);
     }
 }
 
-
-const createXData = (obj) => new XData(obj);
+const createXData = (obj) => {
+    return new XData(obj);
+};

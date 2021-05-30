@@ -177,6 +177,7 @@ class XData {
             },
             // 数组对象
             length: {
+                configurable: true,
                 writable: true,
                 value: 0
             },
@@ -266,7 +267,7 @@ class XData {
 
         let reval = Reflect.set(this, key, value);
 
-        if (this[CANUPDATE]) {
+        if (this[CANUPDATE] || this._update === false) {
             // 改动冒泡
             emitUpdate(this, {
                 xid: this.xid,
@@ -459,7 +460,7 @@ extend(XData.prototype, {
         return this.length;
     },
     shift() {
-        return this.splice(0, 0)[0];
+        return this.splice(0, 1)[0];
     },
     pop() {
         return this.splice(this.length - 1, 1)[0];

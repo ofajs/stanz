@@ -49,7 +49,7 @@ extend(XData.prototype, {
         return this.length;
     },
     shift() {
-        return this.splice(0, 0)[0];
+        return this.splice(0, 1)[0];
     },
     pop() {
         return this.splice(this.length - 1, 1)[0];

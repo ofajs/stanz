@@ -1,4 +1,3 @@
-
 // public function
 const getRandomId = () => Math.random().toString(32).substr(2);
 // const getRandomId = (len = 40) => {

@@ -135,7 +135,8 @@ class XData {
 
         let reval = Reflect.set(this, key, value);
 
-        if (this[CANUPDATE] || this._update === false) {
+        // if (this[CANUPDATE] || this._update === false) {
+        if (this[CANUPDATE]) {
             // 改动冒泡
             emitUpdate(this, {
                 xid: this.xid,

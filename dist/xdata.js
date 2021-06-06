@@ -267,7 +267,8 @@ class XData {
 
         let reval = Reflect.set(this, key, value);
 
-        if (this[CANUPDATE] || this._update === false) {
+        // if (this[CANUPDATE] || this._update === false) {
+        if (this[CANUPDATE]) {
             // 改动冒泡
             emitUpdate(this, {
                 xid: this.xid,
@@ -360,6 +361,28 @@ extend(XData.prototype, {
     // watch异步收集版本
     watchTick(func) {
         return this.watch(collect(func));
+    },
+    // 监听直到表达式成功
+    watchUntil(expr) {
+        if (/[^=]=[^=]/.test(expr)) {
+            throw 'cannot use single =';
+        }
+
+        return new Promise(resolve => {
+            // 忽略错误
+            let exprFun = new Function(`
+        try{with(this){
+            return ${expr}
+        }}catch(e){}`).bind(this);
+
+            const wid = this.watch(() => {
+                let reVal = exprFun();
+                if (reVal) {
+                    this.unwatch(wid);
+                    resolve(reVal);
+                }
+            });
+        });
     },
     // 转换为json数据
     toJSON() {

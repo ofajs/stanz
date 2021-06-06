@@ -27,6 +27,28 @@ extend(XData.prototype, {
     watchTick(func) {
         return this.watch(collect(func));
     },
+    // 监听直到表达式成功
+    watchUntil(expr) {
+        if (/[^=]=[^=]/.test(expr)) {
+            throw 'cannot use single =';
+        }
+
+        return new Promise(resolve => {
+            // 忽略错误
+            let exprFun = new Function(`
+        try{with(this){
+            return ${expr}
+        }}catch(e){}`).bind(this);
+
+            const wid = this.watch(() => {
+                let reVal = exprFun();
+                if (reVal) {
+                    this.unwatch(wid);
+                    resolve(reVal);
+                }
+            });
+        });
+    },
     // 转换为json数据
     toJSON() {
         let obj = {};

@@ -1,5 +1,5 @@
 (async () => {
-    const tester = expect(2, "method test");
+    const tester = expect(3, "method test");
 
     let a = stanz({
         0: {
@@ -45,11 +45,33 @@
         a[0].val = "change 0 val 2";
 
         a.unwatch(wid)
-        
+
     }).nexter(() => {
         a.push({
             val: "new val 3"
         });
+    })
+
+    const b = stanz({
+        val: "1"
+    });
+
+    let b_count = 0;
+    b.watchUntil("val == 3").then(e => {
+        if (b_count === 0) {
+            tester.ok(e === true, "watchUntil succeed");
+        } else {
+            tester.ok(false, "can not run this");
+        }
+        b_count++;
+    })
+
+    b.val = 2;
+    b.val = 3;
+    nexter(() => {
+        b.val = 1;
+        b.val = 3;
+        // 在触发会无效
     })
 
 })();

@@ -19,7 +19,7 @@ extend(XData.prototype, {
         items = items.map(e => {
             let valueType = getType(e);
             if (valueType == "array" || valueType == "object") {
-                e = new XData(e);
+                e = createXData(e, "sub");
                 e.owner.add(self);
             }
 
@@ -29,7 +29,8 @@ extend(XData.prototype, {
         // 套入原生方法
         let rmArrs = arraySplice.call(self, index, howmany, ...items);
 
-        rmArrs.forEach(e => isxdata(e) && e.owner.delete(self));
+        // rmArrs.forEach(e => isxdata(e) && e.owner.delete(self));
+        rmArrs.forEach(e => clearXDataOwner(e, self));
 
         // 改动冒泡
         emitUpdate(this, {

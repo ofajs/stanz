@@ -22,7 +22,7 @@
 
     //<o:end--xdata.js-->
 
-    const stanz = obj => createXData(obj);
+    const stanz = obj => createXData(obj, "root");
 
     Object.assign(stanz, {
         version: "{{version}}",

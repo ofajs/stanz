@@ -2,6 +2,8 @@ const XDATASELF = Symbol("self");
 const WATCHS = Symbol("watchs");
 const CANUPDATE = Symbol("can_update");
 
+const cansetXtatus = new Set(["root", "sub", "revoke"]);
+
 const emitUpdate = (target, opts) => {
     // 触发callback
     target[WATCHS].forEach(f => f(opts))
@@ -11,10 +13,7 @@ const emitUpdate = (target, opts) => {
 }
 
 class XData {
-    constructor(obj) {
-        if (isxdata(obj)) {
-            return obj;
-        }
+    constructor(obj, status) {
 
         let proxy_self;
 
@@ -33,6 +32,9 @@ class XData {
             proxy_self = new Proxy(this, xdataHandler);
         }
 
+        // 当前对象所处的状态
+        let xtatus = status;
+
         // 每个对象的专属id
         defineProperties(this, {
             [XDATASELF]: {
@@ -41,6 +43,38 @@ class XData {
             // 每个对象必有的id
             xid: {
                 value: "x_" + getRandomId()
+            },
+            // 当前所处的状态
+            _xtatus: {
+                get() {
+                    return xtatus;
+                },
+                set(val) {
+                    if (!cansetXtatus.has(val)) {
+                        throw {
+                            target: proxy_self,
+                            desc: `xtatus not allowed to be set ${val}`
+                        };
+                    }
+                    const size = this.owner.size;
+
+                    if (val === "revoke" && size) {
+                        throw {
+                            target: proxy_self,
+                            desc: "the owner is not empty"
+                        };
+                    } else if (xtatus === "revoke" && val !== "revoke") {
+                        if (!size) {
+                            fixXDataOwner(this);
+                        }
+                    } else if (xtatus === "sub" && val === "root") {
+                        throw {
+                            target: proxy_self,
+                            desc: "cannot modify sub to root"
+                        };
+                    }
+                    xtatus = val;
+                }
             },
             // 所有父层对象存储的位置
             // 拥有者对象
@@ -112,26 +146,33 @@ class XData {
     setData(key, value) {
         // 确认key是隐藏属性
         if (/^_/.test(key)) {
-            defineProperties(this, {
-                [key]: {
-                    writable: true,
-                    configurable: true,
-                    value
-                }
-            })
+            if (!this.hasOwnProperty(key)) {
+                defineProperties(this, {
+                    [key]: {
+                        writable: true,
+                        configurable: true,
+                        value
+                    }
+                })
+            } else {
+                Reflect.set(this, key, value);
+            }
             return true;
         }
 
         let valueType = getType(value);
         if (valueType == "array" || valueType == "object") {
-            // if (value instanceof Object) {
-            value = new XData(value, this);
+            value = createXData(value, "sub");
 
             // 设置父层的key
             value.owner.add(this);
         }
 
         const oldVal = this[key];
+
+        if (oldVal === value) {
+            return true;
+        }
 
         let reval = Reflect.set(this, key, value);
 
@@ -145,9 +186,7 @@ class XData {
             });
         }
 
-        if (isxdata(oldVal)) {
-            oldVal.owner.delete(this);
-        }
+        clearXDataOwner(oldVal, this);
 
         return reval;
     }
@@ -166,10 +205,9 @@ class XData {
         const _this = this[XDATASELF];
 
         let val = _this[key];
-        if (isxdata(val)) {
-            // 清除owner上的父层
-            val.owner.delete(_this);
-        }
+        // 清除owner上的父层
+        // val.owner.delete(_this);
+        clearXDataOwner(val, _this);
 
         let reval = Reflect.deleteProperty(_this, key);
 
@@ -197,6 +235,41 @@ const xdataHandler = {
     }
 }
 
-const createXData = (obj) => {
-    return new XData(obj);
+// 清除xdata的owner数据
+const clearXDataOwner = (xdata, parent) => {
+    if (!isxdata(xdata)) {
+        return;
+    }
+
+    const { owner } = xdata;
+    owner.delete(parent);
+
+    if (!owner.size) {
+        xdata._xtatus = "revoke";
+        Object.values(xdata).forEach(child => {
+            clearXDataOwner(child, xdata[XDATASELF]);
+        });
+    }
+}
+
+// 修正xdata的owner数据
+const fixXDataOwner = (xdata) => {
+    if (xdata._xtatus === "revoke") {
+        // 重新修复状态
+        Object.values(xdata).forEach(e => {
+            if (isxdata(e)) {
+                fixXDataOwner(e);
+                e.owner.add(xdata);
+                e._xtatus = "sub";
+            }
+        });
+    }
+}
+
+const createXData = (obj, status) => {
+    if (isxdata(obj)) {
+        obj._xtatus = status;
+        return obj;
+    }
+    return new XData(obj, status);
 };

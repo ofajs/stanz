@@ -271,7 +271,8 @@
                     });
                 } else {
                     // 直接设置函数
-                    this.setData(key, value);
+                    // this.setData(key, value);
+                    proxy_self[key] = value;
                 }
             });
 
@@ -297,22 +298,6 @@
         }
 
         setData(key, value) {
-            // 确认key是隐藏属性
-            if (/^_/.test(key)) {
-                if (!this.hasOwnProperty(key)) {
-                    defineProperties(this, {
-                        [key]: {
-                            writable: true,
-                            configurable: true,
-                            value
-                        }
-                    })
-                } else {
-                    Reflect.set(this, key, value);
-                }
-                return true;
-            }
-
             let valueType = getType(value);
             if (valueType == "array" || valueType == "object") {
                 value = createXData(value, "sub");
@@ -381,6 +366,23 @@
             if (typeof key === "symbol") {
                 return Reflect.set(target, key, value, receiver);
             }
+
+            // 确认key是隐藏属性
+            if (/^_/.test(key)) {
+                if (!target.hasOwnProperty(key)) {
+                    defineProperties(target, {
+                        [key]: {
+                            writable: true,
+                            configurable: true,
+                            value
+                        }
+                    })
+                } else {
+                    Reflect.set(target, key, value, receiver);
+                }
+                return true;
+            }
+
             return target.setData(key, value);
         },
         deleteProperty: function(target, key) {

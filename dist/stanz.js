@@ -423,7 +423,7 @@
         }
     }
 
-    const createXData = (obj, status) => {
+    const createXData = (obj, status = "root") => {
         if (isxdata(obj)) {
             obj._xtatus = status;
             return obj;

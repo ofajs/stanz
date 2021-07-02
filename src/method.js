@@ -49,6 +49,61 @@ extend(XData.prototype, {
             });
         });
     },
+    // 监听相应key
+    watchKey(obj) {
+        let oldVal = {};
+        return this.watch(collect((arr) => {
+            Object.keys(obj).forEach(key => {
+                // 当前值
+                let val = this[key];
+
+                if (oldVal[key] !== val) {
+                    obj[key].call(this, val);
+                } else if (isxdata(val)) {
+                    // 判断改动arr内是否有当前key的改动
+                    let hasChange = arr.some(e => {
+                        let p = e.path[1];
+
+                        if (p == oldVal[key]) {
+                            return true;
+                        }
+                    });
+
+                    if (hasChange) {
+                        obj[key].call(this, val);
+                    }
+                }
+
+                oldVal[key] = val;
+            });
+        }));
+    },
+    // watchKey(key, func) {
+    //     let oldVal = this[key];
+    //     return this.watch(collect((arr) => {
+    //         // 当前值
+    //         let val = this[key];
+
+    //         if (oldVal !== val) {
+    //             func(val);
+    //         } else if (isxdata(val)) {
+    //             // 判断改动arr内是否有当前key的改动
+    //             let hasChange = arr.some(e => {
+    //                 let p = e.path[1];
+
+    //                 if (p == oldVal) {
+    //                     return true;
+    //                 }
+    //             });
+
+    //             if (hasChange) {
+    //                 func(val);
+    //             }
+    //         }
+
+    //         oldVal = val;
+    //     }));
+    // },
     // 转换为json数据
     toJSON() {
         let obj = {};

@@ -1,5 +1,5 @@
 (async () => {
-    const tester = expect(3, "method test");
+    const tester = expect(5, "method test");
 
     let a = stanz({
         0: {
@@ -71,7 +71,34 @@
     nexter(() => {
         b.val = 1;
         b.val = 3;
-        // 在触发会无效
+        // watchUntil只会被触发一次
     })
+
+
+
+    let d = stanz({
+        a: {
+            val: "val a"
+        },
+        b: "bbb"
+    });
+
+    // d.watchKey("a", e => {
+    //     tester.ok(true, "watchKey change sub obj ok");
+    // });
+    // d.watchKey("b", e => {
+    //     tester.ok(true, "watchKey chagne val ok");
+    // });
+    d.watchKey({
+        a() {
+            tester.ok(true, "watchKey change sub obj ok");
+        },
+        b() { 
+            tester.ok(true, "watchKey chagne val ok");
+        }
+    });
+
+    d.a.val = "change a val";
+    d.b = "change b";
 
 })();

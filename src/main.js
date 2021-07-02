@@ -1,15 +1,23 @@
 const XDATASELF = Symbol("self");
+const PROXYSELF = Symbol("proxy");
 const WATCHS = Symbol("watchs");
 const CANUPDATE = Symbol("can_update");
 
 const cansetXtatus = new Set(["root", "sub", "revoke"]);
 
-const emitUpdate = (target, opts) => {
+const emitUpdate = (target, opts, path) => {
+    let new_path;
+    if (!path) {
+        new_path = opts.path = [target[PROXYSELF]];
+    } else {
+        new_path = opts.path = [target[PROXYSELF], ...path];
+    }
+
     // 触发callback
     target[WATCHS].forEach(f => f(opts))
 
     // 向上冒泡
-    target.owner && target.owner.forEach(parent => emitUpdate(parent, opts));
+    target.owner && target.owner.forEach(parent => emitUpdate(parent, opts, new_path.slice()));
 }
 
 class XData {
@@ -39,6 +47,9 @@ class XData {
         defineProperties(this, {
             [XDATASELF]: {
                 value: this
+            },
+            [PROXYSELF]: {
+                value: proxy_self
             },
             // 每个对象必有的id
             xid: {

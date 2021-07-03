@@ -464,17 +464,23 @@ extend(XData.prototype, {
             return ${expr}
         }}catch(e){}`).bind(this);
 
-            const wid = this.watch(() => {
+            let f;
+            const wid = this.watch(f = () => {
                 let reVal = exprFun();
                 if (reVal) {
                     this.unwatch(wid);
                     resolve(reVal);
                 }
             });
+            f();
         });
     },
     // 监听相应key
-    watchKey(obj) {
+    watchKey(obj, immediately) {
+        if (immediately) {
+            Object.keys(obj).forEach(key => obj[key].call(this, this[key]));
+        }
+
         let oldVal = {};
         return this.watch(collect((arr) => {
             Object.keys(obj).forEach(key => {
@@ -502,32 +508,6 @@ extend(XData.prototype, {
             });
         }));
     },
-    // watchKey(key, func) {
-    //     let oldVal = this[key];
-    //     return this.watch(collect((arr) => {
-    //         // 当前值
-    //         let val = this[key];
-
-    //         if (oldVal !== val) {
-    //             func(val);
-    //         } else if (isxdata(val)) {
-    //             // 判断改动arr内是否有当前key的改动
-    //             let hasChange = arr.some(e => {
-    //                 let p = e.path[1];
-
-    //                 if (p == oldVal) {
-    //                     return true;
-    //                 }
-    //             });
-
-    //             if (hasChange) {
-    //                 func(val);
-    //             }
-    //         }
-
-    //         oldVal = val;
-    //     }));
-    // },
     // 转换为json数据
     toJSON() {
         let obj = {};

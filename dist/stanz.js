@@ -474,7 +474,7 @@
         },
         // 监听直到表达式成功
         watchUntil(expr) {
-            if (/[^=]=[^=]/.test(expr)) {
+            if (/[^=><]=[^=]/.test(expr)) {
                 throw 'cannot use single =';
             }
 

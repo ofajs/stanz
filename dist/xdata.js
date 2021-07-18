@@ -374,7 +374,16 @@ const xdataHandler = {
             return true;
         }
 
-        return target.setData(key, value);
+        try {
+            return target.setData(key, value);
+        } catch (e) {
+            throw {
+                desc: `failed to set ${key}`,
+                key,
+                value,
+                target: receiver
+            };
+        }
     },
     deleteProperty: function(target, key) {
         return target.delete(key);

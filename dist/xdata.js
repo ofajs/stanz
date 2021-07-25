@@ -218,6 +218,7 @@ class XData {
             // 所有父层对象存储的位置
             // 拥有者对象
             owner: {
+                configurable: true,
                 writable: true,
                 value: new Set()
             },

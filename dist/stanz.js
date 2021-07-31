@@ -114,7 +114,7 @@
     }
 
     // 扩展对象
-    const extend = (_this, proto) => {
+    const extend = (_this, proto, descriptor = {}) => {
         Object.keys(proto).forEach(k => {
             // 获取描述
             let {
@@ -128,13 +128,15 @@
                     _this[k] = value;
                 } else {
                     Object.defineProperty(_this, k, {
-                        value
+                        ...descriptor,
+                        value,
                     });
                 }
             } else {
                 Object.defineProperty(_this, k, {
+                    ...descriptor,
                     get,
-                    set
+                    set,
                 });
             }
         });

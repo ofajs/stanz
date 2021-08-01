@@ -82,7 +82,8 @@ const nextTick = (() => {
 const collect = (func) => {
     let arr = [];
     const reFunc = e => {
-        arr.push(e);
+        arr.push(Object.assign({}, e));
+        // arr.push(e);
         nextTick(() => {
             func(arr);
             arr.length = 0;

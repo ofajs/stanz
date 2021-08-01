@@ -1,5 +1,5 @@
 (async () => {
-    const tester = expect(5, "method test");
+    const tester = expect(7, "method test");
 
     let a = stanz({
         0: {
@@ -78,27 +78,44 @@
 
     let d = stanz({
         a: {
-            val: "val a"
+            sub: {
+                val: "val a"
+            }
         },
-        b: "bbb"
+        b: "bbb",
+        arr: [{ val: "a1" }, { val: "a2" }]
     });
 
-    // d.watchKey("a", e => {
-    //     tester.ok(true, "watchKey change sub obj ok");
-    // });
-    // d.watchKey("b", e => {
-    //     tester.ok(true, "watchKey chagne val ok");
-    // });
     d.watchKey({
         a() {
             tester.ok(true, "watchKey change sub obj ok");
         },
-        b() { 
+        b() {
             tester.ok(true, "watchKey chagne val ok");
+        },
+        arr() {
+            tester.ok(true, "watchKey arr ok");
         }
     });
 
-    d.a.val = "change a val";
-    d.b = "change b";
+    d.a.sub.val = "change a val";
+    // d.b = "change b";
+    d.b = ["change b"];
+    d.arr.push("1111");
+
+    let g = stanz({
+        obj: {
+            sub: {
+                val: ["sub val"]
+            }
+        }
+    });
+
+    g.obj.watchTick((e) => {
+        tester.ok(e[0].path.length == 3, "path length ok");
+    });
+
+    // g.obj.sub.val = ["change sub val"];
+    g.obj.sub.val.push("sub val 2");
 
 })();

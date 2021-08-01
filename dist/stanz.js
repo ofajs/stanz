@@ -103,7 +103,8 @@
     const collect = (func) => {
         let arr = [];
         const reFunc = e => {
-            arr.push(e);
+            arr.push(Object.assign({}, e));
+            // arr.push(e);
             nextTick(() => {
                 func(arr);
                 arr.length = 0;
@@ -515,6 +516,9 @@
             }
 
             let oldVal = {};
+            // Object.entries(this).forEach(([k, v]) => {
+            //     oldVal[k] = v;
+            // });
             return this.watch(collect((arr) => {
                 Object.keys(obj).forEach(key => {
                     // 当前值
@@ -527,9 +531,8 @@
                         let hasChange = arr.some(e => {
                             let p = e.path[1];
 
-                            if (p == oldVal[key]) {
-                                return true;
-                            }
+                            // if (p == oldVal[key]) {
+                            return p == val;
                         });
 
                         if (hasChange) {

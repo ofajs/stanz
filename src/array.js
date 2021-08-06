@@ -25,9 +25,11 @@ extend(XData.prototype, {
 
             return e;
         })
+        
+        let b_howmany = getType(howmany) == 'number' ? howmany : (this.length - index);
 
         // 套入原生方法
-        let rmArrs = arraySplice.call(self, index, howmany, ...items);
+        let rmArrs = arraySplice.call(self, index, b_howmany, ...items);
 
         // rmArrs.forEach(e => isxdata(e) && e.owner.delete(self));
         rmArrs.forEach(e => clearXDataOwner(e, self));

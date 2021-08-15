@@ -100,15 +100,23 @@
     })();
 
     // 在tick后运行收集的函数数据
-    const collect = (func) => {
+    const collect = (func, time) => {
         let arr = [];
+        let timer;
         const reFunc = e => {
             arr.push(Object.assign({}, e));
-            // arr.push(e);
-            nextTick(() => {
-                func(arr);
-                arr.length = 0;
-            }, reFunc);
+            if (time) {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    func(arr);
+                    arr.length = 0;
+                }, time);
+            } else {
+                nextTick(() => {
+                    func(arr);
+                    arr.length = 0;
+                }, reFunc);
+            }
         }
 
         return reFunc;
@@ -166,7 +174,11 @@
         }
 
         // 触发callback
-        target[WATCHS].forEach(f => f(opts))
+        target[WATCHS].forEach(f => f(opts));
+
+        if (target._unupdate) {
+            return;
+        }
 
         // 向上冒泡
         target.owner && target.owner.forEach(parent => emitUpdate(parent, opts, new_path.slice()));
@@ -482,8 +494,8 @@
             return arr;
         },
         // watch异步收集版本
-        watchTick(func) {
-            return this.watch(collect(func));
+        watchTick(func, time) {
+            return this.watch(collect(func, time));
         },
         // 监听直到表达式成功
         watchUntil(expr) {

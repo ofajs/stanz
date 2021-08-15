@@ -14,7 +14,11 @@ const emitUpdate = (target, opts, path) => {
     }
 
     // 触发callback
-    target[WATCHS].forEach(f => f(opts))
+    target[WATCHS].forEach(f => f(opts));
+
+    if (target._unupdate) {
+        return;
+    }
 
     // 向上冒泡
     target.owner && target.owner.forEach(parent => emitUpdate(parent, opts, new_path.slice()));

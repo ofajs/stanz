@@ -24,8 +24,8 @@ extend(XData.prototype, {
         return arr;
     },
     // watch异步收集版本
-    watchTick(func) {
-        return this.watch(collect(func));
+    watchTick(func, time) {
+        return this.watch(collect(func, time));
     },
     // 监听直到表达式成功
     watchUntil(expr) {

@@ -79,15 +79,23 @@ const nextTick = (() => {
 })();
 
 // 在tick后运行收集的函数数据
-const collect = (func) => {
+const collect = (func, time) => {
     let arr = [];
+    let timer;
     const reFunc = e => {
         arr.push(Object.assign({}, e));
-        // arr.push(e);
-        nextTick(() => {
-            func(arr);
-            arr.length = 0;
-        }, reFunc);
+        if (time) {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                func(arr);
+                arr.length = 0;
+            }, time);
+        } else {
+            nextTick(() => {
+                func(arr);
+                arr.length = 0;
+            }, reFunc);
+        }
     }
 
     return reFunc;

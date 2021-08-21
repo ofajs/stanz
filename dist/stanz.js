@@ -165,7 +165,7 @@
 
     const cansetXtatus = new Set(["root", "sub", "revoke"]);
 
-    const emitUpdate = (target, opts, path) => {
+    const emitUpdate = (target, opts, path, unupdate) => {
         let new_path;
         if (!path) {
             new_path = opts.path = [target[PROXYSELF]];
@@ -176,7 +176,7 @@
         // 触发callback
         target[WATCHS].forEach(f => f(opts));
 
-        if (target._unupdate) {
+        if (unupdate || target._unupdate) {
             return;
         }
 
@@ -528,9 +528,9 @@
             }
 
             let oldVal = {};
-            // Object.entries(this).forEach(([k, v]) => {
-            //     oldVal[k] = v;
-            // });
+            Object.entries(this).forEach(([k, v]) => {
+                oldVal[k] = v;
+            });
             return this.watch(collect((arr) => {
                 Object.keys(obj).forEach(key => {
                     // 当前值

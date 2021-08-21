@@ -5,7 +5,7 @@ const CANUPDATE = Symbol("can_update");
 
 const cansetXtatus = new Set(["root", "sub", "revoke"]);
 
-const emitUpdate = (target, opts, path) => {
+const emitUpdate = (target, opts, path, unupdate) => {
     let new_path;
     if (!path) {
         new_path = opts.path = [target[PROXYSELF]];
@@ -16,7 +16,7 @@ const emitUpdate = (target, opts, path) => {
     // 触发callback
     target[WATCHS].forEach(f => f(opts));
 
-    if (target._unupdate) {
+    if (unupdate || target._unupdate) {
         return;
     }
 

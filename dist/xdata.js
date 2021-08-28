@@ -336,6 +336,15 @@ class XData {
         return reval;
     }
 
+    // 主动触发更新事件
+    // 方便 get 类型数据触发 watch 
+    update(opts = {}) {
+        emitUpdate(this, Object.assign({}, opts, {
+            xid: this.xid,
+            isCustom: true
+        }));
+    }
+
     delete(key) {
         // 确认key是隐藏属性
         if (/^_/.test(key) || typeof key === "symbol") {
@@ -491,7 +500,7 @@ extend(XData.prototype, {
         }}catch(e){}`).bind(this);
 
             let f;
-            const wid = this.watch(f = () => {
+            const wid = this.watchTick(f = () => {
                 let reVal = exprFun();
                 if (reVal) {
                     this.unwatch(wid);
@@ -508,9 +517,12 @@ extend(XData.prototype, {
         }
 
         let oldVal = {};
-        Object.entries(this).forEach(([k, v]) => {
-            oldVal[k] = v;
+        Object.keys(obj).forEach(key => {
+            oldVal[key] = this[key];
         });
+        // Object.entries(this).forEach(([k, v]) => {
+        //     oldVal[k] = v;
+        // });
         return this.watch(collect((arr) => {
             Object.keys(obj).forEach(key => {
                 // 当前值

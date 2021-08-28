@@ -42,7 +42,7 @@ extend(XData.prototype, {
         }}catch(e){}`).bind(this);
 
             let f;
-            const wid = this.watch(f = () => {
+            const wid = this.watchTick(f = () => {
                 let reVal = exprFun();
                 if (reVal) {
                     this.unwatch(wid);
@@ -59,9 +59,12 @@ extend(XData.prototype, {
         }
 
         let oldVal = {};
-        Object.entries(this).forEach(([k, v]) => {
-            oldVal[k] = v;
+        Object.keys(obj).forEach(key => {
+            oldVal[key] = this[key];
         });
+        // Object.entries(this).forEach(([k, v]) => {
+        //     oldVal[k] = v;
+        // });
         return this.watch(collect((arr) => {
             Object.keys(obj).forEach(key => {
                 // 当前值

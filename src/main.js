@@ -193,6 +193,15 @@ class XData {
         return reval;
     }
 
+    // 主动触发更新事件
+    // 方便 get 类型数据触发 watch 
+    update(opts = {}) {
+        emitUpdate(this, Object.assign({}, opts, {
+            xid: this.xid,
+            isCustom: true
+        }));
+    }
+
     delete(key) {
         // 确认key是隐藏属性
         if (/^_/.test(key) || typeof key === "symbol") {

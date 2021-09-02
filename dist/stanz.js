@@ -334,13 +334,25 @@
                 value.owner.add(this);
             }
 
-            const oldVal = this[key];
+            let oldVal;
+            const descObj = Object.getOwnPropertyDescriptor(this, key);
+            const p_self = this[PROXYSELF];
+            try {
+                // 为了只有 set 没有 get 的情况
+                oldVal = p_self[key];
+            } catch (err) {}
 
             if (oldVal === value) {
                 return true;
             }
 
-            let reval = Reflect.set(this, key, value);
+            let reval;
+            if (descObj && descObj.set) {
+                descObj.set.call(p_self, value);
+                reval = true;
+            } else {
+                reval = Reflect.set(this, key, value);
+            }
 
             // if (this[CANUPDATE] || this._update === false) {
             if (this[CANUPDATE]) {

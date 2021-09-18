@@ -560,9 +560,12 @@
                 Object.keys(obj).forEach(key => {
                     // 当前值
                     let val = this[key];
+                    let old = oldVal[key];
 
-                    if (oldVal[key] !== val) {
-                        obj[key].call(this, val);
+                    if (old !== val) {
+                        obj[key].call(this, val, {
+                            old
+                        });
                     } else if (isxdata(val)) {
                         // 判断改动arr内是否有当前key的改动
                         let hasChange = arr.some(e => {
@@ -573,7 +576,9 @@
                         });
 
                         if (hasChange) {
-                            obj[key].call(this, val);
+                            obj[key].call(this, val, {
+                                old
+                            });
                         }
                     }
 

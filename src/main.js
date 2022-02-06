@@ -18,19 +18,21 @@ const emitUpdate = (target, opts, path, unupdate) => {
     }
 
     // 触发callback
-    target[WATCHS].forEach(f => f(opts));
+    target[WATCHS].forEach((f) => f(opts));
 
     if (unupdate || target._unupdate) {
         return;
     }
 
     // 向上冒泡
-    target.owner && target.owner.forEach(parent => emitUpdate(parent, opts, new_path.slice()));
-}
+    target.owner &&
+        target.owner.forEach((parent) =>
+            emitUpdate(parent, opts, new_path.slice())
+        );
+};
 
 class XData {
     constructor(obj, status) {
-
         let proxy_self;
 
         if (obj.get) {
@@ -54,14 +56,14 @@ class XData {
         // 每个对象的专属id
         defineProperties(this, {
             [XDATASELF]: {
-                value: this
+                value: this,
             },
             [PROXYSELF]: {
-                value: proxy_self
+                value: proxy_self,
             },
             // 每个对象必有的id
             xid: {
-                value: "x_" + getRandomId()
+                value: "x_" + getRandomId(),
             },
             // 当前所处的状态
             _xtatus: {
@@ -72,7 +74,7 @@ class XData {
                     if (!cansetXtatus.has(val)) {
                         throw {
                             target: proxy_self,
-                            desc: `xtatus not allowed to be set ${val}`
+                            desc: `xtatus not allowed to be set ${val}`,
                         };
                     }
                     const size = this.owner.size;
@@ -80,7 +82,7 @@ class XData {
                     if (val === "revoke" && size) {
                         throw {
                             target: proxy_self,
-                            desc: "the owner is not empty"
+                            desc: "the owner is not empty",
                         };
                     } else if (xtatus === "revoke" && val !== "revoke") {
                         if (!size) {
@@ -89,37 +91,37 @@ class XData {
                     } else if (xtatus === "sub" && val === "root") {
                         throw {
                             target: proxy_self,
-                            desc: "cannot modify sub to root"
+                            desc: "cannot modify sub to root",
                         };
                     }
                     xtatus = val;
-                }
+                },
             },
             // 所有父层对象存储的位置
             // 拥有者对象
             owner: {
                 configurable: true,
                 writable: true,
-                value: new Set()
+                value: new Set(),
             },
             // 数组对象
             length: {
                 configurable: true,
                 writable: true,
-                value: 0
+                value: 0,
             },
             // 监听函数
             [WATCHS]: {
-                value: new Map()
+                value: new Map(),
             },
             [CANUPDATE]: {
                 writable: true,
-                value: 0
-            }
+                value: 0,
+            },
         });
 
         let maxNum = -1;
-        Object.keys(obj).forEach(key => {
+        Object.keys(obj).forEach((key) => {
             let descObj = getOwnPropertyDescriptor(obj, key);
             let { value, get, set } = descObj;
 
@@ -135,7 +137,7 @@ class XData {
             if (get || set) {
                 // 通过get set 函数设置
                 defineProperties(this, {
-                    [key]: descObj
+                    [key]: descObj,
                 });
             } else {
                 // 直接设置函数
@@ -180,7 +182,7 @@ class XData {
         try {
             // 为了只有 set 没有 get 的情况
             oldVal = p_self[key];
-        } catch (err) { }
+        } catch (err) {}
 
         if (oldVal === value) {
             return true;
@@ -200,7 +202,7 @@ class XData {
             emitUpdate(this, {
                 xid: this.xid,
                 name: "setData",
-                args: [key, value]
+                args: [key, value],
             });
         }
 
@@ -210,12 +212,15 @@ class XData {
     }
 
     // 主动触发更新事件
-    // 方便 get 类型数据触发 watch 
+    // 方便 get 类型数据触发 watch
     update(opts = {}) {
-        emitUpdate(this, Object.assign({}, opts, {
-            xid: this.xid,
-            isCustom: true
-        }));
+        emitUpdate(
+            this,
+            Object.assign({}, opts, {
+                xid: this.xid,
+                isCustom: true,
+            })
+        );
     }
 
     delete(key) {
@@ -242,7 +247,7 @@ class XData {
         emitUpdate(this, {
             xid: this.xid,
             name: "delete",
-            args: [key]
+            args: [key],
         });
 
         return reval;
@@ -263,9 +268,9 @@ const xdataHandler = {
                     [key]: {
                         writable: true,
                         configurable: true,
-                        value
-                    }
-                })
+                        value,
+                    },
+                });
             } else {
                 Reflect.set(target, key, value, receiver);
             }
@@ -277,15 +282,16 @@ const xdataHandler = {
         } catch (e) {
             throw {
                 desc: `failed to set ${key}`,
-                key, value,
-                target: receiver
+                key,
+                value,
+                target: receiver,
             };
         }
     },
     deleteProperty: function (target, key) {
         return target.delete(key);
-    }
-}
+    },
+};
 
 // 清除xdata的owner数据
 const clearXDataOwner = (xdata, parent) => {
@@ -298,17 +304,17 @@ const clearXDataOwner = (xdata, parent) => {
 
     if (!owner.size) {
         xdata._xtatus = "revoke";
-        Object.values(xdata).forEach(child => {
+        Object.values(xdata).forEach((child) => {
             clearXDataOwner(child, xdata[XDATASELF]);
         });
     }
-}
+};
 
 // 修正xdata的owner数据
 const fixXDataOwner = (xdata) => {
     if (xdata._xtatus === "revoke") {
         // 重新修复状态
-        Object.values(xdata).forEach(e => {
+        Object.values(xdata).forEach((e) => {
             if (isxdata(e)) {
                 fixXDataOwner(e);
                 e.owner.add(xdata);
@@ -316,7 +322,7 @@ const fixXDataOwner = (xdata) => {
             }
         });
     }
-}
+};
 
 const createXData = (obj, status = "root") => {
     if (isxdata(obj)) {

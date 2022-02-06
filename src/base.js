@@ -1,8 +1,8 @@
 ((root, factory) => {
-    "use strict"
-    if (typeof exports === 'object') {
+    "use strict";
+    if (typeof exports === "object") {
         module.exports = factory();
-    } else if (typeof define === 'function' && define.amd) {
+    } else if (typeof define === "function" && define.amd) {
         define(factory);
     } else {
         root.stanz = factory();
@@ -22,7 +22,7 @@
 
     //<o:end--xdata.js-->
 
-    const stanz = obj => createXData(obj, "root");
+    const stanz = (obj) => createXData(obj, "root");
 
     Object.assign(stanz, {
         version: "{{version}}",

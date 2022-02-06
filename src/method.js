@@ -3,11 +3,11 @@ extend(XData.prototype, {
         let arr = [];
 
         if (!isFunction(expr)) {
-            let f = new Function(`with(this){return ${expr}}`)
-            expr = _this => {
+            let f = new Function(`with(this){return ${expr}}`);
+            expr = (_this) => {
                 try {
                     return f.call(_this, _this);
-                } catch (e) { }
+                } catch (e) {}
             };
         }
 
@@ -15,7 +15,7 @@ extend(XData.prototype, {
             arr.push(this);
         }
 
-        Object.values(this).forEach(e => {
+        Object.values(this).forEach((e) => {
             if (isxdata(e)) {
                 arr.push(...e.seek(expr));
             }
@@ -31,65 +31,71 @@ extend(XData.prototype, {
     watchUntil(expr) {
         let isFunc = isFunction(expr);
         if (!isFunc && /[^=><]=[^=]/.test(expr)) {
-            throw 'cannot use single =';
+            throw "cannot use single =";
         }
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             // 忽略错误
-            let exprFun = isFunc ? expr.bind(this) : new Function(`
+            let exprFun = isFunc
+                ? expr.bind(this)
+                : new Function(`
         try{with(this){
             return ${expr}
         }}catch(e){}`).bind(this);
 
             let f;
-            const wid = this.watchTick(f = () => {
-                let reVal = exprFun();
-                if (reVal) {
-                    this.unwatch(wid);
-                    resolve(reVal);
-                }
-            });
+            const wid = this.watchTick(
+                (f = () => {
+                    let reVal = exprFun();
+                    if (reVal) {
+                        this.unwatch(wid);
+                        resolve(reVal);
+                    }
+                })
+            );
             f();
         });
     },
     // 监听相应key
     watchKey(obj, immediately) {
         if (immediately) {
-            Object.keys(obj).forEach(key => obj[key].call(this, this[key]));
+            Object.keys(obj).forEach((key) => obj[key].call(this, this[key]));
         }
 
         let oldVal = {};
-        Object.keys(obj).forEach(key => {
+        Object.keys(obj).forEach((key) => {
             oldVal[key] = this[key];
         });
         // Object.entries(this).forEach(([k, v]) => {
         //     oldVal[k] = v;
         // });
-        return this.watch(collect((arr) => {
-            Object.keys(obj).forEach(key => {
-                // 当前值
-                let val = this[key];
-                let old = oldVal[key];
+        return this.watch(
+            collect((arr) => {
+                Object.keys(obj).forEach((key) => {
+                    // 当前值
+                    let val = this[key];
+                    let old = oldVal[key];
 
-                if (old !== val) {
-                    obj[key].call(this, val, { old });
-                } else if (isxdata(val)) {
-                    // 判断改动arr内是否有当前key的改动
-                    let hasChange = arr.some(e => {
-                        let p = e.path[1];
-
-                        // if (p == oldVal[key]) {
-                        return p == val;
-                    });
-
-                    if (hasChange) {
+                    if (old !== val) {
                         obj[key].call(this, val, { old });
-                    }
-                }
+                    } else if (isxdata(val)) {
+                        // 判断改动arr内是否有当前key的改动
+                        let hasChange = arr.some((e) => {
+                            let p = e.path[1];
 
-                oldVal[key] = val;
-            });
-        }));
+                            // if (p == oldVal[key]) {
+                            return p == val;
+                        });
+
+                        if (hasChange) {
+                            obj[key].call(this, val, { old });
+                        }
+                    }
+
+                    oldVal[key] = val;
+                });
+            })
+        );
     },
     // 转换为json数据
     toJSON() {
@@ -98,7 +104,7 @@ extend(XData.prototype, {
         let isPureArray = true;
         let maxId = 0;
 
-        Object.keys(this).forEach(k => {
+        Object.keys(this).forEach((k) => {
             let val = this[k];
 
             if (!/\D/.test(k)) {
@@ -125,8 +131,8 @@ extend(XData.prototype, {
         const xid = this.xid;
         defineProperties(obj, {
             xid: {
-                get: () => xid
-            }
+                get: () => xid,
+            },
         });
 
         return obj;
@@ -134,5 +140,5 @@ extend(XData.prototype, {
     // 转为字符串
     toString() {
         return JSON.stringify(this.toJSON());
-    }
+    },
 });

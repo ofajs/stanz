@@ -2,7 +2,7 @@
  * stanz v7.0.0
  * https://github.com/kirakiray/stanz
  * 
- * (c) 2018-2022 YAO
+ * (c) 2018-2023 YAO
  * Released under the MIT License.
  */
 ((root, factory) => {
@@ -38,7 +38,6 @@
 
     const isDebug = document.currentScript.getAttribute("debug") !== null;
 
-    // 改良异步方法
     const nextTick = (() => {
         if (isDebug) {
             let nMap = new Map();
@@ -59,7 +58,6 @@
             };
         }
 
-        // 定位对象寄存器
         let nextTickMap = new Map();
 
         let pnext = (func) => Promise.resolve().then(() => func());
@@ -106,12 +104,14 @@
         };
     })();
 
-    // 在tick后运行收集的函数数据
+    // Collects the data returned over a period of time and runs it once as a parameter after a period of time.
     const collect = (func, time) => {
         let arr = [];
         let timer;
         const reFunc = (e) => {
-            arr.push(Object.assign({}, e));
+            arr.push({
+                ...e
+            });
             if (time) {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
@@ -129,10 +129,9 @@
         return reFunc;
     };
 
-    // 扩展对象
+    // Enhanced methods for extending objects
     const extend = (_this, proto, descriptor = {}) => {
         Object.keys(proto).forEach((k) => {
-            // 获取描述
             let {
                 get,
                 set,
@@ -158,12 +157,6 @@
         });
     };
 
-    const startTime = Date.now();
-    // 获取高精度的当前时间
-    // const getTimeId = () => startTime + performance.now();
-    // const getTimeId = () => Date.now().toString(32);
-    // const getTimeId = () => performance.now().toString(32);
-
 
     const XDATASELF = Symbol("self");
     const PROXYSELF = Symbol("proxy");
@@ -174,7 +167,7 @@
 
     const emitUpdate = (target, opts, path, unupdate) => {
         if (path && path.includes(target[PROXYSELF])) {
-            // 防止循环引用
+            console.warn("Circular references appear");
             return;
         }
         let new_path;
@@ -184,14 +177,14 @@
             new_path = opts.path = [target[PROXYSELF], ...path];
         }
 
-        // 触发callback
+        // trigger watch callback
         target[WATCHS].forEach((f) => f(opts));
 
         if (unupdate || target._unupdate) {
             return;
         }
 
-        // 向上冒泡
+        // Bubbling change events to the parent object
         target.owner &&
             target.owner.forEach((parent) =>
                 emitUpdate(parent, opts, new_path.slice())
@@ -217,10 +210,10 @@
                 proxy_self = new Proxy(this, xdataHandler);
             }
 
-            // 当前对象所处的状态
+            // status of the object
             let xtatus = status;
 
-            // 每个对象的专属id
+            // Attributes that are available for each instance
             defineProperties(this, {
                 [XDATASELF]: {
                     value: this,
@@ -228,11 +221,10 @@
                 [PROXYSELF]: {
                     value: proxy_self,
                 },
-                // 每个对象必有的id
+                // Each object must have an id
                 xid: {
                     value: "x_" + getRandomId(),
                 },
-                // 当前所处的状态
                 _xtatus: {
                     get() {
                         return xtatus;
@@ -264,20 +256,18 @@
                         xtatus = val;
                     },
                 },
-                // 所有父层对象存储的位置
-                // 拥有者对象
+                // Save all parent objects
                 owner: {
                     configurable: true,
                     writable: true,
                     value: new Set(),
                 },
-                // 数组对象
                 length: {
                     configurable: true,
                     writable: true,
                     value: 0,
                 },
-                // 监听函数
+                // Save the object of the listener function
                 [WATCHS]: {
                     value: new Map(),
                 },
@@ -306,13 +296,11 @@
                     }
                 }
                 if (get || set) {
-                    // 通过get set 函数设置
                     defineProperties(this, {
                         [key]: descObj,
                     });
                 } else {
-                    // 直接设置函数
-                    // this.setData(key, value);
+                    // Set the function directly
                     proxy_self[key] = value;
                 }
             });
@@ -343,7 +331,7 @@
             if (valueType == "array" || valueType == "object") {
                 value = createXData(value, "sub");
 
-                // 设置父层的key
+                // Adding a parent object to an object
                 value.owner.add(this);
             }
 
@@ -351,7 +339,7 @@
             const descObj = Object.getOwnPropertyDescriptor(this, key);
             const p_self = this[PROXYSELF];
             try {
-                // 为了只有 set 没有 get 的情况
+                // The case of only set but not get
                 oldVal = p_self[key];
             } catch (err) {}
 
@@ -367,9 +355,8 @@
                 reval = Reflect.set(this, key, value);
             }
 
-            // if (this[CANUPDATE] || this._update === false) {
             if (this[CANUPDATE]) {
-                // 改动冒泡
+                // Need bubble processing after changing data
                 emitUpdate(this, {
                     xid: this.xid,
                     name: "setData",
@@ -382,8 +369,8 @@
             return reval;
         }
 
-        // 主动触发更新事件
-        // 方便 get 类型数据触发 watch
+        // Proactively trigger update events
+        // Convenient get type data trigger watch
         update(opts = {}) {
             emitUpdate(
                 this,
@@ -395,7 +382,7 @@
         }
 
         delete(key) {
-            // 确认key是隐藏属性
+            // The _ prefix or symbol can be deleted directly
             if (/^_/.test(key) || typeof key === "symbol") {
                 return Reflect.deleteProperty(this, key);
             }
@@ -404,17 +391,16 @@
                 return false;
             }
 
-            // 无proxy自身
+            // Adjustment of internal data, not using proxy objects
             const _this = this[XDATASELF];
 
             let val = _this[key];
-            // 清除owner上的父层
-            // val.owner.delete(_this);
+            // Clear the parent on the owner
             clearXDataOwner(val, _this);
 
             let reval = Reflect.deleteProperty(_this, key);
 
-            // 改动冒泡
+            // Bubbling behavior after data changes
             emitUpdate(this, {
                 xid: this.xid,
                 name: "delete",
@@ -425,14 +411,14 @@
         }
     }
 
-    // 中转XBody的请求
+    // Proxy Handler for relaying XData
     const xdataHandler = {
         set(target, key, value, receiver) {
             if (typeof key === "symbol") {
                 return Reflect.set(target, key, value, receiver);
             }
 
-            // 确认key是隐藏属性
+            // Set properties with _ prefix directly
             if (/^_/.test(key)) {
                 if (!target.hasOwnProperty(key)) {
                     defineProperties(target, {
@@ -464,7 +450,7 @@
         },
     };
 
-    // 清除xdata的owner数据
+    // Clear xdata's owner data
     const clearXDataOwner = (xdata, parent) => {
         if (!isxdata(xdata)) {
             return;
@@ -483,7 +469,7 @@
         }
     };
 
-    // 修正xdata的owner数据
+    // Fix xdata's owner data
     const fixXDataOwner = (xdata) => {
         if (xdata._xtatus === "revoke") {
             // 重新修复状态
@@ -531,11 +517,11 @@
 
             return arr;
         },
-        // watch异步收集版本
+        // watch asynchronous collection version
         watchTick(func, time) {
             return this.watch(collect(func, time));
         },
-        // 监听直到表达式成功
+        // Listening until the expression succeeds
         watchUntil(expr) {
             let isFunc = isFunction(expr);
             if (!isFunc && /[^=><]=[^=]/.test(expr)) {
@@ -543,7 +529,7 @@
             }
 
             return new Promise((resolve) => {
-                // 忽略错误
+                // Ignore errors
                 let exprFun = isFunc ?
                     expr.bind(this) :
                     new Function(`
@@ -564,7 +550,7 @@
                 f();
             });
         },
-        // 监听相应key
+        // Listen to the corresponding key
         watchKey(obj, immediately) {
             if (immediately) {
                 Object.keys(obj).forEach((key) => obj[key].call(this, this[key]));
@@ -574,13 +560,10 @@
             Object.keys(obj).forEach((key) => {
                 oldVal[key] = this[key];
             });
-            // Object.entries(this).forEach(([k, v]) => {
-            //     oldVal[k] = v;
-            // });
+
             return this.watch(
                 collect((arr) => {
                     Object.keys(obj).forEach((key) => {
-                        // 当前值
                         let val = this[key];
                         let old = oldVal[key];
 
@@ -589,11 +572,10 @@
                                 old
                             });
                         } else if (isxdata(val)) {
-                            // 判断改动arr内是否有当前key的改动
+                            // Whether the current array has changes to this key
                             let hasChange = arr.some((e) => {
                                 let p = e.path[1];
 
-                                // if (p == oldVal[key]) {
                                 return p == val;
                             });
 
@@ -609,7 +591,6 @@
                 })
             );
         },
-        // 转换为json数据
         toJSON() {
             let obj = {};
 
@@ -649,14 +630,13 @@
 
             return obj;
         },
-        // 转为字符串
         toString() {
             return JSON.stringify(this.toJSON());
         },
     });
 
 
-    // 不影响数据原结构的方法，重新做钩子
+    // Submerged hooks that do not affect the original structure of the data
     [
         "concat",
         "every",
@@ -682,14 +662,13 @@
         }
     });
 
-    // 原生splice方法
     const arraySplice = Array.prototype.splice;
 
     extend(XData.prototype, {
         splice(index, howmany, ...items) {
             let self = this[XDATASELF];
 
-            // items修正
+            // Fix the properties of new objects
             items = items.map((e) => {
                 let valueType = getType(e);
                 if (valueType == "array" || valueType == "object") {
@@ -700,16 +679,14 @@
                 return e;
             });
 
-            let b_howmany =
+            const b_howmany =
                 getType(howmany) == "number" ? howmany : this.length - index;
 
-            // 套入原生方法
-            let rmArrs = arraySplice.call(self, index, b_howmany, ...items);
+            // Follow the native split method
+            const rmArrs = arraySplice.call(self, index, b_howmany, ...items);
 
-            // rmArrs.forEach(e => isxdata(e) && e.owner.delete(self));
             rmArrs.forEach((e) => clearXDataOwner(e, self));
 
-            // 改动冒泡
             emitUpdate(this, {
                 xid: this.xid,
                 name: "splice",
@@ -735,7 +712,6 @@
     });
 
     ["sort", "reverse"].forEach((methodName) => {
-        // 原来的数组方法
         const arrayFnFunc = Array.prototype[methodName];
 
         if (arrayFnFunc) {
@@ -765,7 +741,6 @@
         version: "7.0.0",
         v: 7000000,
         isxdata,
-        // collect
     });
 
     return stanz;

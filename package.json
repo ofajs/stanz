@@ -13,8 +13,7 @@
         "uglify-es": "^3.3.9"
     },
     "scripts": {
-        "watch": "node scripts/watch.js",
-        "stest": "node --inspect stanzServer/runTest"
+        "watch": "node scripts/watch.js"
     },
     "repository": {
         "type": "git",

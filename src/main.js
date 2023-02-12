@@ -6,328 +6,321 @@ const CANUPDATE = Symbol("can_update");
 const cansetXtatus = new Set(["root", "sub", "revoke"]);
 
 const emitUpdate = (target, opts, path, unupdate) => {
-    if (path && path.includes(target[PROXYSELF])) {
-        // 防止循环引用
-        return;
-    }
-    let new_path;
-    if (!path) {
-        new_path = opts.path = [target[PROXYSELF]];
-    } else {
-        new_path = opts.path = [target[PROXYSELF], ...path];
-    }
+  if (path && path.includes(target[PROXYSELF])) {
+    console.warn("Circular references appear");
+    return;
+  }
+  let new_path;
+  if (!path) {
+    new_path = opts.path = [target[PROXYSELF]];
+  } else {
+    new_path = opts.path = [target[PROXYSELF], ...path];
+  }
 
-    // 触发callback
-    target[WATCHS].forEach((f) => f(opts));
+  // trigger watch callback
+  target[WATCHS].forEach((f) => f(opts));
 
-    if (unupdate || target._unupdate) {
-        return;
-    }
+  if (unupdate || target._unupdate) {
+    return;
+  }
 
-    // 向上冒泡
-    target.owner &&
-        target.owner.forEach((parent) =>
-            emitUpdate(parent, opts, new_path.slice())
-        );
+  // Bubbling change events to the parent object
+  target.owner &&
+    target.owner.forEach((parent) =>
+      emitUpdate(parent, opts, new_path.slice())
+    );
 };
 
 class XData {
-    constructor(obj, status) {
-        let proxy_self;
+  constructor(obj, status) {
+    let proxy_self;
 
-        if (obj.get) {
-            proxy_self = new Proxy(this, {
-                get: obj.get,
-                ownKeys: obj.ownKeys,
-                getOwnPropertyDescriptor: obj.getOwnPropertyDescriptor,
-                set: xdataHandler.set,
-            });
+    if (obj.get) {
+      proxy_self = new Proxy(this, {
+        get: obj.get,
+        ownKeys: obj.ownKeys,
+        getOwnPropertyDescriptor: obj.getOwnPropertyDescriptor,
+        set: xdataHandler.set,
+      });
 
-            delete obj.get;
-            delete obj.ownKeys;
-            delete obj.getOwnPropertyDescriptor;
-        } else {
-            proxy_self = new Proxy(this, xdataHandler);
+      delete obj.get;
+      delete obj.ownKeys;
+      delete obj.getOwnPropertyDescriptor;
+    } else {
+      proxy_self = new Proxy(this, xdataHandler);
+    }
+
+    // status of the object
+    let xtatus = status;
+
+    // Attributes that are available for each instance
+    defineProperties(this, {
+      [XDATASELF]: {
+        value: this,
+      },
+      [PROXYSELF]: {
+        value: proxy_self,
+      },
+      // Each object must have an id
+      xid: {
+        value: "x_" + getRandomId(),
+      },
+      _xtatus: {
+        get() {
+          return xtatus;
+        },
+        set(val) {
+          if (!cansetXtatus.has(val)) {
+            throw {
+              target: proxy_self,
+              desc: `xtatus not allowed to be set ${val}`,
+            };
+          }
+          const size = this.owner.size;
+
+          if (val === "revoke" && size) {
+            throw {
+              target: proxy_self,
+              desc: "the owner is not empty",
+            };
+          } else if (xtatus === "revoke" && val !== "revoke") {
+            if (!size) {
+              fixXDataOwner(this);
+            }
+          } else if (xtatus === "sub" && val === "root") {
+            throw {
+              target: proxy_self,
+              desc: "cannot modify sub to root",
+            };
+          }
+          xtatus = val;
+        },
+      },
+      // Save all parent objects
+      owner: {
+        configurable: true,
+        writable: true,
+        value: new Set(),
+      },
+      length: {
+        configurable: true,
+        writable: true,
+        value: 0,
+      },
+      // Save the object of the listener function
+      [WATCHS]: {
+        value: new Map(),
+      },
+      [CANUPDATE]: {
+        writable: true,
+        value: 0,
+      },
+    });
+
+    let maxNum = -1;
+    Object.keys(obj).forEach((key) => {
+      let descObj = getOwnPropertyDescriptor(obj, key);
+      let { value, get, set } = descObj;
+
+      if (key === "get") {
+        return;
+      }
+      if (!/\D/.test(key)) {
+        key = parseInt(key);
+        if (key > maxNum) {
+          maxNum = key;
         }
-
-        // 当前对象所处的状态
-        let xtatus = status;
-
-        // 每个对象的专属id
+      }
+      if (get || set) {
         defineProperties(this, {
-            [XDATASELF]: {
-                value: this,
-            },
-            [PROXYSELF]: {
-                value: proxy_self,
-            },
-            // 每个对象必有的id
-            xid: {
-                value: "x_" + getRandomId(),
-            },
-            // 当前所处的状态
-            _xtatus: {
-                get() {
-                    return xtatus;
-                },
-                set(val) {
-                    if (!cansetXtatus.has(val)) {
-                        throw {
-                            target: proxy_self,
-                            desc: `xtatus not allowed to be set ${val}`,
-                        };
-                    }
-                    const size = this.owner.size;
-
-                    if (val === "revoke" && size) {
-                        throw {
-                            target: proxy_self,
-                            desc: "the owner is not empty",
-                        };
-                    } else if (xtatus === "revoke" && val !== "revoke") {
-                        if (!size) {
-                            fixXDataOwner(this);
-                        }
-                    } else if (xtatus === "sub" && val === "root") {
-                        throw {
-                            target: proxy_self,
-                            desc: "cannot modify sub to root",
-                        };
-                    }
-                    xtatus = val;
-                },
-            },
-            // 所有父层对象存储的位置
-            // 拥有者对象
-            owner: {
-                configurable: true,
-                writable: true,
-                value: new Set(),
-            },
-            // 数组对象
-            length: {
-                configurable: true,
-                writable: true,
-                value: 0,
-            },
-            // 监听函数
-            [WATCHS]: {
-                value: new Map(),
-            },
-            [CANUPDATE]: {
-                writable: true,
-                value: 0,
-            },
+          [key]: descObj,
         });
+      } else {
+        // Set the function directly
+        proxy_self[key] = value;
+      }
+    });
 
-        let maxNum = -1;
-        Object.keys(obj).forEach((key) => {
-            let descObj = getOwnPropertyDescriptor(obj, key);
-            let { value, get, set } = descObj;
-
-            if (key === "get") {
-                return;
-            }
-            if (!/\D/.test(key)) {
-                key = parseInt(key);
-                if (key > maxNum) {
-                    maxNum = key;
-                }
-            }
-            if (get || set) {
-                // 通过get set 函数设置
-                defineProperties(this, {
-                    [key]: descObj,
-                });
-            } else {
-                // 直接设置函数
-                // this.setData(key, value);
-                proxy_self[key] = value;
-            }
-        });
-
-        if (maxNum > -1) {
-            this.length = maxNum + 1;
-        }
-
-        this[CANUPDATE] = 1;
-
-        return proxy_self;
+    if (maxNum > -1) {
+      this.length = maxNum + 1;
     }
 
-    watch(callback) {
-        const wid = "e_" + getRandomId();
+    this[CANUPDATE] = 1;
 
-        this[WATCHS].set(wid, callback);
+    return proxy_self;
+  }
 
-        return wid;
+  watch(callback) {
+    const wid = "e_" + getRandomId();
+
+    this[WATCHS].set(wid, callback);
+
+    return wid;
+  }
+
+  unwatch(wid) {
+    return this[WATCHS].delete(wid);
+  }
+
+  setData(key, value) {
+    let valueType = getType(value);
+    if (valueType == "array" || valueType == "object") {
+      value = createXData(value, "sub");
+
+      // Adding a parent object to an object
+      value.owner.add(this);
     }
 
-    unwatch(wid) {
-        return this[WATCHS].delete(wid);
+    let oldVal;
+    const descObj = Object.getOwnPropertyDescriptor(this, key);
+    const p_self = this[PROXYSELF];
+    try {
+      // The case of only set but not get
+      oldVal = p_self[key];
+    } catch (err) {}
+
+    if (oldVal === value) {
+      return true;
     }
 
-    setData(key, value) {
-        let valueType = getType(value);
-        if (valueType == "array" || valueType == "object") {
-            value = createXData(value, "sub");
-
-            // 设置父层的key
-            value.owner.add(this);
-        }
-
-        let oldVal;
-        const descObj = Object.getOwnPropertyDescriptor(this, key);
-        const p_self = this[PROXYSELF];
-        try {
-            // 为了只有 set 没有 get 的情况
-            oldVal = p_self[key];
-        } catch (err) {}
-
-        if (oldVal === value) {
-            return true;
-        }
-
-        let reval;
-        if (descObj && descObj.set) {
-            descObj.set.call(p_self, value);
-            reval = true;
-        } else {
-            reval = Reflect.set(this, key, value);
-        }
-
-        // if (this[CANUPDATE] || this._update === false) {
-        if (this[CANUPDATE]) {
-            // 改动冒泡
-            emitUpdate(this, {
-                xid: this.xid,
-                name: "setData",
-                args: [key, value],
-            });
-        }
-
-        clearXDataOwner(oldVal, this);
-
-        return reval;
+    let reval;
+    if (descObj && descObj.set) {
+      descObj.set.call(p_self, value);
+      reval = true;
+    } else {
+      reval = Reflect.set(this, key, value);
     }
 
-    // 主动触发更新事件
-    // 方便 get 类型数据触发 watch
-    update(opts = {}) {
-        emitUpdate(
-            this,
-            Object.assign({}, opts, {
-                xid: this.xid,
-                isCustom: true,
-            })
-        );
+    if (this[CANUPDATE]) {
+      // Need bubble processing after changing data
+      emitUpdate(this, {
+        xid: this.xid,
+        name: "setData",
+        args: [key, value],
+      });
     }
 
-    delete(key) {
-        // 确认key是隐藏属性
-        if (/^_/.test(key) || typeof key === "symbol") {
-            return Reflect.deleteProperty(this, key);
-        }
+    clearXDataOwner(oldVal, this);
 
-        if (!key) {
-            return false;
-        }
+    return reval;
+  }
 
-        // 无proxy自身
-        const _this = this[XDATASELF];
+  // Proactively trigger update events
+  // Convenient get type data trigger watch
+  update(opts = {}) {
+    emitUpdate(
+      this,
+      Object.assign({}, opts, {
+        xid: this.xid,
+        isCustom: true,
+      })
+    );
+  }
 
-        let val = _this[key];
-        // 清除owner上的父层
-        // val.owner.delete(_this);
-        clearXDataOwner(val, _this);
-
-        let reval = Reflect.deleteProperty(_this, key);
-
-        // 改动冒泡
-        emitUpdate(this, {
-            xid: this.xid,
-            name: "delete",
-            args: [key],
-        });
-
-        return reval;
+  delete(key) {
+    // The _ prefix or symbol can be deleted directly
+    if (/^_/.test(key) || typeof key === "symbol") {
+      return Reflect.deleteProperty(this, key);
     }
+
+    if (!key) {
+      return false;
+    }
+
+    // Adjustment of internal data, not using proxy objects
+    const _this = this[XDATASELF];
+
+    let val = _this[key];
+    // Clear the parent on the owner
+    clearXDataOwner(val, _this);
+
+    let reval = Reflect.deleteProperty(_this, key);
+
+    // Bubbling behavior after data changes
+    emitUpdate(this, {
+      xid: this.xid,
+      name: "delete",
+      args: [key],
+    });
+
+    return reval;
+  }
 }
 
-// 中转XBody的请求
+// Proxy Handler for relaying XData
 const xdataHandler = {
-    set(target, key, value, receiver) {
-        if (typeof key === "symbol") {
-            return Reflect.set(target, key, value, receiver);
-        }
+  set(target, key, value, receiver) {
+    if (typeof key === "symbol") {
+      return Reflect.set(target, key, value, receiver);
+    }
 
-        // 确认key是隐藏属性
-        if (/^_/.test(key)) {
-            if (!target.hasOwnProperty(key)) {
-                defineProperties(target, {
-                    [key]: {
-                        writable: true,
-                        configurable: true,
-                        value,
-                    },
-                });
-            } else {
-                Reflect.set(target, key, value, receiver);
-            }
-            return true;
-        }
+    // Set properties with _ prefix directly
+    if (/^_/.test(key)) {
+      if (!target.hasOwnProperty(key)) {
+        defineProperties(target, {
+          [key]: {
+            writable: true,
+            configurable: true,
+            value,
+          },
+        });
+      } else {
+        Reflect.set(target, key, value, receiver);
+      }
+      return true;
+    }
 
-        try {
-            return target.setData(key, value);
-        } catch (e) {
-            throw {
-                desc: `failed to set ${key}`,
-                key,
-                value,
-                target: receiver,
-            };
-        }
-    },
-    deleteProperty: function (target, key) {
-        return target.delete(key);
-    },
+    try {
+      return target.setData(key, value);
+    } catch (e) {
+      throw {
+        desc: `failed to set ${key}`,
+        key,
+        value,
+        target: receiver,
+      };
+    }
+  },
+  deleteProperty: function (target, key) {
+    return target.delete(key);
+  },
 };
 
-// 清除xdata的owner数据
+// Clear xdata's owner data
 const clearXDataOwner = (xdata, parent) => {
-    if (!isxdata(xdata)) {
-        return;
-    }
+  if (!isxdata(xdata)) {
+    return;
+  }
 
-    const { owner } = xdata;
-    owner.delete(parent);
+  const { owner } = xdata;
+  owner.delete(parent);
 
-    if (!owner.size) {
-        xdata._xtatus = "revoke";
-        Object.values(xdata).forEach((child) => {
-            clearXDataOwner(child, xdata[XDATASELF]);
-        });
-    }
+  if (!owner.size) {
+    xdata._xtatus = "revoke";
+    Object.values(xdata).forEach((child) => {
+      clearXDataOwner(child, xdata[XDATASELF]);
+    });
+  }
 };
 
-// 修正xdata的owner数据
+// Fix xdata's owner data
 const fixXDataOwner = (xdata) => {
-    if (xdata._xtatus === "revoke") {
-        // 重新修复状态
-        Object.values(xdata).forEach((e) => {
-            if (isxdata(e)) {
-                fixXDataOwner(e);
-                e.owner.add(xdata);
-                e._xtatus = "sub";
-            }
-        });
-    }
+  if (xdata._xtatus === "revoke") {
+    // Restoration status
+    Object.values(xdata).forEach((e) => {
+      if (isxdata(e)) {
+        fixXDataOwner(e);
+        e.owner.add(xdata);
+        e._xtatus = "sub";
+      }
+    });
+  }
 };
 
 const createXData = (obj, status = "root") => {
-    if (isxdata(obj)) {
-        obj._xtatus = status;
-        return obj;
-    }
-    return new XData(obj, status);
+  if (isxdata(obj)) {
+    obj._xtatus = status;
+    return obj;
+  }
+  return new XData(obj, status);
 };

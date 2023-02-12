@@ -1,35 +1,34 @@
 ((root, factory) => {
-    "use strict";
-    if (typeof exports === "object") {
-        module.exports = factory();
-    } else if (typeof define === "function" && define.amd) {
-        define(factory);
-    } else {
-        root.stanz = factory();
-    }
+  "use strict";
+  if (typeof exports === "object") {
+    module.exports = factory();
+  } else if (typeof define === "function" && define.amd) {
+    define(factory);
+  } else {
+    root.stanz = factory();
+  }
 })(this, () => {
-    "use strict";
+  "use strict";
 
-    //<o:start--xdata.js-->
+  //<o:start--xdata.js-->
 
-    //<!--public-->
+  //<!--public-->
 
-    //<!--main-->
+  //<!--main-->
 
-    //<!--method-->
+  //<!--method-->
 
-    //<!--array-->
+  //<!--array-->
 
-    //<o:end--xdata.js-->
+  //<o:end--xdata.js-->
 
-    const stanz = (obj) => createXData(obj, "root");
+  const stanz = (obj) => createXData(obj, "root");
 
-    Object.assign(stanz, {
-        version: "{{version}}",
-        v: "{{versionCode}}",
-        isxdata,
-        // collect
-    });
+  Object.assign(stanz, {
+    version: "{{version}}",
+    v: "{{versionCode}}",
+    isxdata,
+  });
 
-    return stanz;
+  return stanz;
 });

@@ -5,10 +5,10 @@ const getRandomId = () => Math.random().toString(32).substr(2);
 // }
 var objectToString = Object.prototype.toString;
 var getType = (value) =>
-    objectToString
-        .call(value)
-        .toLowerCase()
-        .replace(/(\[object )|(])/g, "");
+  objectToString
+    .call(value)
+    .toLowerCase()
+    .replace(/(\[object )|(])/g, "");
 const isFunction = (d) => getType(d).search("function") > -1;
 var isEmptyObj = (obj) => !Object.keys(obj).length;
 const defineProperties = Object.defineProperties;
@@ -17,121 +17,112 @@ const isxdata = (obj) => obj instanceof XData;
 
 const isDebug = document.currentScript.getAttribute("debug") !== null;
 
-// 改良异步方法
 const nextTick = (() => {
-    if (isDebug) {
-        let nMap = new Map();
-        return (fun, key) => {
-            if (!key) {
-                key = getRandomId();
-            }
-
-            let timer = nMap.get(key);
-            clearTimeout(timer);
-            nMap.set(
-                key,
-                setTimeout(() => {
-                    fun();
-                    nMap.delete(key);
-                })
-            );
-        };
-    }
-
-    // 定位对象寄存器
-    let nextTickMap = new Map();
-
-    let pnext = (func) => Promise.resolve().then(() => func());
-
-    if (typeof process === "object" && process.nextTick) {
-        pnext = process.nextTick;
-    }
-
-    let inTick = false;
+  if (isDebug) {
+    let nMap = new Map();
     return (fun, key) => {
-        if (!key) {
-            key = getRandomId();
-        }
+      if (!key) {
+        key = getRandomId();
+      }
 
-        nextTickMap.set(key, {
-            key,
-            fun,
-        });
-
-        if (inTick) {
-            return;
-        }
-
-        inTick = true;
-
-        pnext(() => {
-            if (nextTickMap.size) {
-                nextTickMap.forEach(({ key, fun }) => {
-                    try {
-                        fun();
-                    } catch (e) {
-                        console.error(e);
-                    }
-                    nextTickMap.delete(key);
-                });
-            }
-
-            nextTickMap.clear();
-            inTick = false;
-        });
+      let timer = nMap.get(key);
+      clearTimeout(timer);
+      nMap.set(
+        key,
+        setTimeout(() => {
+          fun();
+          nMap.delete(key);
+        })
+      );
     };
+  }
+
+  let nextTickMap = new Map();
+
+  let pnext = (func) => Promise.resolve().then(() => func());
+
+  if (typeof process === "object" && process.nextTick) {
+    pnext = process.nextTick;
+  }
+
+  let inTick = false;
+  return (fun, key) => {
+    if (!key) {
+      key = getRandomId();
+    }
+
+    nextTickMap.set(key, {
+      key,
+      fun,
+    });
+
+    if (inTick) {
+      return;
+    }
+
+    inTick = true;
+
+    pnext(() => {
+      if (nextTickMap.size) {
+        nextTickMap.forEach(({ key, fun }) => {
+          try {
+            fun();
+          } catch (e) {
+            console.error(e);
+          }
+          nextTickMap.delete(key);
+        });
+      }
+
+      nextTickMap.clear();
+      inTick = false;
+    });
+  };
 })();
 
-// 在tick后运行收集的函数数据
+// Collects the data returned over a period of time and runs it once as a parameter after a period of time.
 const collect = (func, time) => {
-    let arr = [];
-    let timer;
-    const reFunc = (e) => {
-        arr.push(Object.assign({}, e));
-        if (time) {
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                func(arr);
-                arr.length = 0;
-            }, time);
-        } else {
-            nextTick(() => {
-                func(arr);
-                arr.length = 0;
-            }, reFunc);
-        }
-    };
+  let arr = [];
+  let timer;
+  const reFunc = (e) => {
+    arr.push({ ...e });
+    if (time) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        func(arr);
+        arr.length = 0;
+      }, time);
+    } else {
+      nextTick(() => {
+        func(arr);
+        arr.length = 0;
+      }, reFunc);
+    }
+  };
 
-    return reFunc;
+  return reFunc;
 };
 
-// 扩展对象
+// Enhanced methods for extending objects
 const extend = (_this, proto, descriptor = {}) => {
-    Object.keys(proto).forEach((k) => {
-        // 获取描述
-        let { get, set, value } = getOwnPropertyDescriptor(proto, k);
+  Object.keys(proto).forEach((k) => {
+    let { get, set, value } = getOwnPropertyDescriptor(proto, k);
 
-        if (value) {
-            if (_this.hasOwnProperty(k)) {
-                _this[k] = value;
-            } else {
-                Object.defineProperty(_this, k, {
-                    ...descriptor,
-                    value,
-                });
-            }
-        } else {
-            Object.defineProperty(_this, k, {
-                ...descriptor,
-                get,
-                set,
-            });
-        }
-    });
+    if (value) {
+      if (_this.hasOwnProperty(k)) {
+        _this[k] = value;
+      } else {
+        Object.defineProperty(_this, k, {
+          ...descriptor,
+          value,
+        });
+      }
+    } else {
+      Object.defineProperty(_this, k, {
+        ...descriptor,
+        get,
+        set,
+      });
+    }
+  });
 };
-
-const startTime = Date.now();
-// 获取高精度的当前时间
-// const getTimeId = () => startTime + performance.now();
-// const getTimeId = () => Date.now().toString(32);
-// const getTimeId = () => performance.now().toString(32);

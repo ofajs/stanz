@@ -3,5 +3,5 @@ parcelRequire=function(e,r,t,n){var i,o="function"==typeof parcelRequire&&parcel
 },{}],"PnwU":[function(require,module,exports) {
 "use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=void 0;var e=require("./public.mjs");const{defineProperties:t}=Object;class s extends Array{constructor(s){super(),Object.assign(this,s),t(this,{xid:{value:(0,e.getRandomId)()}})}toJSON(){let s={},r=!0,i=0;Object.keys(this).forEach(t=>{let o=this[t];/\D/.test(t)?r=!1:(t=parseInt(t))>i&&(i=t),(0,e.isXdata)(o)&&(o=o.toJSON()),s[t]=o}),r&&(s.length=i+1,s=Array.from(s));const o=this.xid;return t(s,{xid:{get:()=>o}}),s}}exports.default=s;
 },{"./public.mjs":"jcrR"}],"SZYs":[function(require,module,exports) {
-"use strict";var e=t(require("./main.mjs"));function t(e){return e&&e.__esModule?e:{default:e}}globalThis.stanz=(t=>new e.default(t));
+"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=void 0;var e=t(require("./main.mjs"));function t(e){return e&&e.__esModule?e:{default:e}}const o=t=>new e.default(t);var r=o;exports.default=r,"object"==typeof window&&(window.stanz=o);
 },{"./main.mjs":"PnwU"}]},{},["SZYs"], null)

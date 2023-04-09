@@ -6,4 +6,6 @@ const stanz = (data) => {
 
 export default stanz;
 
-globalThis.stanz = stanz;
+if (typeof window === "object") {
+  window.stanz = stanz;
+}

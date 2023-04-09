@@ -1,15 +1,47 @@
 import { getRandomId, isXdata } from "./public.mjs";
-const { defineProperties } = Object;
+import { handler } from "./accessor.mjs";
+import reBuildProto from "./array.mjs";
+const { defineProperties, getOwnPropertyDescriptor } = Object;
+
+export const SELF = Symbol("self");
+export const PROXY = Symbol("proxy");
 
 export default class Stanz extends Array {
   constructor(data) {
     super();
 
-    Object.assign(this, data);
+    const proxySelf = new Proxy(this, handler);
 
     defineProperties(this, {
       xid: { value: getRandomId() },
+      // Save all parent objects
+      owner: {
+        configurable: true,
+        writable: true,
+        value: new Set(),
+      },
+      [SELF]: { get: () => this },
+      [PROXY]: { get: () => proxySelf },
     });
+
+    Object.keys(data).forEach((key) => {
+      const descObj = getOwnPropertyDescriptor(data, key);
+      let { value, get, set } = descObj;
+
+      if (key === "get") {
+        return;
+      }
+      if (get || set) {
+        defineProperties(this, {
+          [key]: descObj,
+        });
+      } else {
+        // Set the function directly
+        proxySelf[key] = value;
+      }
+    });
+
+    return proxySelf;
   }
 
   toJSON() {
@@ -52,3 +84,5 @@ export default class Stanz extends Array {
     return obj;
   }
 }
+
+reBuildProto(Stanz);

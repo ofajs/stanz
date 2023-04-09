@@ -20,7 +20,7 @@
     "dev": "parcel src/base.mjs --public-url /dist --out-file stanz-dev.js",
     "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps",
     "static-server": "node scripts/static-server.js",
-    "test": "jest"
+    "test": "npm run build && jest"
   },
   "repository": {
     "type": "git",

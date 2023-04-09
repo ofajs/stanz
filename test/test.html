@@ -5,19 +5,35 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>stanz test</title>
-    <script src="../dist/stanz-dev.js"></script>
+    <!-- <script src="../dist/stanz-dev.js"></script> -->
     <!-- <script src="../dist/stanz.js"></script> -->
+    <script type="module">
+      import stanz from "../src/base.mjs";
+
+      const o = {
+        val: "I am val",
+        obj: {
+          val: "I am obj",
+        },
+        _b: 999,
+        get a() {
+          return (this._a || 0) + 1;
+        },
+        set a(val) {
+          this._a = val;
+        },
+      };
+
+      const d = stanz(o);
+
+      d.push(200);
+      d.push(300);
+      d.push(100);
+
+      console.log(d);
+
+      window.d = d;
+    </script>
   </head>
   <body></body>
-  <script>
-    const d = stanz({
-      val: "asdasd",
-      obj: {
-        val: "obj",
-      },
-    });
-    d.push(100);
-
-    console.log(d);
-  </script>
 </html>

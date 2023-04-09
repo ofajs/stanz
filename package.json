@@ -3,7 +3,6 @@
   "version": "7.1.0",
   "description": "sync data lib",
   "main": "dist/stanz.js",
-  "type": "module",
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "directories": {
     "doc": "doc",
@@ -11,9 +10,10 @@
   },
   "devDependencies": {
     "jest": "^29.5.0",
-    "parcel-bundler": "^1.12.5",
     "koa": "^2.14.1",
     "koa-static": "^5.0.0",
+    "parcel-bundler": "^1.12.5",
+    "parcel-plugin-wrapper": "^0.2.3",
     "shelljs": "^0.8.5"
   },
   "scripts": {
@@ -36,7 +36,5 @@
     "url": "https://github.com/kirakiray/stanz/issues"
   },
   "homepage": "https://github.com/kirakiray/stanz",
-  "watchjs": {
-    "startyear": "2018"
-  }
+  "startyear": "2018"
 }

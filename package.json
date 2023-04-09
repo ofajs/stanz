@@ -3,17 +3,22 @@
   "version": "7.1.0",
   "description": "sync data lib",
   "main": "dist/stanz.js",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "directories": {
     "doc": "doc",
     "test": "test"
   },
   "devDependencies": {
     "jest": "^29.5.0",
-    "parcel-bundler": "^1.12.5"
+    "parcel-bundler": "^1.12.5",
+    "koa": "^2.14.1",
+    "koa-static": "^5.0.0",
+    "shelljs": "^0.8.5"
   },
   "scripts": {
     "dev": "parcel src/base.mjs --public-url /dist --out-file stanz-dev.js",
     "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps",
+    "static-server": "node scripts/static-server.js",
     "test": "jest"
   },
   "repository": {

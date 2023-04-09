@@ -5,6 +5,58 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>stanz test</title>
+    <script src="../dist/stanz-dev.js"></script>
+    <!-- <script src="../dist/stanz.js"></script> -->
+    <style>
+      .target {
+        width: 100px;
+        height: 100px;
+        margin: 10px;
+        background-color: red;
+
+        animation: aa ease 2s;
+      }
+
+      @keyframes aa {
+        0% {
+          width: 50px;
+        }
+        100% {
+          width: 100px;
+        }
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <div class="target">1</div>
+    <div class="target">2</div>
+    <div class="target">3</div>
+    <div class="target">4</div>
+    <div class="target">5</div>
+  </body>
+  <script>
+    function test1() {
+      const arr = Array.from(document.body.children);
+
+      const fragele = document.createDocumentFragment();
+
+      arr.reverse();
+      arr.forEach((el) => fragele.appendChild(el));
+
+      document.body.appendChild(fragele);
+    }
+
+    function test2() {
+      document.body.insertBefore(
+        document.body.children[0],
+        document.body.children[4]
+      );
+    }
+
+    const d = stanz({
+      val: "asdasd",
+    });
+
+    console.log(d);
+  </script>
 </html>

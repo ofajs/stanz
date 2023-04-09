@@ -7,55 +7,16 @@
     <title>stanz test</title>
     <script src="../dist/stanz-dev.js"></script>
     <!-- <script src="../dist/stanz.js"></script> -->
-    <style>
-      .target {
-        width: 100px;
-        height: 100px;
-        margin: 10px;
-        background-color: red;
-
-        animation: aa ease 2s;
-      }
-
-      @keyframes aa {
-        0% {
-          width: 50px;
-        }
-        100% {
-          width: 100px;
-        }
-      }
-    </style>
   </head>
-  <body>
-    <div class="target">1</div>
-    <div class="target">2</div>
-    <div class="target">3</div>
-    <div class="target">4</div>
-    <div class="target">5</div>
-  </body>
+  <body></body>
   <script>
-    function test1() {
-      const arr = Array.from(document.body.children);
-
-      const fragele = document.createDocumentFragment();
-
-      arr.reverse();
-      arr.forEach((el) => fragele.appendChild(el));
-
-      document.body.appendChild(fragele);
-    }
-
-    function test2() {
-      document.body.insertBefore(
-        document.body.children[0],
-        document.body.children[4]
-      );
-    }
-
     const d = stanz({
       val: "asdasd",
+      obj: {
+        val: "obj",
+      },
     });
+    d.push(100);
 
     console.log(d);
   </script>

@@ -1,4 +1,7 @@
-import stanz from "../src/base.mjs";
+const { default: stanz } = require("../dist/stanz");
+// const stanz = require("../src/base.cjs");
+
+console.log("stanz => ", stanz);
 
 test("to json test object", () => {
   const d = stanz({

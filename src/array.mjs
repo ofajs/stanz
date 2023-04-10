@@ -1,6 +1,6 @@
 import { clearData } from "./accessor.mjs";
 import { SELF, PROXY } from "./main.mjs";
-import { getType } from "./public.mjs";
+import { isObject, isxdata } from "./public.mjs";
 
 const mutatingMethods = [
   "push",
@@ -63,8 +63,9 @@ export default (Stanz) => {
 
           // Refactoring objects as proxy instances
           for (let [key, value] of addedItems) {
-            const type = getType(value);
-            if (type === "object" || type === "array") {
+            if (isxdata(value)) {
+              value._owner.push(this);
+            } else if (isObject(value)) {
               this[key] = value;
             }
           }

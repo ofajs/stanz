@@ -1,19 +1,24 @@
-import { getType, isxdata } from "./public.mjs";
+import { isxdata, isObject } from "./public.mjs";
 import Stanz, { PROXY } from "./main.mjs";
 
 const { defineProperties } = Object;
 
-export const bindData = (value, receiver) => {
+export const setData = (target, key, value, receiver) => {
   let data = value;
-  const valType = getType(value);
   if (isxdata(data)) {
     data._owner.push(receiver);
-  } else if (valType === "object" || valType === "array") {
+  } else if (isObject(value)) {
     data = new Stanz(value);
     data._owner.push(receiver);
   }
 
-  return data;
+  const oldData = receiver[key];
+
+  if (isxdata(oldData)) {
+    clearData(oldData, target);
+  }
+
+  return Reflect.set(target, key, data, receiver);
 };
 
 export const clearData = (val, target) => {
@@ -54,8 +59,7 @@ export const handler = {
     }
 
     try {
-      const data = bindData(value, receiver, key);
-      return Reflect.set(target, key, data, receiver);
+      return setData(target, key, value, receiver);
     } catch (error) {
       throw {
         desc: `failed to set ${key}`,

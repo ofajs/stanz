@@ -112,7 +112,7 @@ test("accessor test: array", () => {
   expect(o2.owner.has(d)).toBe(true);
 });
 
-test("access repeat test", () => {
+test("accessor repeat test", () => {
   const d = stanz([{ val: "V1" }, { val: "V2" }, { val: "V3" }, { val: "V4" }]);
 
   const v2 = d[0];
@@ -139,4 +139,20 @@ test("access repeat test", () => {
   d.shift();
   expect(v2.owner.has(d)).toBe(false);
   expect(v2._owner.length).toBe(0);
+});
+
+test("accessor coverage value test", () => {
+  const d = stanz({
+    a1: {
+      val: "I am a1",
+    },
+  });
+
+  const { a1 } = d;
+
+  expect(a1.owner.has(d)).toBe(true);
+
+  d.a1 = "cover it";
+
+  expect(a1.owner.has(d)).toBe(false);
 });

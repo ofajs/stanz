@@ -9,3 +9,8 @@ export const getType = (value) =>
     .call(value)
     .toLowerCase()
     .replace(/(\[object )|(])/g, "");
+
+export const isObject = (obj) => {
+  const type = getType(obj);
+  return type === "array" || type === "object";
+};

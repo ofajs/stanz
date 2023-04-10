@@ -111,3 +111,32 @@ test("accessor test: array", () => {
   expect(o1.owner.has(d)).toBe(false);
   expect(o2.owner.has(d)).toBe(true);
 });
+
+test("access repeat test", () => {
+  const d = stanz([{ val: "V1" }, { val: "V2" }, { val: "V3" }, { val: "V4" }]);
+
+  const v2 = d[0];
+
+  expect(v2.owner.has(d)).toBe(true);
+  expect(v2._owner.length).toBe(1);
+
+  d.push(v2);
+  expect(v2.owner.has(d)).toBe(true);
+  expect(v2._owner.length).toBe(2);
+
+  d.h = v2;
+  expect(v2.owner.has(d)).toBe(true);
+  expect(v2._owner.length).toBe(3);
+
+  delete d.h;
+  expect(v2.owner.has(d)).toBe(true);
+  expect(v2._owner.length).toBe(2);
+
+  d.pop();
+  expect(v2.owner.has(d)).toBe(true);
+  expect(v2._owner.length).toBe(1);
+
+  d.shift();
+  expect(v2.owner.has(d)).toBe(false);
+  expect(v2._owner.length).toBe(0);
+});

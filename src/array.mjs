@@ -14,19 +14,32 @@ const mutatingMethods = [
   "copyWithin",
 ];
 
+const holder = Symbol("placeholder");
+
 function compareArrays(oldArray, newArray) {
+  const backupNewArray = Array.from(newArray);
+  const backupOldArray = Array.from(oldArray);
   const deletedItems = [];
   const addedItems = new Map();
 
-  for (let i = 0; i < oldArray.length || i < newArray.length; i++) {
+  const oldLen = oldArray.length;
+  for (let i = 0; i < oldLen; i++) {
     const oldItem = oldArray[i];
-    const newItem = newArray[i];
-
-    if (oldItem !== undefined && !newArray.includes(oldItem)) {
+    const newIndex = backupNewArray.indexOf(oldItem);
+    if (newIndex > -1) {
+      backupNewArray[newIndex] = holder;
+    } else {
       deletedItems.push(oldItem);
     }
+  }
 
-    if (newItem !== undefined && !oldArray.includes(newItem)) {
+  const newLen = newArray.length;
+  for (let i = 0; i < newLen; i++) {
+    const newItem = newArray[i];
+    const oldIndex = backupOldArray.indexOf(newItem);
+    if (oldIndex > -1) {
+      backupOldArray[oldIndex] = holder;
+    } else {
       addedItems.set(i, newItem);
     }
   }

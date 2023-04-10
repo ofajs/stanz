@@ -10,29 +10,18 @@
     <script type="module">
       import stanz from "../src/base.mjs";
 
-      const d = stanz({
-        0: {
-          val: "I am 0",
-        },
-      });
+      const d = stanz([
+        { val: "V1" },
+        { val: "V2" },
+        { val: "V3" },
+        { val: "V4" },
+      ]);
 
-      d.push({
-        val: "I am 1",
-      });
+      const v2 = d[1];
 
-      const o0 = d[0];
+      d.push(v2);
 
-      d.shift();
-
-      const o2 = stanz({
-        val: "I am 3",
-      });
-      
-      const o1 = d[0];
-
-      d.splice(0, 1, o2);
-
-      debugger;
+      d.h = v2;
 
       window.d = d;
     </script>

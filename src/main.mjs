@@ -1,33 +1,55 @@
 import { getRandomId, isxdata } from "./public.mjs";
-import { handler } from "./accessor.mjs";
-import reBuildProto from "./array.mjs";
-const { defineProperties, getOwnPropertyDescriptor } = Object;
+import { handler, clearData } from "./accessor.mjs";
+import fnInstallArray from "./array.mjs";
+import fnInstallWatch from "./watch.mjs";
+const { defineProperties, getOwnPropertyDescriptor, entries } = Object;
 
 export const SELF = Symbol("self");
 export const PROXY = Symbol("proxy");
+export const WATCHS = Symbol("watchs");
 
 export default class Stanz extends Array {
   constructor(data) {
     super();
 
-    const proxySelf = new Proxy(this, handler);
+    // const proxySelf = new Proxy(this, handler);
+    let { proxy: proxySelf, revoke } = Proxy.revocable(this, handler);
+
+    // Determines the properties of the listener bubble
+    proxySelf._update = 1;
+
+    let watchs;
 
     defineProperties(this, {
       xid: { value: data.xid || getRandomId() },
       // Save all parent objects
       _owner: {
-        configurable: true,
-        writable: true,
         value: [],
-        // value: new Set(),
       },
       owner: {
+        configurable: true,
         get() {
           return new Set(this._owner);
         },
       },
-      [SELF]: { get: () => this },
-      [PROXY]: { get: () => proxySelf },
+      [SELF]: {
+        configurable: true,
+        get: () => this,
+      },
+      [PROXY]: {
+        configurable: true,
+        get: () => proxySelf,
+      },
+      // Save the object of the listener function
+      [WATCHS]: {
+        get: () => watchs || (watchs = new Map()),
+      },
+      _hasWatchs: {
+        get: () => !!watchs,
+      },
+      _revoke: {
+        value: revoke,
+      },
     });
 
     Object.keys(data).forEach((key) => {
@@ -45,6 +67,26 @@ export default class Stanz extends Array {
     });
 
     return proxySelf;
+  }
+
+  // This method is still in the experimental period
+  revoke() {
+    const self = this[SELF];
+    entries(this).forEach(([name, value]) => {
+      if (isxdata(value)) {
+        clearData(value, self);
+      }
+    });
+    self._owner.forEach((parent) => {
+      entries(parent).forEach(([name, value]) => {
+        if (value === this) {
+          parent[name] = null;
+        }
+      });
+    });
+    delete self[SELF];
+    delete self[PROXY];
+    self._revoke();
   }
 
   toJSON() {
@@ -88,4 +130,5 @@ export default class Stanz extends Array {
   }
 }
 
-reBuildProto(Stanz);
+fnInstallArray(Stanz);
+fnInstallWatch(Stanz);

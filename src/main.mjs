@@ -1,5 +1,5 @@
 import { getRandomId, isxdata } from "./public.mjs";
-import { handler, clearData } from "./accessor.mjs";
+import { handler } from "./accessor.mjs";
 import fnInstallArray from "./array.mjs";
 import fnInstallWatch from "./watch.mjs";
 const { defineProperties, getOwnPropertyDescriptor, entries } = Object;
@@ -74,7 +74,7 @@ export default class Stanz extends Array {
     const self = this[SELF];
     entries(this).forEach(([name, value]) => {
       if (isxdata(value)) {
-        clearData(value, self);
+        this[name] = null;
       }
     });
     self._owner.forEach((parent) => {

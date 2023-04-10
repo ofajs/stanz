@@ -1,5 +1,6 @@
 import { isxdata, isObject } from "./public.mjs";
 import Stanz, { PROXY } from "./main.mjs";
+import { emitUpdate } from "./watch.mjs";
 
 const { defineProperties } = Object;
 
@@ -12,11 +13,19 @@ export const setData = (target, key, value, receiver) => {
     data._owner.push(receiver);
   }
 
-  const oldData = receiver[key];
+  const oldValue = receiver[key];
 
-  if (isxdata(oldData)) {
-    clearData(oldData, target);
+  if (isxdata(oldValue)) {
+    clearData(oldValue, target);
   }
+
+  emitUpdate({
+    target: receiver,
+    currentTarget: receiver,
+    name: key,
+    value,
+    oldValue,
+  });
 
   return Reflect.set(target, key, data, receiver);
 };

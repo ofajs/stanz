@@ -1,8 +1,43 @@
 import { getRandomId } from "./public.mjs";
 import { WATCHS } from "./main.mjs";
 
-const emitUpdate = () => {
-    
+export const emitUpdate = ({
+  currentTarget,
+  target,
+  name,
+  value,
+  oldValue,
+  path = [],
+}) => {
+  if (path && path.includes(currentTarget)) {
+    console.warn("Circular references appear");
+    return;
+  }
+
+  const options = {
+    target,
+    name,
+    value,
+    oldValue,
+  };
+
+  if (currentTarget._hasWatchs) {
+    currentTarget[WATCHS].forEach((func) => {
+      func({
+        currentTarget,
+        ...options,
+        path: [...path],
+      });
+    });
+  }
+
+  currentTarget.owner.forEach((parent) => {
+    emitUpdate({
+      currentTarget: parent,
+      ...options,
+      path: [currentTarget, ...path],
+    });
+  });
 };
 
 export default (Stanz) => {

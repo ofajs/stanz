@@ -1,6 +1,6 @@
 const { default: stanz } = require("../dist/stanz");
 
-test("accessor test set and get", () => {
+test("accessor test: set and get", () => {
   const d = stanz({
     get a() {
       return (this._a || 0) + 1;
@@ -17,7 +17,7 @@ test("accessor test set and get", () => {
   expect(d.a).toEqual(101);
 });
 
-test("accessor test _", () => {
+test("accessor test: _", () => {
   const d = stanz({
     a: 222,
     _b: 111,
@@ -33,7 +33,7 @@ test("accessor test _", () => {
   expect(keys).not.toContain("_b");
 });
 
-test("accessor test set object", () => {
+test("accessor test set: object", () => {
   const d = stanz({
     o1: {
       val: "I am o1",
@@ -74,4 +74,40 @@ test("accessor test set object", () => {
   expect(o1.owner.size === 0).toBe(true);
   expect(o2.owner.size === 0).toBe(true);
   expect(o3.owner.size === 0).toBe(true);
+});
+
+test("accessor test: array", () => {
+  const d = stanz({
+    0: {
+      val: "I am 0",
+    },
+    o1: {
+      val: "I am o1",
+    },
+  });
+
+  d.push({
+    val: "I am 1",
+  });
+
+  expect(d[0].owner.has(d)).toBe(true);
+  expect(d[1].owner.has(d)).toBe(true);
+
+  const o0 = d[0];
+  const o0_b = d.shift();
+
+  expect(o0).toBe(o0_b);
+  expect(o0.owner.size).toBe(0);
+
+  const o1 = d[0];
+  const o2 = stanz({
+    val: "I am 3",
+  });
+
+  expect(o1.owner.has(d)).toBe(true);
+
+  d.splice(0, 1, o2);
+
+  expect(o1.owner.has(d)).toBe(false);
+  expect(o2.owner.has(d)).toBe(true);
 });

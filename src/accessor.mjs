@@ -3,7 +3,7 @@ import Stanz, { PROXY } from "./main.mjs";
 
 const { defineProperties } = Object;
 
-const setData = (target, key, value, receiver) => {
+export const bindData = (value, receiver) => {
   let data = value;
   const valType = getType(value);
   if (isxdata(data)) {
@@ -16,9 +16,7 @@ const setData = (target, key, value, receiver) => {
   return data;
 };
 
-const clearData = (target, key) => {
-  const val = target[key];
-
+export const clearData = (val, target) => {
   if (isxdata(val)) {
     const index = val._owner.indexOf(target[PROXY]);
     if (index > -1) {
@@ -56,7 +54,7 @@ export const handler = {
     }
 
     try {
-      const data = setData(target, key, value, receiver);
+      const data = bindData(value, receiver, key);
       return Reflect.set(target, key, data, receiver);
     } catch (error) {
       throw {
@@ -69,7 +67,7 @@ export const handler = {
     }
   },
   deleteProperty(target, key) {
-    clearData(target, key);
+    clearData(target[key], target);
     return Reflect.deleteProperty(target, key);
   },
 };

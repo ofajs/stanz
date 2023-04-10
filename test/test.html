@@ -14,14 +14,25 @@
         0: {
           val: "I am 0",
         },
-        o1: {
-          val: "I am o1",
-        },
       });
 
       d.push({
         val: "I am 1",
       });
+
+      const o0 = d[0];
+
+      d.shift();
+
+      const o2 = stanz({
+        val: "I am 3",
+      });
+      
+      const o1 = d[0];
+
+      d.splice(0, 1, o2);
+
+      debugger;
 
       window.d = d;
     </script>

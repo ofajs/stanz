@@ -2,12 +2,12 @@ import { getRandomId } from "./public.mjs";
 import { WATCHS } from "./main.mjs";
 
 export const emitUpdate = ({
+  type,
   currentTarget,
   target,
   name,
   value,
   oldValue,
-  array,
   args,
   path = [],
 }) => {
@@ -17,17 +17,18 @@ export const emitUpdate = ({
   }
 
   let options = {
+    type,
     target,
     name,
     value,
     oldValue,
   };
 
-  if (array) {
+  if (type === "array") {
     options = {
+      type,
       target,
       name,
-      array,
       args,
     };
   }
@@ -42,13 +43,14 @@ export const emitUpdate = ({
     });
   }
 
-  currentTarget.owner.forEach((parent) => {
-    emitUpdate({
-      currentTarget: parent,
-      ...options,
-      path: [currentTarget, ...path],
+  currentTarget._update &&
+    currentTarget.owner.forEach((parent) => {
+      emitUpdate({
+        currentTarget: parent,
+        ...options,
+        path: [currentTarget, ...path],
+      });
     });
-  });
 };
 
 export default (Stanz) => {

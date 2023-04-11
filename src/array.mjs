@@ -67,10 +67,9 @@ export default (Stanz) => {
             if (isxdata(value)) {
               value._owner.push(this);
             } else if (isObject(value)) {
-              const oldUpdate = this._update;
-              this._update = 0;
+              this.__unupdate = 1;
               this[key] = value;
-              this._update = oldUpdate;
+              delete this.__unupdate;
             }
           }
 
@@ -79,9 +78,9 @@ export default (Stanz) => {
           }
 
           emitUpdate({
+            type: "array",
             currentTarget: this,
             target: this,
-            array: true,
             args,
             name: methodName,
           });

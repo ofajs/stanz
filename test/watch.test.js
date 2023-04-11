@@ -28,6 +28,7 @@ test("watch modified values", () => {
   let i = 0;
 
   d.watch((e) => {
+    expect(e.type).toBe("set");
     i++;
     if (i === 1) {
       expect(e.target).toBe(d);
@@ -69,6 +70,7 @@ test("watch array change", () => {
 
   let i = 0;
   d.watch((e) => {
+    expect(e.type).toBe("array");
     i++;
     if (i === 1) {
       expect(e.args).toEqual([{ val: "v3 after push" }]);
@@ -95,4 +97,81 @@ test("watch array change", () => {
   });
 
   expect(i).toBe(3);
+});
+
+test("watch delete", () => {
+  const d = stanz({
+    val: "I am d",
+    test: "test delete this",
+    obj: {
+      val: "I am obj",
+      test2: "test delete this 2",
+    },
+  });
+
+  const d2 = stanz({
+    obj2: {
+      sub: d.obj,
+    },
+  });
+
+  let i = 0;
+  d.watch((e) => {
+    expect(e.type).toBe("delete");
+    i++;
+    if (i == 1) {
+      expect(e.path.length).toBe(0);
+    } else if (i === 2) {
+      expect(e.path.length).toBe(1);
+    }
+  });
+
+  d2.watch((e) => {
+    expect(e.type).toBe("delete");
+    if (i === 2) {
+      expect(e.path.length).toBe(2);
+    }
+  });
+
+  delete d.test;
+  delete d.obj.test2;
+
+  expect(i).toBe(2);
+});
+
+test("test _update", () => {
+  const d = stanz({
+    obj: {
+      val: "I am obj",
+    },
+    val: "I am d",
+  });
+
+  d.watch(() => {
+    throw "update in";
+  });
+
+  d.obj._update = false;
+  d.obj.val = "change obj val";
+});
+
+test("test unwatch", () => {
+  const d = stanz({
+    obj: {
+      val: "I am obj",
+    },
+    val: "I am d",
+  });
+
+  let i = 0;
+  const wid = d.watch(() => {
+    if (i) {
+      throw "update in";
+    }
+    i++;
+  });
+
+  d.obj.val = "change obj val";
+  d.unwatch(wid);
+  d.obj.val = "change obj val2";
 });

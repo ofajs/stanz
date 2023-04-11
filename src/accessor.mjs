@@ -4,7 +4,7 @@ import { emitUpdate } from "./watch.mjs";
 
 const { defineProperties } = Object;
 
-export const setData = (target, key, value, receiver) => {
+export const setData = ({ target, key, value, receiver, type }) => {
   let data = value;
   if (isxdata(data)) {
     data._owner.push(receiver);
@@ -19,8 +19,9 @@ export const setData = (target, key, value, receiver) => {
     clearData(oldValue, receiver);
   }
 
-  target._update &&
+  !target.__unupdate &&
     emitUpdate({
+      type: type || "set",
       target: receiver,
       currentTarget: receiver,
       name: key,
@@ -28,7 +29,7 @@ export const setData = (target, key, value, receiver) => {
       oldValue,
     });
 
-  return Reflect.set(target, key, data, receiver);
+  return data;
 };
 
 export const clearData = (val, target) => {
@@ -69,7 +70,8 @@ export const handler = {
     }
 
     try {
-      return setData(target, key, value, receiver);
+      const data = setData({ target, key, value, receiver });
+      return Reflect.set(target, key, data, receiver);
     } catch (error) {
       throw {
         desc: `failed to set ${key}`,
@@ -81,7 +83,14 @@ export const handler = {
     }
   },
   deleteProperty(target, key) {
-    clearData(target[key], target[PROXY]);
+    setData({
+      target,
+      key,
+      value: undefined,
+      receiver: target[PROXY],
+      type: "delete",
+    });
+    
     return Reflect.deleteProperty(target, key);
   },
 };

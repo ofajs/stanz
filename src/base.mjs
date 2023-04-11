@@ -9,6 +9,6 @@ Object.assign(stanz, { is: isxdata });
 
 export default stanz;
 
-if (typeof window === "object") {
-  window.stanz = stanz;
+if (typeof global !== "undefined") {
+  global.stanz = stanz;
 }

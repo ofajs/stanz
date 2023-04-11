@@ -18,7 +18,7 @@
   },
   "scripts": {
     "dev": "parcel src/base.mjs --public-url /dist --out-file stanz-dev.js",
-    "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps",
+    "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps --global global",
     "static-server": "node scripts/static-server.js",
     "test": "npm run build && jest"
   },

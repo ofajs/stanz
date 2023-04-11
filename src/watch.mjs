@@ -1,4 +1,4 @@
-import { getRandomId } from "./public.mjs";
+import { getRandomId, debounce } from "./public.mjs";
 import { WATCHS } from "./main.mjs";
 
 export const emitUpdate = ({
@@ -65,6 +65,10 @@ export default (Stanz) => {
 
     unwatch(wid) {
       return this[WATCHS].delete(wid);
+    },
+
+    watchTick(callback) {
+      return this.watch(debounce(callback));
     },
   });
 };

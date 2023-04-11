@@ -175,3 +175,28 @@ test("test unwatch", () => {
   d.unwatch(wid);
   d.obj.val = "change obj val2";
 });
+
+test("test watchTick", () => {
+  const d = stanz({
+    val: "I am d",
+    test: "test delete this",
+    obj: {
+      val: "I am obj",
+      test2: "test delete this 2",
+    },
+  });
+
+  let i = 0;
+  d.watchTick((e) => {
+    i++;
+
+    expect(e.length).toBe(2);
+
+    if (i > 1) {
+      throw "watch error";
+    }
+  });
+
+  delete d.test;
+  delete d.obj.test2;
+});

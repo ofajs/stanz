@@ -1,2 +1,5 @@
 **/node_modules/
 **/.DS_Store
+dist/stanz-dev.js
+dist/stanz-dev.js.map
+.cache

@@ -1,48 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>stanz test</title>
-    <script src="Nexter.js"></script>
-    <script src="ok.js"></script>
-    <script src="../dist/stanz.js"></script>
-</head>
+    <!-- <script src="../dist/stanz-dev.js"></script> -->
+    <!-- <script src="../dist/stanz.js"></script> -->
+    <script type="module">
+      import stanz from "../src/base.mjs";
 
-<body>
-    <script src="test-owner.js"></script>
-    <script src="test-watch.js"></script>
-    <script src="test-delete-and-reuse.js"></script>
-    <script src="test-array.js"></script>
-    <script src="test-seek.js"></script>
-    <script src="test-method.js"></script>
-    <script src="test-other.js"></script>
-    <script>
-        // let arr = [];
-        // for (let i = 0; i < 100000; i++) {
-        //     arr.push(i * 2);
-        // }
+      const d = stanz([
+        { val: "V1" },
+        { val: "V2" },
+        { val: "V3" },
+        { val: "V4" },
+      ]);
 
-        // console.time("aa");
-        // for (let i = 0; i < 30000; i++) {
-        //     arr.indexOf(100);
-        // }
-        // console.timeEnd("aa");
+      const v2 = d[0];
 
-        // console.time("bb");
-        // for (let i = 0; i < 30000; i++) {
-        //     arr.findIndex(e => e === i);
-        // }
-        // console.timeEnd("bb");
-
-        // aaa = stanz({
-        //     pms: new Promise(res => setTimeout(() => res(1111), 10000)),
-        //     ele: document.querySelector("head"),
-        //     val: "aaaaaaa"
-        // });
+      d.push(v2);
     </script>
-</body>
-
+  </head>
+  <body></body>
 </html>

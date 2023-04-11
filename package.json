@@ -1,35 +1,40 @@
 {
-    "name": "stanz",
-    "version": "7.0.0",
-    "description": "sync data lib",
-    "main": "dist/stanz.js",
-    "directories": {
-        "doc": "doc",
-        "test": "test"
-    },
-    "dependencies": {},
-    "devDependencies": {
-        "js-beautify": "^1.10.0",
-        "uglify-es": "^3.3.9"
-    },
-    "scripts": {
-        "watch": "node scripts/watch.js"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/kirakiray/stanz.git"
-    },
-    "author": {
-        "name": "YAO",
-        "email": "kirayao@hotmail.com",
-        "url": "https://kirakiray.com/"
-    },
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/kirakiray/stanz/issues"
-    },
-    "homepage": "https://github.com/kirakiray/stanz",
-    "watchjs": {
-        "startyear": "2018"
-    }
+  "name": "stanz",
+  "version": "8.0.0",
+  "description": "sync data lib",
+  "main": "dist/stanz.js",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "koa": "^2.14.1",
+    "koa-static": "^5.0.0",
+    "parcel-bundler": "^1.12.5",
+    "parcel-plugin-wrapper": "^0.2.3",
+    "shelljs": "^0.8.5"
+  },
+  "scripts": {
+    "dev": "parcel src/base.mjs --public-url /dist --out-file stanz-dev.js",
+    "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps --global global",
+    "static-server": "node scripts/static-server.js",
+    "test": "npm run build && jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kirakiray/stanz.git"
+  },
+  "author": {
+    "name": "YAO",
+    "email": "kirayao@hotmail.com",
+    "url": "https://kirakiray.com/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kirakiray/stanz/issues"
+  },
+  "homepage": "https://github.com/kirakiray/stanz",
+  "startyear": "2018"
 }

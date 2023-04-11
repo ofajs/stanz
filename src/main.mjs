@@ -128,6 +128,10 @@ export default class Stanz extends Array {
 
     return obj;
   }
+
+  toString() {
+    return JSON.stringify(this.toJSON());
+  }
 }
 
 fnInstallArray(Stanz);

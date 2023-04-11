@@ -1,13 +1,5 @@
-# stanz 7
+# Stanz 8
 
-针对性能的优化；大幅度提升 get 和 set 的性能；
+A data synchronization library that listens for changes to child objects;
 
-化繁为简，抛弃部分浪费效率的特性；
-
-* 事件机；
-* parent机制，改为拥有者机制
-* Proxy get
-
-增加更多有用的特性
-
-* 对象映射（从此不需要镜像对象）
+More compact than stanz 7

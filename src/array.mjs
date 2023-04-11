@@ -1,6 +1,7 @@
 import { clearData } from "./accessor.mjs";
 import { SELF, PROXY } from "./main.mjs";
 import { isObject, isxdata } from "./public.mjs";
+import { emitUpdate } from "./watch.mjs";
 
 const mutatingMethods = [
   "push",
@@ -66,13 +67,24 @@ export default (Stanz) => {
             if (isxdata(value)) {
               value._owner.push(this);
             } else if (isObject(value)) {
+              const oldUpdate = this._update;
+              this._update = 0;
               this[key] = value;
+              this._update = oldUpdate;
             }
           }
 
           for (let item of deletedItems) {
             clearData(item, this);
           }
+
+          emitUpdate({
+            currentTarget: this,
+            target: this,
+            array: true,
+            args,
+            name: methodName,
+          });
 
           if (reval === this[SELF]) {
             return this[PROXY];

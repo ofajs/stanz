@@ -7,6 +7,8 @@ export const emitUpdate = ({
   name,
   value,
   oldValue,
+  array,
+  args,
   path = [],
 }) => {
   if (path && path.includes(currentTarget)) {
@@ -14,12 +16,21 @@ export const emitUpdate = ({
     return;
   }
 
-  const options = {
+  let options = {
     target,
     name,
     value,
     oldValue,
   };
+
+  if (array) {
+    options = {
+      target,
+      name,
+      array,
+      args,
+    };
+  }
 
   if (currentTarget._hasWatchs) {
     currentTarget[WATCHS].forEach((func) => {

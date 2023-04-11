@@ -16,23 +16,24 @@ export const setData = (target, key, value, receiver) => {
   const oldValue = receiver[key];
 
   if (isxdata(oldValue)) {
-    clearData(oldValue, target);
+    clearData(oldValue, receiver);
   }
 
-  emitUpdate({
-    target: receiver,
-    currentTarget: receiver,
-    name: key,
-    value,
-    oldValue,
-  });
+  target._update &&
+    emitUpdate({
+      target: receiver,
+      currentTarget: receiver,
+      name: key,
+      value,
+      oldValue,
+    });
 
   return Reflect.set(target, key, data, receiver);
 };
 
 export const clearData = (val, target) => {
   if (isxdata(val)) {
-    const index = val._owner.indexOf(target[PROXY]);
+    const index = val._owner.indexOf(target);
     if (index > -1) {
       val._owner.splice(index, 1);
     } else {
@@ -80,7 +81,7 @@ export const handler = {
     }
   },
   deleteProperty(target, key) {
-    clearData(target[key], target);
+    clearData(target[key], target[PROXY]);
     return Reflect.deleteProperty(target, key);
   },
 };

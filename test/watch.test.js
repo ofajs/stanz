@@ -1,6 +1,6 @@
 const { default: stanz } = require("../dist/stanz");
 
-test("watch base test", () => {
+test("watch modified values", () => {
   const d = stanz({
     val: "I am d",
     obj: {
@@ -54,4 +54,45 @@ test("watch base test", () => {
   d.val = "change d val";
   obj.val = "change obj val";
   sub.val = "change sub val";
+
+  expect(i).toBe(3);
+});
+
+test("watch array change", () => {
+  const d = stanz([
+    { val: "I am v0" },
+    { val: "I am v1" },
+    { val: "I am v2" },
+    { val: "I am v3", arr: [{ val: "v3 sub 0" }, { val: "v3 sub 1" }] },
+    [{ val: "I am v4 sub1" }, { val: "I am v4 sub2" }],
+  ]);
+
+  let i = 0;
+  d.watch((e) => {
+    i++;
+    if (i === 1) {
+      expect(e.args).toEqual([{ val: "v3 after push" }]);
+      expect(e.path.length).toBe(2);
+    } else if (i === 2) {
+      expect(e.args).toEqual([{ val: "v4 after push" }]);
+      expect(e.path.length).toBe(1);
+    } else if (i === 3) {
+      expect(e.args).toEqual([{ val: "I am v5" }]);
+      expect(e.path.length).toBe(0);
+    }
+  });
+
+  d[3].arr.push({
+    val: "v3 after push",
+  });
+
+  d[3].push({
+    val: "v4 after push",
+  });
+
+  d.push({
+    val: "I am v5",
+  });
+
+  expect(i).toBe(3);
 });

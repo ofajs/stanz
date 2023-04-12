@@ -26,3 +26,11 @@ test("revoke test", () => {
   expect(d.obj).toBe(null);
   expect(d[0]).toBe(null);
 });
+
+test("is test", () => {
+  const a = { val: "I am a" };
+  const b = stanz({ val: "I am b" });
+
+  expect(stanz.is(a)).toBe(false);
+  expect(stanz.is(b)).toBe(true);
+});

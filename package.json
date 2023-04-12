@@ -14,7 +14,7 @@
     "parcel-plugin-wrapper": "^0.2.3"
   },
   "scripts": {
-    "build": "parcel build src/base.mjs -d dist --out-file stanz.js --no-source-maps --global global",
+    "build": "parcel build src/dist.mjs -d dist --out-file stanz.js --no-source-maps --global global",
     "test": "npm run build && jest"
   },
   "repository": {

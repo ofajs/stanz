@@ -136,9 +136,3 @@ export default class Stanz extends Array {
 
 fnInstallArray(Stanz);
 fnInstallWatch(Stanz);
-
-export const stanz = (data) => {
-  return new Stanz(data);
-};
-
-Object.assign(stanz, { is: isxdata });

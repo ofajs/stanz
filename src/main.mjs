@@ -21,10 +21,10 @@ export function constructor(data, handler = stanzHandler) {
     xid: { value: data.xid || getRandomId() },
     // Save all parent objects
     _owner: {
+      configurable: true,
       value: [],
     },
     owner: {
-      configurable: true,
       get() {
         return new Set(this._owner);
       },

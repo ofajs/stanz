@@ -1,6 +1,6 @@
 import { clearData } from "./accessor.mjs";
-import { SELF, PROXY } from "./main.mjs";
-import { isObject, isxdata } from "./public.mjs";
+import { SELF, PROXY, isxdata } from "./main.mjs";
+import { isObject } from "./public.mjs";
 import { emitUpdate } from "./watch.mjs";
 
 const mutatingMethods = [

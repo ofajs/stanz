@@ -1,4 +1,4 @@
-import { getRandomId, isxdata, extend } from "./public.mjs";
+import { extend, getRandomId } from "./public.mjs";
 import { handler as stanzHandler } from "./accessor.mjs";
 import arrayFn from "./array.mjs";
 import watchFn from "./watch.mjs";
@@ -148,3 +148,5 @@ Stanz.prototype.extend(
     enumerable: false,
   }
 );
+
+export const isxdata = (val) => val instanceof Stanz;

@@ -1,7 +1,7 @@
-import { getRandomId, isxdata } from "./public.mjs";
+import { getRandomId, isxdata, extend } from "./public.mjs";
 import { handler as stanzHandler } from "./accessor.mjs";
-import fnInstallArray from "./array.mjs";
-import fnInstallWatch from "./watch.mjs";
+import arrayFn from "./array.mjs";
+import watchFn from "./watch.mjs";
 const { defineProperties, getOwnPropertyDescriptor, entries } = Object;
 
 export const SELF = Symbol("self");
@@ -136,7 +136,15 @@ export default class Stanz extends Array {
   toString() {
     return JSON.stringify(this.toJSON());
   }
+
+  extend(obj, desc) {
+    return extend(this, obj, desc);
+  }
 }
 
-fnInstallArray(Stanz);
-fnInstallWatch(Stanz);
+Stanz.prototype.extend(
+  { ...watchFn, ...arrayFn },
+  {
+    enumerable: false,
+  }
+);

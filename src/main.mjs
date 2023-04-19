@@ -76,11 +76,15 @@ export default class Stanz extends Array {
   // This method is still in the experimental period
   revoke() {
     const self = this[SELF];
+
+    self.__unupdate = 1;
+
     entries(this).forEach(([name, value]) => {
       if (isxdata(value)) {
         this[name] = null;
       }
     });
+
     self._owner.forEach((parent) => {
       entries(parent).forEach(([name, value]) => {
         if (value === this) {
@@ -88,6 +92,7 @@ export default class Stanz extends Array {
         }
       });
     });
+
     delete self[SELF];
     delete self[PROXY];
     self._revoke();

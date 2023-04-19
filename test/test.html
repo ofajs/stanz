@@ -10,14 +10,14 @@
     <script type="module">
       import stanz from "../src/base.mjs";
 
-      const d = stanz({ val: "I am d" });
-
-      let i = 0;
-
-      d.watch((e) => {
-        i++;
-        throw "error";
-        console.log("e => ", e);
+      const d = stanz({
+        val: "I am d",
+        obj: {
+          val: "I am obj",
+          sub: {
+            val: "I am sub",
+          },
+        },
       });
 
       window.d = d;

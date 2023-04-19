@@ -18,7 +18,15 @@
             val: "I am sub",
           },
         },
+        arr: [7, 3, 6, 4, 9, 2, 1],
       });
+
+      d.watchTick((e) => {
+        console.log(e);
+      });
+
+      d.arr.push(11);
+      d.arr.reverse();
 
       window.d = d;
     </script>

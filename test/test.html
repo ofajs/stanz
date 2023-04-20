@@ -17,17 +17,26 @@
           sub: {
             val: "I am sub",
           },
+          oarr: [1, 2, 3],
         },
         arr: [7, 3, 6, 4, 9, 2, 1],
       });
 
       d.watchTick((e) => {
-        console.log(e);
+        console.log("watchTick => ", e);
+      });
+
+      d.watch((e) => {
+        console.log("watch => ", e, e.hasModified("arr"));
+        // console.log("watch => ", e, e.hasModified("obj"));
       });
 
       d.arr.push(11);
       d.arr.reverse();
+      d.arr = [222, 333];
 
+      // d.obj.oarr.push(11);
+      // d.obj.oarr = [777, 888];
       window.d = d;
     </script>
   </head>

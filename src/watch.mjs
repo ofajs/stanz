@@ -8,17 +8,63 @@ class Watcher {
     freeze(this);
   }
 
-  hasModified(key) {
-    if (this.path.length) {
-      const target = this.path[0];
-      return this.currentTarget[key] === target;
-    } else {
-      return this.hasReplaced(key);
+  _getCurrent(key) {
+    let { currentTarget } = this;
+
+    if (/\./.test(key)) {
+      const matchs = key.split(".");
+      key = matchs.pop();
+      currentTarget = currentTarget.get(matchs.join("."));
     }
+
+    return {
+      current: currentTarget,
+      key,
+    };
   }
 
-  hasReplaced(key) {
-    if (this.type === "set" && !this.path.length && this.name === key) {
+  hasModified(k) {
+    if (this.type === "array") {
+      return this.path.includes(this.currentTarget.get(k));
+    }
+
+    if (/\./.test(k)) {
+      const { current, key } = this._getCurrent(k);
+      const last = this.path.slice(-1)[0];
+      if (current === last) {
+        if (this.name === key) {
+          return true;
+        }
+
+        return false;
+      }
+
+      return this.path.includes(current);
+    }
+
+    if (!this.path.length) {
+      return this.name === k;
+    }
+
+    return this.path.includes(this.currentTarget[k]);
+  }
+
+  hasReplaced(k) {
+    if (this.type !== "set") {
+      return false;
+    }
+
+    if (/\./.test(k)) {
+      const { current, key } = this._getCurrent(k);
+      const last = this.path.slice(-1)[0];
+      if (current === last && this.name === key) {
+        return true;
+      }
+
+      return false;
+    }
+
+    if (!this.path.length && this.name === k) {
       return true;
     }
 

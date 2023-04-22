@@ -3,3 +3,4 @@
 dist/stanz-dev.js
 dist/stanz-dev.js.map
 .cache
+coverage

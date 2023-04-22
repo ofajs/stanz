@@ -1,5 +1,4 @@
-import Stanz from "./main.mjs";
-import { isxdata } from "./public.mjs";
+import Stanz, { isxdata } from "./main.mjs";
 
 const stanz = (data) => {
   return new Stanz(data);
@@ -8,7 +7,3 @@ const stanz = (data) => {
 Object.assign(stanz, { is: isxdata });
 
 export default stanz;
-
-if (typeof global !== "undefined") {
-  global.stanz = stanz;
-}

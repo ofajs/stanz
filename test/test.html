@@ -10,17 +10,40 @@
     <script type="module">
       import stanz from "../src/base.mjs";
 
-      const d = stanz([
-        { val: "V1" },
-        { val: "V2" },
-        { val: "V3" },
-        { val: "V4" },
-      ]);
+      const d = stanz({
+        val: "I am d",
+        obj: {
+          val: "I am obj",
+          sub: {
+            val: "I am sub",
+            oarr: [1, 2, 3],
+          },
+        },
+        arr: [7, 3, 6, 4, 9, 2, 1],
+      });
 
-      const v2 = d[0];
+      d.watchTick((e) => {
+        console.log("watchTick => ", e);
+      });
 
-      d.push(v2);
+      // d.watch((e) => {
+      //   console.log(
+      //     "watch => ",
+      //     e,
+      //     e.hasModified("obj.sub.val"),
+      //     e.hasReplaced("obj")
+      //   );
+      // });
+
+      d.obj.sub.oarr = [3, 4, 5];
+
+      d.revoke();
+      // d.obj.revoke();
+
+      window.d = d;
     </script>
   </head>
-  <body></body>
+  <body>
+    This is the html file for development and debugging
+  </body>
 </html>

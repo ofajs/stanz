@@ -1,5 +1,5 @@
-import { isxdata, isObject } from "./public.mjs";
-import Stanz, { PROXY } from "./main.mjs";
+import { isObject } from "./public.mjs";
+import Stanz, { PROXY, isxdata } from "./main.mjs";
 import { emitUpdate } from "./watch.mjs";
 
 const { defineProperties } = Object;
@@ -14,12 +14,14 @@ export const setData = ({ target, key, value, receiver, type }) => {
   }
 
   const oldValue = receiver[key];
+  const isSame = oldValue === value;
 
-  if (isxdata(oldValue)) {
+  if (!isSame && isxdata(oldValue)) {
     clearData(oldValue, receiver);
   }
 
-  !target.__unupdate &&
+  !isSame &&
+    !target.__unupdate &&
     emitUpdate({
       type: type || "set",
       target: receiver,
@@ -73,13 +75,16 @@ export const handler = {
       const data = setData({ target, key, value, receiver });
       return Reflect.set(target, key, data, receiver);
     } catch (error) {
-      throw {
-        desc: `failed to set ${key}`,
+      const err = new Error(`failed to set ${key} \n ${error.stack}`);
+
+      Object.assign(err, {
         key,
         value,
         target: receiver,
         error,
-      };
+      });
+
+      throw err;
     }
   },
   deleteProperty(target, key) {
@@ -90,7 +95,7 @@ export const handler = {
       receiver: target[PROXY],
       type: "delete",
     });
-    
+
     return Reflect.deleteProperty(target, key);
   },
 };

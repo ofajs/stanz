@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.1",
+  "version": "8.1.2",
   "description": "sync data lib",
   "main": "dist/stanz.js",
   "browserslist": "> 0.5%, last 2 versions, not dead",

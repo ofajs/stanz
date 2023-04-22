@@ -97,7 +97,7 @@ export const handler = {
     }
   },
   deleteProperty(target, key) {
-    if (/^_/.test(key)) {
+    if (/^_/.test(key) || typeof key === "symbol") {
       return Reflect.deleteProperty(target, key);
     }
 

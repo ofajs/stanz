@@ -32,12 +32,21 @@ export function debounce(func, wait = 0) {
 
   return function (...args) {
     if (timeout === null) {
-      timeout = 1;
-      (wait > 0 ? setTimeout : nextTick)(() => {
-        func.call(this, hisArgs);
-        hisArgs = [];
-        timeout = null;
-      }, wait);
+      if (wait > 0) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          func.call(this, hisArgs);
+          hisArgs = [];
+          timeout = null;
+        }, wait);
+      } else {
+        timeout = 1;
+        nextTick(() => {
+          func.call(this, hisArgs);
+          hisArgs = [];
+          timeout = null;
+        });
+      }
     }
     hisArgs.push(...args);
   };

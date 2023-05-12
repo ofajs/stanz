@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.4",
+  "version": "8.1.5",
   "description": "sync data lib",
   "main": "dist/stanz.js",
   "browserslist": "> 0.5%, last 2 versions, not dead",
@@ -11,11 +11,13 @@
   "devDependencies": {
     "jasmine-core": "^4.6.0",
     "jest": "^29.5.0",
-    "parcel-bundler": "^1.12.5",
-    "parcel-plugin-wrapper": "^0.2.3"
+    "rollup": "^3.21.6",
+    "terser": "^5.17.3"
   },
   "scripts": {
-    "build": "parcel build src/dist.mjs -d dist --out-file stanz.js --no-source-maps --global global",
+    "build": "npm run rollup && npm run terser && node scripts/addComments.js",
+    "terser": "terser dist/stanz.dev.js -c -m -o dist/stanz.js",
+    "rollup": "rollup src/dist.mjs --file dist/stanz.dev.js --format iife",
     "test": "npm run build && jest"
   },
   "repository": {

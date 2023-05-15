@@ -3,6 +3,10 @@
   "version": "8.1.5",
   "description": "sync data lib",
   "main": "dist/stanz.js",
+  "exports": {
+    "require": "./dist/stanz.js",
+    "import": "./src/base.mjs"
+  },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "directories": {
     "doc": "doc",

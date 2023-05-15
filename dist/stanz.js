@@ -1,4 +1,4 @@
-// stanz - v8.1.6 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+// stanz - v8.1.7 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function () {
   'use strict';
 

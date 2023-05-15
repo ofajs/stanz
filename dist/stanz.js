@@ -1,2 +1,676 @@
-// stanz - v8.1.5 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
-!function(){"use strict";const e=()=>Math.random().toString(32).slice(2),t=Object.prototype.toString,r=e=>{const r=(s=e,t.call(s).toLowerCase().replace(/(\[object )|(])/g,""));var s;return"array"===r||"object"===r},s=new Set;function n(t,r=0){let n=null,o=[];return function(...a){o.push(...a),r>0?(clearTimeout(n),n=setTimeout((()=>{t.call(this,o),o=[],n=null}),r)):null===n&&(n=1,function(t){const r=`t-${e()}`;s.add(r),Promise.resolve().then((()=>{s.has(r)&&(t(),s.delete(r))}))}((()=>{t.call(this,o),o=[],n=null})))}}const{assign:o,freeze:a}=Object;class i{constructor(e){o(this,e),a(this)}_getCurrent(e){let{currentTarget:t}=this;if(/\./.test(e)){const r=e.split(".");e=r.pop(),t=t.get(r.join("."))}return{current:t,key:e}}hasModified(e){if("array"===this.type)return this.path.includes(this.currentTarget.get(e));if(/\./.test(e)){const{current:t,key:r}=this._getCurrent(e);return t===this.path.slice(-1)[0]?this.name===r:this.path.includes(t)}return this.path.length?this.path.includes(this.currentTarget[e]):this.name===e}hasReplaced(e){if("set"!==this.type)return!1;if(/\./.test(e)){const{current:t,key:r}=this._getCurrent(e);return t===this.path.slice(-1)[0]&&this.name===r}return!this.path.length&&this.name===e}}class c extends Array{constructor(e){super(...e)}hasModified(e){return this.some((t=>t.hasModified(e)))}hasReplaced(e){return this.some((t=>t.hasReplaced(e)))}}const l=({type:e,currentTarget:t,target:r,name:s,value:n,oldValue:o,args:a,path:c=[]})=>{if(c&&c.includes(t))return void console.warn("Circular references appear");let u={type:e,target:r,name:s,oldValue:o,value:n};if("array"===e&&(delete u.value,u.args=a),t._hasWatchs){const e=new i({currentTarget:t,...u,path:[...c]});t[k].forEach((t=>{t(e)}))}t._update&&t.owner.forEach((e=>{l({currentTarget:e,...u,path:[t,...c]})}))};var u={watch(t){const r="w-"+e();return this[k].set(r,t),r},unwatch(e){return this[k].delete(e)},watchTick(e,t){return this.watch(n((t=>{try{this.xid}catch(e){return}t=t.filter((e=>{try{e.path.forEach((e=>e.xid))}catch(e){return!1}return!0})),e(new c(t))}),t||0))}};const{defineProperties:h}=Object,d=({target:e,key:t,value:s,receiver:n,type:o,succeed:a})=>{let i=s;x(i)?i._owner.push(n):r(s)&&(i=new E(s),i._owner.push(n));const c=n[t],u=c===s;!u&&x(c)&&p(c,n);const h=a(i);return!u&&!e.__unupdate&&l({type:o||"set",target:n,currentTarget:n,name:t,value:s,oldValue:c}),h},p=(e,t)=>{if(x(e)){const r=e._owner.indexOf(t);r>-1?e._owner.splice(r,1):console.error({desc:"This data is wrong, the owner has no boarding object at the time of deletion",target:t,mismatch:e})}},f={set(e,t,r,s){if("symbol"==typeof t)return Reflect.set(e,t,r,s);if(/^_/.test(t))return e.hasOwnProperty(t)?Reflect.set(e,t,r,s):h(e,{[t]:{writable:!0,configurable:!0,value:r}}),!0;try{return d({target:e,key:t,value:r,receiver:s,succeed:r=>Reflect.set(e,t,r,s)})}catch(e){const n=new Error(`failed to set ${t} \n ${e.stack}`);throw Object.assign(n,{key:t,value:r,target:s,error:e}),n}},deleteProperty:(e,t)=>/^_/.test(t)||"symbol"==typeof t?Reflect.deleteProperty(e,t):d({target:e,key:t,value:void 0,receiver:e[O],type:"delete",succeed:()=>Reflect.deleteProperty(e,t)})},g=Symbol("placeholder");const y={},w=Array.prototype;["push","pop","shift","unshift","splice","reverse","sort","fill","copyWithin"].forEach((e=>{w[e]&&(y[e]=function(...t){const s=Array.from(this),n=w[e].apply(this[_],t),{deletedItems:o,addedItems:a}=function(e,t){const r=Array.from(t),s=Array.from(e),n=[],o=new Map,a=e.length;for(let t=0;t<a;t++){const s=e[t],o=r.indexOf(s);o>-1?r[o]=g:n.push(s)}const i=t.length;for(let e=0;e<i;e++){const r=t[e],n=s.indexOf(r);n>-1?s[n]=g:o.set(e,r)}return{deletedItems:n,addedItems:o}}(s,this);for(let[e,t]of a)x(t)?t._owner.push(this):r(t)&&(this.__unupdate=1,this[e]=t,delete this.__unupdate);for(let e of o)p(e,this);return l({type:"array",currentTarget:this,target:this,args:t,name:e,oldValue:s}),n===this[_]?this[O]:n})}));const{defineProperties:b,getOwnPropertyDescriptor:m,entries:v}=Object,_=Symbol("self"),O=Symbol("proxy"),k=Symbol("watchs"),j=Symbol("isxdata"),x=e=>e&&!!e[j];function S(t,r=f){let s,{proxy:n,revoke:o}=Proxy.revocable(this,r);return n._update=1,b(this,{xid:{value:t.xid||e()},_owner:{value:[]},owner:{configurable:!0,get(){return new Set(this._owner)}},[j]:{value:!0},[_]:{configurable:!0,get:()=>this},[O]:{configurable:!0,get:()=>n},[k]:{get:()=>s||(s=new Map)},_hasWatchs:{get:()=>!!s},_revoke:{value:o}}),Object.keys(t).forEach((e=>{const r=m(t,e);let{value:s,get:o,set:a}=r;o||a?b(this,{[e]:r}):n[e]=s})),n}class E extends Array{constructor(e){return super(),S.call(this,e)}revoke(){const e=this[_];e._onrevokes&&(e._onrevokes.forEach((e=>e())),e._onrevokes.length=0),e.__unupdate=1,e[k].clear(),v(this).forEach((([e,t])=>{x(t)&&(this[e]=null)})),e._owner.forEach((e=>{v(e).forEach((([t,r])=>{r===this&&(e[t]=null)}))})),delete e[_],delete e[O],e._revoke()}toJSON(){let e={},t=!0,r=0;Object.keys(this).forEach((s=>{let n=this[s];/\D/.test(s)?t=!1:(s=parseInt(s))>r&&(r=s),x(n)&&(n=n.toJSON()),e[s]=n})),t&&(e.length=r+1,e=Array.from(e));const s=this.xid;return b(e,{xid:{get:()=>s}}),e}toString(){return JSON.stringify(this.toJSON())}extend(e,t){return((e,t,r={})=>(Object.keys(t).forEach((s=>{const n=Object.getOwnPropertyDescriptor(t,s),{configurable:o,enumerable:a,writable:i,get:c,set:l,value:u}=n;"value"in n?e.hasOwnProperty(s)?e[s]=u:Object.defineProperty(e,s,{enumerable:a,configurable:o,writable:i,...r,value:u}):Object.defineProperty(e,s,{enumerable:a,configurable:o,...r,get:c,set:l})})),e))(this,e,t)}get(e){if(/\./.test(e)){const t=e.split(".");let r=this;for(let e=0,s=t.length;e<s;e++)try{r=r[t[e]]}catch(s){const n=new Error(`Failed to get data : ${t.slice(0,e).join(".")} \n${s.stack}`);throw Object.assign(n,{error:s,target:r}),n}return r}return this[e]}}E.prototype.extend({...u,...y},{enumerable:!1});const P=e=>new E(e);Object.assign(P,{is:x}),"undefined"!=typeof window&&(window.stanz=P),"object"==typeof module&&(module.exports=P)}();
+// stanz - v8.1.6 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+(function () {
+  'use strict';
+
+  const getRandomId = () => Math.random().toString(32).slice(2);
+
+  const objectToString = Object.prototype.toString;
+  const getType = (value) =>
+    objectToString
+      .call(value)
+      .toLowerCase()
+      .replace(/(\[object )|(])/g, "");
+
+  const isObject = (obj) => {
+    const type = getType(obj);
+    return type === "array" || type === "object";
+  };
+
+  const tickSets = new Set();
+  function nextTick(callback) {
+    const tickId = `t-${getRandomId()}`;
+    tickSets.add(tickId);
+    Promise.resolve().then(() => {
+      if (tickSets.has(tickId)) {
+        callback();
+        tickSets.delete(tickId);
+      }
+    });
+    return tickId;
+  }
+
+  function debounce(func, wait = 0) {
+    let timeout = null;
+    let hisArgs = [];
+
+    return function (...args) {
+      hisArgs.push(...args);
+
+      if (wait > 0) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          func.call(this, hisArgs);
+          hisArgs = [];
+          timeout = null;
+        }, wait);
+      } else {
+        if (timeout === null) {
+          timeout = 1;
+          nextTick(() => {
+            func.call(this, hisArgs);
+            hisArgs = [];
+            timeout = null;
+          });
+        }
+      }
+    };
+  }
+
+  // Enhanced methods for extending objects
+  const extend = (_this, proto, descriptor = {}) => {
+    Object.keys(proto).forEach((k) => {
+      const result = Object.getOwnPropertyDescriptor(proto, k);
+      const { configurable, enumerable, writable, get, set, value } = result;
+
+      if ("value" in result) {
+        if (_this.hasOwnProperty(k)) {
+          _this[k] = value;
+        } else {
+          Object.defineProperty(_this, k, {
+            enumerable,
+            configurable,
+            writable,
+            ...descriptor,
+            value,
+          });
+        }
+      } else {
+        Object.defineProperty(_this, k, {
+          enumerable,
+          configurable,
+          ...descriptor,
+          get,
+          set,
+        });
+      }
+    });
+
+    return _this;
+  };
+
+  const { assign, freeze } = Object;
+
+  class Watcher {
+    constructor(opts) {
+      assign(this, opts);
+      freeze(this);
+    }
+
+    _getCurrent(key) {
+      let { currentTarget } = this;
+
+      if (/\./.test(key)) {
+        const matchs = key.split(".");
+        key = matchs.pop();
+        currentTarget = currentTarget.get(matchs.join("."));
+      }
+
+      return {
+        current: currentTarget,
+        key,
+      };
+    }
+
+    hasModified(k) {
+      if (this.type === "array") {
+        return this.path.includes(this.currentTarget.get(k));
+      }
+
+      if (/\./.test(k)) {
+        const { current, key } = this._getCurrent(k);
+        const last = this.path.slice(-1)[0];
+        if (current === last) {
+          if (this.name === key) {
+            return true;
+          }
+
+          return false;
+        }
+
+        return this.path.includes(current);
+      }
+
+      if (!this.path.length) {
+        return this.name === k;
+      }
+
+      return this.path.includes(this.currentTarget[k]);
+    }
+
+    hasReplaced(k) {
+      if (this.type !== "set") {
+        return false;
+      }
+
+      if (/\./.test(k)) {
+        const { current, key } = this._getCurrent(k);
+        const last = this.path.slice(-1)[0];
+        if (current === last && this.name === key) {
+          return true;
+        }
+
+        return false;
+      }
+
+      if (!this.path.length && this.name === k) {
+        return true;
+      }
+
+      return false;
+    }
+  }
+
+  class Watchers extends Array {
+    constructor(arr) {
+      super(...arr);
+    }
+
+    hasModified(key) {
+      return this.some((e) => e.hasModified(key));
+    }
+
+    hasReplaced(key) {
+      return this.some((e) => e.hasReplaced(key));
+    }
+  }
+
+  const emitUpdate = ({
+    type,
+    currentTarget,
+    target,
+    name,
+    value,
+    oldValue,
+    args,
+    path = [],
+  }) => {
+    if (path && path.includes(currentTarget)) {
+      console.warn("Circular references appear");
+      return;
+    }
+
+    let options = {
+      type,
+      target,
+      name,
+      oldValue,
+      value,
+    };
+
+    if (type === "array") {
+      delete options.value;
+      options.args = args;
+    }
+
+    if (currentTarget._hasWatchs) {
+      const watcher = new Watcher({
+        currentTarget,
+        ...options,
+        path: [...path],
+      });
+
+      currentTarget[WATCHS].forEach((func) => {
+        func(watcher);
+      });
+    }
+
+    currentTarget._update &&
+      currentTarget.owner.forEach((parent) => {
+        emitUpdate({
+          currentTarget: parent,
+          ...options,
+          path: [currentTarget, ...path],
+        });
+      });
+  };
+
+  var watchFn = {
+    watch(callback) {
+      const wid = "w-" + getRandomId();
+
+      this[WATCHS].set(wid, callback);
+
+      return wid;
+    },
+
+    unwatch(wid) {
+      return this[WATCHS].delete(wid);
+    },
+
+    watchTick(callback, wait) {
+      return this.watch(
+        debounce((arr) => {
+          try {
+            this.xid;
+          } catch (err) {
+            // console.warn(`The revoked object cannot use watchTick : `, this);
+            return;
+          }
+          arr = arr.filter((e) => {
+            try {
+              e.path.forEach((item) => item.xid);
+            } catch (err) {
+              return false;
+            }
+
+            return true;
+          });
+
+          callback(new Watchers(arr));
+        }, wait || 0)
+      );
+    },
+  };
+
+  const { defineProperties: defineProperties$1 } = Object;
+
+  const setData = ({ target, key, value, receiver, type, succeed }) => {
+    let data = value;
+    if (isxdata(data)) {
+      data._owner.push(receiver);
+    } else if (isObject(value)) {
+      data = new Stanz(value);
+      data._owner.push(receiver);
+    }
+
+    const oldValue = receiver[key];
+    const isSame = oldValue === value;
+
+    if (!isSame && isxdata(oldValue)) {
+      clearData(oldValue, receiver);
+    }
+
+    const reval = succeed(data);
+
+    !isSame &&
+      !target.__unupdate &&
+      emitUpdate({
+        type: type || "set",
+        target: receiver,
+        currentTarget: receiver,
+        name: key,
+        value,
+        oldValue,
+      });
+
+    return reval;
+  };
+
+  const clearData = (val, target) => {
+    if (isxdata(val)) {
+      const index = val._owner.indexOf(target);
+      if (index > -1) {
+        val._owner.splice(index, 1);
+      } else {
+        console.error({
+          desc: "This data is wrong, the owner has no boarding object at the time of deletion",
+          target,
+          mismatch: val,
+        });
+      }
+    }
+  };
+
+  const handler = {
+    set(target, key, value, receiver) {
+      if (typeof key === "symbol") {
+        return Reflect.set(target, key, value, receiver);
+      }
+
+      // Set properties with _ prefix directly
+      if (/^_/.test(key)) {
+        if (!target.hasOwnProperty(key)) {
+          defineProperties$1(target, {
+            [key]: {
+              writable: true,
+              configurable: true,
+              value,
+            },
+          });
+        } else {
+          Reflect.set(target, key, value, receiver);
+        }
+        return true;
+      }
+
+      try {
+        return setData({
+          target,
+          key,
+          value,
+          receiver,
+          succeed(data) {
+            return Reflect.set(target, key, data, receiver);
+          },
+        });
+      } catch (error) {
+        const err = new Error(`failed to set ${key} \n ${error.stack}`);
+
+        Object.assign(err, {
+          key,
+          value,
+          target: receiver,
+          error,
+        });
+
+        throw err;
+      }
+    },
+    deleteProperty(target, key) {
+      if (/^_/.test(key) || typeof key === "symbol") {
+        return Reflect.deleteProperty(target, key);
+      }
+
+      return setData({
+        target,
+        key,
+        value: undefined,
+        receiver: target[PROXY],
+        type: "delete",
+        succeed() {
+          return Reflect.deleteProperty(target, key);
+        },
+      });
+    },
+  };
+
+  const mutatingMethods = [
+    "push",
+    "pop",
+    "shift",
+    "unshift",
+    "splice",
+    "reverse",
+    "sort",
+    "fill",
+    "copyWithin",
+  ];
+
+  const holder = Symbol("placeholder");
+
+  function compareArrays(oldArray, newArray) {
+    const backupNewArray = Array.from(newArray);
+    const backupOldArray = Array.from(oldArray);
+    const deletedItems = [];
+    const addedItems = new Map();
+
+    const oldLen = oldArray.length;
+    for (let i = 0; i < oldLen; i++) {
+      const oldItem = oldArray[i];
+      const newIndex = backupNewArray.indexOf(oldItem);
+      if (newIndex > -1) {
+        backupNewArray[newIndex] = holder;
+      } else {
+        deletedItems.push(oldItem);
+      }
+    }
+
+    const newLen = newArray.length;
+    for (let i = 0; i < newLen; i++) {
+      const newItem = newArray[i];
+      const oldIndex = backupOldArray.indexOf(newItem);
+      if (oldIndex > -1) {
+        backupOldArray[oldIndex] = holder;
+      } else {
+        addedItems.set(i, newItem);
+      }
+    }
+
+    return { deletedItems, addedItems };
+  }
+
+  const fn = {};
+
+  const arrayFn = Array.prototype;
+
+  mutatingMethods.forEach((methodName) => {
+    if (arrayFn[methodName]) {
+      fn[methodName] = function (...args) {
+        const backupArr = Array.from(this);
+
+        const reval = arrayFn[methodName].apply(this[SELF], args);
+
+        const { deletedItems, addedItems } = compareArrays(backupArr, this);
+
+        // Refactoring objects as proxy instances
+        for (let [key, value] of addedItems) {
+          if (isxdata(value)) {
+            value._owner.push(this);
+          } else if (isObject(value)) {
+            this.__unupdate = 1;
+            this[key] = value;
+            delete this.__unupdate;
+          }
+        }
+
+        for (let item of deletedItems) {
+          clearData(item, this);
+        }
+
+        emitUpdate({
+          type: "array",
+          currentTarget: this,
+          target: this,
+          args,
+          name: methodName,
+          oldValue: backupArr,
+        });
+
+        if (reval === this[SELF]) {
+          return this[PROXY];
+        }
+
+        return reval;
+      };
+    }
+  });
+
+  const { defineProperties, getOwnPropertyDescriptor, entries } = Object;
+
+  const SELF = Symbol("self");
+  const PROXY = Symbol("proxy");
+  const WATCHS = Symbol("watchs");
+  const ISXDATA = Symbol("isxdata");
+
+  const isxdata = (val) => val && !!val[ISXDATA];
+
+  function constructor(data, handler$1 = handler) {
+    // const proxySelf = new Proxy(this, handler);
+    let { proxy: proxySelf, revoke } = Proxy.revocable(this, handler$1);
+
+    // Determines the properties of the listener bubble
+    proxySelf._update = 1;
+
+    let watchs;
+
+    defineProperties(this, {
+      xid: { value: data.xid || getRandomId() },
+      // Save all parent objects
+      _owner: {
+        value: [],
+      },
+      owner: {
+        configurable: true,
+        get() {
+          return new Set(this._owner);
+        },
+      },
+      [ISXDATA]: {
+        value: true,
+      },
+      [SELF]: {
+        configurable: true,
+        get: () => this,
+      },
+      [PROXY]: {
+        configurable: true,
+        get: () => proxySelf,
+      },
+      // Save the object of the listener function
+      [WATCHS]: {
+        get: () => watchs || (watchs = new Map()),
+      },
+      _hasWatchs: {
+        get: () => !!watchs,
+      },
+      _revoke: {
+        value: revoke,
+      },
+    });
+
+    Object.keys(data).forEach((key) => {
+      const descObj = getOwnPropertyDescriptor(data, key);
+      let { value, get, set } = descObj;
+
+      if (get || set) {
+        defineProperties(this, {
+          [key]: descObj,
+        });
+      } else {
+        // Set the function directly
+        proxySelf[key] = value;
+      }
+    });
+
+    return proxySelf;
+  }
+
+  class Stanz extends Array {
+    constructor(data) {
+      super();
+
+      return constructor.call(this, data);
+    }
+
+    // This method is still in the experimental period
+    revoke() {
+      const self = this[SELF];
+
+      if (self._onrevokes) {
+        self._onrevokes.forEach((f) => f());
+        self._onrevokes.length = 0;
+      }
+
+      self.__unupdate = 1;
+
+      self[WATCHS].clear();
+
+      entries(this).forEach(([name, value]) => {
+        if (isxdata(value)) {
+          this[name] = null;
+        }
+      });
+
+      self._owner.forEach((parent) => {
+        entries(parent).forEach(([name, value]) => {
+          if (value === this) {
+            parent[name] = null;
+          }
+        });
+      });
+
+      delete self[SELF];
+      delete self[PROXY];
+      self._revoke();
+    }
+
+    toJSON() {
+      let obj = {};
+
+      let isPureArray = true;
+      let maxId = 0;
+
+      Object.keys(this).forEach((k) => {
+        let val = this[k];
+
+        if (!/\D/.test(k)) {
+          k = parseInt(k);
+          if (k > maxId) {
+            maxId = k;
+          }
+        } else {
+          isPureArray = false;
+        }
+
+        if (isxdata(val)) {
+          val = val.toJSON();
+        }
+
+        obj[k] = val;
+      });
+
+      if (isPureArray) {
+        obj.length = maxId + 1;
+        obj = Array.from(obj);
+      }
+
+      const xid = this.xid;
+      defineProperties(obj, {
+        xid: {
+          get: () => xid,
+        },
+      });
+
+      return obj;
+    }
+
+    toString() {
+      return JSON.stringify(this.toJSON());
+    }
+
+    extend(obj, desc) {
+      return extend(this, obj, desc);
+    }
+
+    get(key) {
+      if (/\./.test(key)) {
+        const keys = key.split(".");
+        let target = this;
+        for (let i = 0, len = keys.length; i < len; i++) {
+          try {
+            target = target[keys[i]];
+          } catch (error) {
+            const err = new Error(
+              `Failed to get data : ${keys.slice(0, i).join(".")} \n${
+              error.stack
+            }`
+            );
+            Object.assign(err, {
+              error,
+              target,
+            });
+            throw err;
+          }
+        }
+
+        return target;
+      }
+
+      return this[key];
+    }
+  }
+
+  Stanz.prototype.extend(
+    { ...watchFn, ...fn },
+    {
+      enumerable: false,
+    }
+  );
+
+  const stanz = (data) => {
+    return new Stanz(data);
+  };
+
+  Object.assign(stanz, { is: isxdata });
+
+  if (typeof window !== "undefined") {
+    window.stanz = stanz;
+  }
+
+  if (typeof module === "object") {
+    module.exports = stanz;
+  }
+
+  return stanz;
+
+})();

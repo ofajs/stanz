@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.5",
+  "version": "8.1.6",
   "description": "sync data lib",
   "main": "dist/stanz.js",
   "exports": {
@@ -20,8 +20,8 @@
   },
   "scripts": {
     "build": "npm run rollup && npm run terser && node scripts/addComments.js",
-    "terser": "terser dist/stanz.dev.js -c -m -o dist/stanz.js",
-    "rollup": "rollup src/dist.mjs --file dist/stanz.dev.js --format iife",
+    "terser": "terser dist/stanz.js -c -m -o dist/stanz.min.js",
+    "rollup": "rollup src/dist.mjs --file dist/stanz.js --format iife",
     "test": "npm run build && jest"
   },
   "repository": {

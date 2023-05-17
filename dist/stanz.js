@@ -1,6 +1,9 @@
-// stanz - v8.1.7 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
-(function () {
-  'use strict';
+//! stanz - v8.1.8 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.stanz = factory());
+})(this, (function () { 'use strict';
 
   const getRandomId = () => Math.random().toString(32).slice(2);
 
@@ -663,14 +666,6 @@
 
   Object.assign(stanz, { is: isxdata });
 
-  if (typeof window !== "undefined") {
-    window.stanz = stanz;
-  }
-
-  if (typeof module === "object") {
-    module.exports = stanz;
-  }
-
   return stanz;
 
-})();
+}));

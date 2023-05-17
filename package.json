@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.7",
+  "version": "8.1.8",
   "description": "javascript library for listening to data changes of child objects",
   "main": "dist/stanz.js",
   "exports": {
@@ -19,9 +19,8 @@
     "terser": "^5.17.3"
   },
   "scripts": {
-    "build": "npm run rollup && npm run terser && node scripts/addComments.js",
-    "terser": "terser dist/stanz.js -c -m -o dist/stanz.min.js",
-    "rollup": "rollup src/dist.mjs --file dist/stanz.js --format iife",
+    "build": "rollup -c && npm run terser",
+    "terser": "terser dist/stanz.js -c -m -o dist/stanz.min.js && terser dist/stanz.mjs -c -m -o dist/stanz.min.mjs",
     "test": "npm run build && jest"
   },
   "repository": {

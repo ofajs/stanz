@@ -1,4 +1,4 @@
-//! stanz - v8.1.8 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.9 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -650,6 +650,33 @@
       }
 
       return this[key];
+    }
+    set(key, value) {
+      if (/\./.test(key)) {
+        const keys = key.split(".");
+        const lastKey = keys.pop();
+        let target = this;
+        for (let i = 0, len = keys.length; i < len; i++) {
+          try {
+            target = target[keys[i]];
+          } catch (error) {
+            const err = new Error(
+              `Failed to get data : ${keys.slice(0, i).join(".")} \n${
+              error.stack
+            }`
+            );
+            Object.assign(err, {
+              error,
+              target,
+            });
+            throw err;
+          }
+        }
+
+        return (target[lastKey] = value);
+      }
+
+      return (this[key] = value);
     }
   }
 

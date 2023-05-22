@@ -1,4 +1,4 @@
-//! stanz - v8.1.9 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.10 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -61,7 +61,10 @@
 
   // Enhanced methods for extending objects
   const extend = (_this, proto, descriptor = {}) => {
-    Object.keys(proto).forEach((k) => {
+    [
+      ...Object.getOwnPropertyNames(proto),
+      ...Object.getOwnPropertySymbols(proto),
+    ].forEach((k) => {
       const result = Object.getOwnPropertyDescriptor(proto, k);
       const { configurable, enumerable, writable, get, set, value } = result;
 

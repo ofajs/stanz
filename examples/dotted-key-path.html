@@ -20,8 +20,8 @@
 
       data.watch((watcher) => {
         console.log(watcher);
-        console.log("address.city 变化：", watcher.hasModified("address.city")); // true
-        console.log("address.city 变化：", watcher.hasReplaced("address.city")); // true
+        console.log("address.city hasModified:", watcher.hasModified("address.city")); // true
+        console.log("address.city hasReplaced:", watcher.hasReplaced("address.city")); // true
       });
 
       //   data.set("address.city", "London");

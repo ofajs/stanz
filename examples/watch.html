@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watch data</title>
+    <script src="https://cdn.jsdelivr.net/npm/stanz/dist/stanz.min.js"></script>
+  </head>
+  <body>
+    Please open the console to view
+    <script>
+      const data = stanz({
+        name: "John",
+        age: 30,
+      });
+
+      data.watch((e) => {
+        console.log("Properties changed:", e);
+
+        document.write("Properties changed:" + JSON.stringify(e));
+      });
+
+      data.name = "Mike";
+    </script>
+  </body>
+</html>

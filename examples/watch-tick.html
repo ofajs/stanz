@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watchTick</title>
+    <script src="https://cdn.jsdelivr.net/npm/stanz/dist/stanz.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const data = stanz({
+        name: "John",
+        age: 30,
+        mother: {
+          name: "Jennifer",
+          age: 50,
+        },
+      });
+
+      data.watchTick((watchers) => {
+        console.log("watchers.length => ", watchers.length);
+        console.log(
+          'watchers.hasModified("name") => ',
+          watchers.hasModified("name")
+        );
+        console.log(
+          'watchers.hasReplaced("name") => ',
+          watchers.hasReplaced("name")
+        );
+        console.log(
+          'watchers.hasModified("mother") => ',
+          watchers.hasModified("mother")
+        );
+        console.log(
+          'watchers.hasReplaced("mother") => ',
+          watchers.hasReplaced("mother")
+        );
+      });
+
+      data.name = "Joker";
+      data.mother.age = 56;
+      data.mother.name = "Jennimer";
+    </script>
+  </body>
+</html>

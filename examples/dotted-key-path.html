@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dotted Key Path</title>
+    <script src="https://cdn.jsdelivr.net/npm/stanz/dist/stanz.min.js"></script>
+  </head>
+  <body>
+    Please open the console to view
+    <script>
+      const data = stanz({
+        name: "John",
+        age: 30,
+        address: {
+          city: "New York",
+          country: "USA",
+        },
+      });
+
+      data.watch((watcher) => {
+        console.log(watcher);
+        console.log("address.city 变化：", watcher.hasModified("address.city")); // true
+        console.log("address.city 变化：", watcher.hasReplaced("address.city")); // true
+      });
+
+      //   data.set("address.city", "London");
+      data.address.city = "London";
+    </script>
+  </body>
+</html>

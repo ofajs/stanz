@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>has modified and replaced</title>
+    <script src="https://cdn.jsdelivr.net/npm/stanz/dist/stanz.min.js"></script>
+  </head>
+  <body>
+    Please open the console to view
+    <script>
+      const data = stanz({
+        name: "John",
+        age: 30,
+        mother: {
+          name: "Jennifer",
+          age: 50,
+        },
+      });
+
+      data.mother.watch((watcher) => {
+        console.log("data hasModified('age') => ", watcher.hasModified("age")); // true
+        console.log("data hasReplaced('age') => ", watcher.hasReplaced("age")); // true
+      });
+
+      data.watch((watcher) => {
+        console.log(
+          "data hasModified('name') => ",
+          watcher.hasModified("name")
+        ); // false
+
+        console.log(
+          "data hasModified('mother') => ",
+          watcher.hasModified("mother")
+        ); // true
+
+        console.log(
+          "data hasReplaced('mother') => ",
+          watcher.hasReplaced("mother")
+        ); // false
+      });
+
+      data.mother.age = 52;
+    </script>
+  </body>
+</html>

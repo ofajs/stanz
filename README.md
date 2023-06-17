@@ -37,6 +37,8 @@ Before using the Stanz library, it's important to understand some basic concepts
 - **Instance** : The object or array instance that Stanz operates on. 
 - **Watch** : Use the `watch` method to monitor changes in instance properties.<!-- - **Path**: The location of a property in the instance, which can be specified using dot notation. -->
 
+Please open the debug mode and visit the corresponding file in the [examples](https://github.com/kirakiray/stanz/tree/main/examples) directory to quickly understand the usage of stanz. Click [here](https://kirakiray.github.io/stanz/examples/watch.html) to access the online example of "watch", which is particularly useful for understanding the functionality of stanz.
+
 ## Creating an Instance
 
 To use the Stanz library, you first need to create an instance object. You can create an instance object using the `stanz` function.

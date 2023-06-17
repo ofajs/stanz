@@ -224,4 +224,4 @@ data.name = "Tom"; // No longer outputs property change information
 
 The above example demonstrates how to cancel the observation of properties by calling the `unwatch` method. After canceling the observation, modifications to the properties will no longer trigger the corresponding callback function.
 
-[Advanced Drill](./docs/en/more.md)
+[Advanced Stanz](./docs/en/more.md)

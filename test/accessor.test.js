@@ -177,4 +177,22 @@ describe("stanz test of access rights", () => {
 
     expect(i).toBe(0);
   });
+
+  test("setting object properties", () => {
+    const d = stanz({
+      a: "I am a",
+      get data() {
+        return this._data;
+      },
+      set data(data) {
+        this._data = data;
+      },
+    });
+
+    d.data = {
+      val: "I am data",
+    };
+
+    expect(stanz.is(d.data)).toBe(false);
+  });
 });

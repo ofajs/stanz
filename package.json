@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.14",
+  "version": "8.1.15",
   "description": "javascript library for listening to data changes of child objects",
   "main": "dist/stanz.js",
   "exports": {
@@ -19,7 +19,7 @@
     "@rollup/plugin-terser": "^0.4.3"
   },
   "scripts": {
-    "bump": "node scripts/bump-version.js && npm run build",
+    "bump": "node scripts/bump-version.js && npm run build && npm i",
     "build": "rollup -c",
     "test": "npm run build && jest"
   },

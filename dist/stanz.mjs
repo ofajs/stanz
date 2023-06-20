@@ -1,4 +1,4 @@
-//! stanz - v8.1.14 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.15 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;
@@ -269,8 +269,11 @@ const setData = ({ target, key, value, receiver, type, succeed }) => {
   if (isxdata(data)) {
     data._owner.push(receiver);
   } else if (isObject(value)) {
-    data = new Stanz(value);
-    data._owner.push(receiver);
+    const desc = Object.getOwnPropertyDescriptor(target, key);
+    if (!desc || desc.hasOwnProperty("value")) {
+      data = new Stanz(value);
+      data._owner.push(receiver);
+    }
   }
 
   const oldValue = receiver[key];

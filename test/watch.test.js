@@ -351,17 +351,33 @@ describe("Test if the watch method of the instance is correct", () => {
       },
     });
 
+    let i = 0;
+
     d.watch((e) => {
-      expect(e.hasModified("obj.o2.val")).toBe(true);
-      expect(e.hasModified("obj.o2")).toBe(true);
-      expect(e.hasModified("obj.o3.val")).toBe(false);
-      expect(e.hasModified("obj.o3")).toBe(false);
-      expect(e.hasReplaced("obj.o2.val")).toBe(true);
-      expect(e.hasReplaced("obj.o2")).toBe(true);
-      expect(e.hasReplaced("obj.o3.val")).toBe(false);
-      expect(e.hasReplaced("obj.o3")).toBe(false);
+      i++;
+
+      if (i === 1) {
+        expect(e.hasModified("obj.o2.val")).toBe(true);
+        expect(e.hasModified("obj.o2")).toBe(true);
+        expect(e.hasModified("obj.o3.val")).toBe(false);
+        expect(e.hasModified("obj.o3")).toBe(false);
+        expect(e.hasReplaced("obj.o2.val")).toBe(true);
+        expect(e.hasReplaced("obj.o2")).toBe(true);
+        expect(e.hasReplaced("obj.o3.val")).toBe(false);
+        expect(e.hasReplaced("obj.o3")).toBe(false);
+      } else if (i === 2) {
+        expect(e.hasModified("obj.o2.val")).toBe(true);
+        expect(e.hasModified("obj.o2")).toBe(true);
+        expect(e.hasModified("obj.o3.val")).toBe(true);
+        expect(e.hasModified("obj.o3")).toBe(true);
+        expect(e.hasReplaced("obj.o2.val")).toBe(true);
+        expect(e.hasReplaced("obj.o2")).toBe(true);
+        expect(e.hasReplaced("obj.o3.val")).toBe(true);
+        expect(e.hasReplaced("obj.o3")).toBe(true);
+      }
     });
 
     d.obj.o2 = { val: "asdasd" };
+    d.obj = { val: "asdasd" };
   });
 });

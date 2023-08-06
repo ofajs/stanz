@@ -1,4 +1,4 @@
-//! stanz - v8.1.16 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.17 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -107,11 +107,13 @@
         return this.path.includes(this.currentTarget.get(k));
       }
 
-      if (this.currentTarget === this.target && k === this.name) {
+      const keys = k.split(".");
+
+      if (this.currentTarget === this.target && this.name === keys[0]) {
         return true;
       }
 
-      const { modifieds, keys } = getModifieds(this, k);
+      const modifieds = getModifieds(this, keys);
 
       const positionIndex = modifieds.indexOf(this.target);
       if (positionIndex > -1) {
@@ -134,7 +136,13 @@
         return false;
       }
 
-      const { modifieds, keys } = getModifieds(this, k);
+      const keys = k.split(".");
+
+      if (this.target === this.currentTarget && this.name === keys[0]) {
+        return true;
+      }
+
+      const modifieds = getModifieds(this, keys);
 
       const positionIndex = modifieds.indexOf(this.target);
 
@@ -144,17 +152,12 @@
         return currentKeys[0] === this.name;
       }
 
-      if (this.target === this.currentTarget && this.name === k) {
-        return true;
-      }
-
       return false;
     }
   }
 
-  const getModifieds = (_this, k) => {
+  const getModifieds = (_this, keys) => {
     const modifieds = [];
-    const keys = k.split(".");
 
     const cloneKeys = keys.slice();
     let target = _this.currentTarget;
@@ -167,7 +170,7 @@
       modifieds.push(target);
     }
 
-    return { modifieds, keys };
+    return modifieds;
   };
 
   class Watchers extends Array {

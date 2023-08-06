@@ -102,44 +102,30 @@
       freeze(this);
     }
 
-    _getCurrent(key) {
-      let { currentTarget } = this;
-
-      if (/\./.test(key)) {
-        const matchs = key.split(".");
-        key = matchs.pop();
-        currentTarget = currentTarget.get(matchs.join("."));
-      }
-
-      return {
-        current: currentTarget,
-        key,
-      };
-    }
-
     hasModified(k) {
       if (this.type === "array") {
         return this.path.includes(this.currentTarget.get(k));
       }
 
-      if (/\./.test(k)) {
-        const { current, key } = this._getCurrent(k);
-        const last = this.path.slice(-1)[0];
-        if (current === last) {
-          if (this.name === key) {
-            return true;
-          }
+      if (this.currentTarget === this.target && k === this.name) {
+        return true;
+      }
 
-          return false;
+      const { modifieds, keys } = getModifieds(this, k);
+
+      const positionIndex = modifieds.indexOf(this.target);
+      if (positionIndex > -1) {
+        const currentKeys = keys.slice(positionIndex + 1);
+
+        if (!currentKeys.length) {
+          // This is listening for changes in the child object itself
+          return true;
         }
 
-        return this.path.includes(current);
+        return this.name === currentKeys[0];
       }
 
-      if (!this.path.length) {
-        return this.name === k;
-      }
-
+      // Data belonging to the chain of change
       return this.path.includes(this.currentTarget[k]);
     }
 
@@ -148,23 +134,41 @@
         return false;
       }
 
-      if (/\./.test(k)) {
-        const { current, key } = this._getCurrent(k);
-        const last = this.path.slice(-1)[0];
-        if (current === last && this.name === key) {
-          return true;
-        }
+      const { modifieds, keys } = getModifieds(this, k);
 
-        return false;
+      const positionIndex = modifieds.indexOf(this.target);
+
+      if (positionIndex > -1) {
+        const currentKeys = keys.slice(positionIndex + 1);
+
+        return currentKeys[0] === this.name;
       }
 
-      if (!this.path.length && this.name === k) {
+      if (this.target === this.currentTarget && this.name === k) {
         return true;
       }
 
       return false;
     }
   }
+
+  const getModifieds = (_this, k) => {
+    const modifieds = [];
+    const keys = k.split(".");
+
+    const cloneKeys = keys.slice();
+    let target = _this.currentTarget;
+    while (cloneKeys.length) {
+      const targetKey = cloneKeys.shift();
+      if (target) {
+        target = target[targetKey];
+      }
+
+      modifieds.push(target);
+    }
+
+    return { modifieds, keys };
+  };
 
   class Watchers extends Array {
     constructor(arr) {

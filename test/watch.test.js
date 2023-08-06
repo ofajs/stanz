@@ -343,4 +343,25 @@ describe("Test if the watch method of the instance is correct", () => {
     d.obj.sub.oarr = [4, 5, 6];
     d.obj.sub.val = "change sub val";
   });
+
+  test("test watcher [sub-property]", () => {
+    const d = stanz({
+      obj: {
+        o2: {},
+      },
+    });
+
+    d.watch((e) => {
+      expect(e.hasModified("obj.o2.val")).toBe(true);
+      expect(e.hasModified("obj.o2")).toBe(true);
+      expect(e.hasModified("obj.o3.val")).toBe(false);
+      expect(e.hasModified("obj.o3")).toBe(false);
+      expect(e.hasReplaced("obj.o2.val")).toBe(true);
+      expect(e.hasReplaced("obj.o2")).toBe(true);
+      expect(e.hasReplaced("obj.o3.val")).toBe(false);
+      expect(e.hasReplaced("obj.o3")).toBe(false);
+    });
+
+    d.obj.o2 = { val: "asdasd" };
+  });
 });

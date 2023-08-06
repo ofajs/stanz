@@ -101,11 +101,13 @@ class Watcher {
       return this.path.includes(this.currentTarget.get(k));
     }
 
-    if (this.currentTarget === this.target && k === this.name) {
+    const keys = k.split(".");
+
+    if (this.currentTarget === this.target && this.name === keys[0]) {
       return true;
     }
 
-    const { modifieds, keys } = getModifieds(this, k);
+    const modifieds = getModifieds(this, keys);
 
     const positionIndex = modifieds.indexOf(this.target);
     if (positionIndex > -1) {
@@ -128,7 +130,13 @@ class Watcher {
       return false;
     }
 
-    const { modifieds, keys } = getModifieds(this, k);
+    const keys = k.split(".");
+
+    if (this.target === this.currentTarget && this.name === keys[0]) {
+      return true;
+    }
+
+    const modifieds = getModifieds(this, keys);
 
     const positionIndex = modifieds.indexOf(this.target);
 
@@ -138,17 +146,12 @@ class Watcher {
       return currentKeys[0] === this.name;
     }
 
-    if (this.target === this.currentTarget && this.name === k) {
-      return true;
-    }
-
     return false;
   }
 }
 
-const getModifieds = (_this, k) => {
+const getModifieds = (_this, keys) => {
   const modifieds = [];
-  const keys = k.split(".");
 
   const cloneKeys = keys.slice();
   let target = _this.currentTarget;
@@ -161,7 +164,7 @@ const getModifieds = (_this, k) => {
     modifieds.push(target);
   }
 
-  return { modifieds, keys };
+  return modifieds;
 };
 
 class Watchers extends Array {

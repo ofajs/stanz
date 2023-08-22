@@ -1,4 +1,4 @@
-//! stanz - v8.1.17 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.18 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -278,8 +278,13 @@
   const { defineProperties: defineProperties$1 } = Object;
 
   const setData = ({ target, key, value, receiver, type, succeed }) => {
+    const oldValue = receiver[key];
+
     let data = value;
     if (isxdata(data)) {
+      if (oldValue === value) {
+        return true;
+      }
       data._owner.push(receiver);
     } else if (isObject(value)) {
       const desc = Object.getOwnPropertyDescriptor(target, key);
@@ -289,7 +294,6 @@
       }
     }
 
-    const oldValue = receiver[key];
     const isSame = oldValue === value;
 
     if (!isSame && isxdata(oldValue)) {

@@ -195,4 +195,25 @@ describe("stanz test of access rights", () => {
 
     expect(stanz.is(d.data)).toBe(false);
   });
+
+  test("set same stanz object", () => {
+    const d1 = stanz({
+      val: "I am d1",
+    });
+
+    const d2 = stanz({
+      val: "I am d2",
+      d1,
+    });
+
+    expect(d1.owner.size).toBe(1);
+
+    d2.d1 = d1;
+
+    expect(d1.owner.size).toBe(1);
+
+    d2.d1 = null;
+
+    expect(d1.owner.size).toBe(0);
+  });
 });

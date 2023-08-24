@@ -88,6 +88,25 @@ const extend = (_this, proto, descriptor = {}) => {
   return _this;
 };
 
+function dataRevoked(data) {
+  try {
+    data.xid;
+  } catch (err) {
+    return isRevokedErr(err);
+  }
+
+  return false;
+}
+
+function isRevokedErr(error) {
+  const firstLine = error.stack.split(/\\n/)[0].toLowerCase();
+  if (firstLine.includes("proxy") && firstLine.includes("revoked")) {
+    return true;
+  }
+
+  return false;
+}
+
 const { assign, freeze } = Object;
 
 class Watcher {
@@ -247,9 +266,7 @@ var watchFn = {
   watchTick(callback, wait) {
     return this.watch(
       debounce((arr) => {
-        try {
-          this.xid;
-        } catch (err) {
+        if (dataRevoked(this)) {
           // console.warn(`The revoked object cannot use watchTick : `, this);
           return;
         }

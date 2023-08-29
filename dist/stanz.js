@@ -615,7 +615,7 @@
       let obj = {};
 
       let isPureArray = true;
-      let maxId = 0;
+      let maxId = -1;
 
       Object.keys(this).forEach((k) => {
         let val = this[k];

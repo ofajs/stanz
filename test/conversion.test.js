@@ -37,4 +37,18 @@ describe("Tests related to conversion data", () => {
 
     expect(d.toJSON().xid).toEqual(d.xid);
   });
+
+  test("empty sub array", () => {
+    const d = stanz({
+      a: [],
+    });
+
+    const d2 = d.toJSON();
+
+    expect(d2).toEqual({
+      a: [],
+    });
+
+    expect(d2.a.length).toBe(0);
+  });
 });

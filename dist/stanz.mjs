@@ -284,6 +284,16 @@ var watchFn = {
       }, wait || 0)
     );
   },
+  // For manual use of emitUpdate
+  refresh(opts) {
+    const options = {
+      ...opts,
+      type: "refresh",
+      target: this,
+      currentTarget: this,
+    };
+    emitUpdate(options);
+  },
 };
 
 const { defineProperties: defineProperties$1 } = Object;
@@ -314,6 +324,7 @@ const setData = ({ target, key, value, receiver, type, succeed }) => {
   const reval = succeed(data);
 
   !isSame &&
+    // __unupdate: Let the system not trigger an upgrade, system self-use attribute
     !target.__unupdate &&
     emitUpdate({
       type: type || "set",

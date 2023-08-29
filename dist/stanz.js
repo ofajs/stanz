@@ -1,4 +1,4 @@
-//! stanz - v8.1.20 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.21 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -290,6 +290,16 @@
         }, wait || 0)
       );
     },
+    // For manual use of emitUpdate
+    refresh(opts) {
+      const options = {
+        ...opts,
+        type: "refresh",
+        target: this,
+        currentTarget: this,
+      };
+      emitUpdate(options);
+    },
   };
 
   const { defineProperties: defineProperties$1 } = Object;
@@ -320,6 +330,7 @@
     const reval = succeed(data);
 
     !isSame &&
+      // __unupdate: Let the system not trigger an upgrade, system self-use attribute
       !target.__unupdate &&
       emitUpdate({
         type: type || "set",

@@ -380,4 +380,24 @@ describe("Test if the watch method of the instance is correct", () => {
     d.obj.o2 = { val: "asdasd" };
     d.obj = { val: "asdasd" };
   });
+
+  test("test refresh", () => {
+    const d = stanz({
+      obj: {
+        o2: {},
+      },
+    });
+
+    d.watch((e) => {
+      expect(e.type === "refresh");
+      expect(e.hasModified("obj.o2.val")).toBe(false);
+      expect(e.hasReplaced("obj.o2.val")).toBe(false);
+      expect(e.hasModified("obj.o2")).toBe(true);
+      expect(e.hasReplaced("obj.o2")).toBe(false);
+      expect(e.hasModified("obj")).toBe(true);
+      expect(e.hasReplaced("obj")).toBe(false);
+    });
+
+    d.obj.o2.refresh();
+  });
 });

@@ -17,14 +17,17 @@
       });
 
       d.watch((e) => {
-        console.log("e2 => ", e.hasModified("obj.o2.val")); // true
-        console.log("e2 => ", e.hasReplaced("obj.o2.val")); // true
+        console.log("e2 => ", e.hasModified("obj.o2.val")); // false
+        console.log("e2 => ", e.hasReplaced("obj.o2.val")); // false
+        console.log("e22 => ", e.hasModified("obj.o2")); // true
+        console.log("e22 => ", e.hasReplaced("obj.o2")); // false
+        console.log("e22 => ", e.hasModified("obj")); // true
+        console.log("e22 => ", e.hasReplaced("obj")); // false
       });
 
-      d.obj = { val: "asdasd" };
+      d.obj.o2.refresh();
 
       window.d = d;
-
     </script>
   </head>
   <body>

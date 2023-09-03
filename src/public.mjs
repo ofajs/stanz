@@ -25,7 +25,7 @@ export function nextTick(callback) {
   Promise.resolve().then(() => {
     asyncsCounter++;
     // console.log("asyncsCounter => ", asyncsCounter);
-    if (asyncsCounter > 5000) {
+    if (asyncsCounter > 50000) {
       tickSets.clear();
       const desc = `nextTick exceeds thread limit`;
       console.error({

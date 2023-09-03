@@ -1,4 +1,4 @@
-//! stanz - v8.1.21 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.22 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;
@@ -13,11 +13,28 @@ const isObject = (obj) => {
   return type === "array" || type === "object";
 };
 
+let asyncsCounter = 0;
+let afterTimer;
 const tickSets = new Set();
 function nextTick(callback) {
   const tickId = `t-${getRandomId()}`;
+  clearTimeout(afterTimer);
+  afterTimer = setTimeout(() => {
+    asyncsCounter = 0;
+  });
   tickSets.add(tickId);
   Promise.resolve().then(() => {
+    asyncsCounter++;
+    // console.log("asyncsCounter => ", asyncsCounter);
+    if (asyncsCounter > 50000) {
+      tickSets.clear();
+      const desc = `nextTick exceeds thread limit`;
+      console.error({
+        desc,
+        lastCall: callback,
+      });
+      throw new Error(desc);
+    }
     if (tickSets.has(tickId)) {
       callback();
       tickSets.delete(tickId);

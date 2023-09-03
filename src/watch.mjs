@@ -103,7 +103,6 @@ export const emitUpdate = ({
   args,
   path = [],
 }) => {
-  // console.log("update => ", target.ele);
   if (path && path.includes(currentTarget)) {
     console.warn("Circular references appear");
     return;

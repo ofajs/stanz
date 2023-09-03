@@ -20,7 +20,6 @@ function nextTick(callback) {
   const tickId = `t-${getRandomId()}`;
   clearTimeout(afterTimer);
   afterTimer = setTimeout(() => {
-    console.log("timer!!");
     asyncsCounter = 0;
   });
   tickSets.add(tickId);
@@ -37,11 +36,7 @@ function nextTick(callback) {
       throw new Error(desc);
     }
     if (tickSets.has(tickId)) {
-      tickSets.size;
       callback();
-      // if (tickSets.size > len) {
-      //   debugger;
-      // }
       tickSets.delete(tickId);
     }
   });
@@ -232,7 +227,6 @@ const emitUpdate = ({
   args,
   path = [],
 }) => {
-  // console.log("update => ", target.ele);
   if (path && path.includes(currentTarget)) {
     console.warn("Circular references appear");
     return;

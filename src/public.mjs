@@ -19,7 +19,6 @@ export function nextTick(callback) {
   const tickId = `t-${getRandomId()}`;
   clearTimeout(afterTimer);
   afterTimer = setTimeout(() => {
-    console.log("timer!!");
     asyncsCounter = 0;
   });
   tickSets.add(tickId);
@@ -36,11 +35,7 @@ export function nextTick(callback) {
       throw new Error(desc);
     }
     if (tickSets.has(tickId)) {
-      const len = tickSets.size;
       callback();
-      // if (tickSets.size > len) {
-      //   debugger;
-      // }
       tickSets.delete(tickId);
     }
   });

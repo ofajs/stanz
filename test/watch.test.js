@@ -400,4 +400,29 @@ describe("Test if the watch method of the instance is correct", () => {
 
     d.obj.o2.refresh();
   });
+
+  test("change in watchTick", async () => {
+    let count = 0;
+    const d = stanz({});
+
+    d.watch((e) => {
+      console.log("watch: ", e);
+    });
+
+    let resolve;
+
+    d.watchTick(() => {
+      count++;
+      if (count === 1) {
+        d.val = "change val";
+      } else if (count > 1) {
+        expect(count).toBe(2);
+        resolve();
+      }
+    });
+
+    d.val = "add val";
+
+    await new Promise((res) => (resolve = res));
+  });
 });

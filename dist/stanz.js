@@ -1,4 +1,4 @@
-//! stanz - v8.1.22 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.23 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -67,9 +67,10 @@
         if (timeout === null) {
           timeout = 1;
           nextTick(() => {
-            func.call(this, hisArgs);
-            hisArgs = [];
             timeout = null;
+            const args = hisArgs.slice();
+            hisArgs = [];
+            func.call(this, args);
           });
         }
       }

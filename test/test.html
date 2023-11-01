@@ -16,16 +16,22 @@
         },
       });
 
+      window.count = 0;
+
       d.watch((e) => {
-        console.log("e2 => ", e.hasModified("obj.o2.val")); // false
-        console.log("e2 => ", e.hasReplaced("obj.o2.val")); // false
-        console.log("e22 => ", e.hasModified("obj.o2")); // true
-        console.log("e22 => ", e.hasReplaced("obj.o2")); // false
-        console.log("e22 => ", e.hasModified("obj")); // true
-        console.log("e22 => ", e.hasReplaced("obj")); // false
+        console.log("watch: ", e);
       });
 
-      d.obj.o2.refresh();
+      d.watchTick(() => {
+        count++;
+        if (count === 1) {
+          d.val = "change val";
+        } else if (count > 1) {
+          console.log("ok");
+        }
+      });
+
+      d.val = "add val";
 
       window.d = d;
     </script>

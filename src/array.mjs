@@ -94,4 +94,16 @@ mutatingMethods.forEach((methodName) => {
   }
 });
 
+// ["concat", "filter", "slice", "flatMap", "map"].forEach((methodName) => {
+Object.getOwnPropertyNames(Array.prototype).forEach((methodName) => {
+  if (methodName === "constructor" || mutatingMethods.includes(methodName)) {
+    return;
+  }
+
+  const oldFunc = Array.prototype[methodName];
+  fn[methodName] = function (...args) {
+    return oldFunc.call(Array.from(this), ...args);
+  };
+});
+
 export default fn;

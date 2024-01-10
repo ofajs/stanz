@@ -1,4 +1,4 @@
-//! stanz - v8.1.23 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.23 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -529,6 +529,18 @@
         return reval;
       };
     }
+  });
+
+  // ["concat", "filter", "slice", "flatMap", "map"].forEach((methodName) => {
+  Object.getOwnPropertyNames(Array.prototype).forEach((methodName) => {
+    if (methodName === "constructor" || mutatingMethods.includes(methodName)) {
+      return;
+    }
+
+    const oldFunc = Array.prototype[methodName];
+    fn[methodName] = function (...args) {
+      return oldFunc.call(Array.from(this), ...args);
+    };
   });
 
   const { defineProperties, getOwnPropertyDescriptor, entries } = Object;

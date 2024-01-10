@@ -1,4 +1,4 @@
-//! stanz - v8.1.23 https://github.com/kirakiray/stanz  (c) 2018-2023 YAO
+//! stanz - v8.1.23 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;
@@ -523,6 +523,18 @@ mutatingMethods.forEach((methodName) => {
       return reval;
     };
   }
+});
+
+// ["concat", "filter", "slice", "flatMap", "map"].forEach((methodName) => {
+Object.getOwnPropertyNames(Array.prototype).forEach((methodName) => {
+  if (methodName === "constructor" || mutatingMethods.includes(methodName)) {
+    return;
+  }
+
+  const oldFunc = Array.prototype[methodName];
+  fn[methodName] = function (...args) {
+    return oldFunc.call(Array.from(this), ...args);
+  };
 });
 
 const { defineProperties, getOwnPropertyDescriptor, entries } = Object;

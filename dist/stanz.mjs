@@ -532,9 +532,11 @@ Object.getOwnPropertyNames(Array.prototype).forEach((methodName) => {
   }
 
   const oldFunc = Array.prototype[methodName];
-  fn[methodName] = function (...args) {
-    return oldFunc.call(Array.from(this), ...args);
-  };
+  if (oldFunc instanceof Function) {
+    fn[methodName] = function (...args) {
+      return oldFunc.call(Array.from(this), ...args);
+    };
+  }
 });
 
 const { defineProperties, getOwnPropertyDescriptor, entries } = Object;

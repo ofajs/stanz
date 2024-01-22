@@ -1,4 +1,4 @@
-//! stanz - v8.1.24 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.25 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -410,13 +410,14 @@
           },
         });
       } catch (error) {
-        const err = new Error(`failed to set ${key} \n ${error.stack}`);
+        const err = new Error(`failed to set ${key} \n ${error.stack}`, {
+          cause: error,
+        });
 
         Object.assign(err, {
           key,
           value,
           target: receiver,
-          error,
         });
 
         throw err;
@@ -713,10 +714,10 @@
             const err = new Error(
               `Failed to get data : ${keys.slice(0, i).join(".")} \n${
               error.stack
-            }`
+            }`,
+              { cause: error }
             );
             Object.assign(err, {
-              error,
               target,
             });
             throw err;
@@ -740,10 +741,10 @@
             const err = new Error(
               `Failed to get data : ${keys.slice(0, i).join(".")} \n${
               error.stack
-            }`
+            }`,
+              { cause: error }
             );
             Object.assign(err, {
-              error,
               target,
             });
             throw err;

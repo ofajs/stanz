@@ -1,4 +1,4 @@
-//! stanz - v8.1.24 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.25 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;
@@ -404,13 +404,14 @@ const handler = {
         },
       });
     } catch (error) {
-      const err = new Error(`failed to set ${key} \n ${error.stack}`);
+      const err = new Error(`failed to set ${key} \n ${error.stack}`, {
+        cause: error,
+      });
 
       Object.assign(err, {
         key,
         value,
         target: receiver,
-        error,
       });
 
       throw err;
@@ -707,10 +708,10 @@ class Stanz extends Array {
           const err = new Error(
             `Failed to get data : ${keys.slice(0, i).join(".")} \n${
               error.stack
-            }`
+            }`,
+            { cause: error }
           );
           Object.assign(err, {
-            error,
             target,
           });
           throw err;
@@ -734,10 +735,10 @@ class Stanz extends Array {
           const err = new Error(
             `Failed to get data : ${keys.slice(0, i).join(".")} \n${
               error.stack
-            }`
+            }`,
+            { cause: error }
           );
           Object.assign(err, {
-            error,
             target,
           });
           throw err;

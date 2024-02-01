@@ -1,4 +1,4 @@
-//! stanz - v8.1.25 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.26 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -317,6 +317,17 @@
         currentTarget: this,
       };
       emitUpdate(options);
+    },
+    watchUntil(func) {
+      return new Promise((resolve) => {
+        const tid = this.watch(() => {
+          const bool = func();
+          if (bool) {
+            this.unwatch(tid);
+            resolve(this);
+          }
+        });
+      });
     },
   };
 

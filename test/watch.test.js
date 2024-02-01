@@ -425,4 +425,24 @@ describe("Test if the watch method of the instance is correct", () => {
 
     await new Promise((res) => (resolve = res));
   });
+
+  test("watchUntil test 1", async () => {
+    const d = stanz({ val: "I am d" });
+
+    setTimeout(() => {
+      d.ok = 1;
+    }, 100);
+
+    await d.watchUntil(() => d.ok);
+
+    expect(true).toBe(true);
+  });
+
+  test("watchUntil test 2", async () => {
+    const d = stanz({ val: "I am d", ok: 1 });
+
+    await d.watchUntil(() => d.ok);
+
+    expect(true).toBe(true);
+  });
 });

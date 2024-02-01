@@ -1,4 +1,4 @@
-//! stanz - v8.1.26 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.27 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;
@@ -314,13 +314,18 @@ var watchFn = {
   },
   watchUntil(func) {
     return new Promise((resolve) => {
-      const tid = this.watch(() => {
-        const bool = func();
-        if (bool) {
-          this.unwatch(tid);
-          resolve(this);
-        }
-      });
+      let f;
+      const tid = this.watch(
+        (f = () => {
+          const bool = func();
+          if (bool) {
+            this.unwatch(tid);
+            resolve(this);
+          }
+        })
+      );
+
+      f();
     });
   },
 };

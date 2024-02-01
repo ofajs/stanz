@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.25",
+  "version": "8.1.26",
   "description": "javascript library for listening to data changes of child objects",
   "main": "dist/stanz.js",
   "exports": {

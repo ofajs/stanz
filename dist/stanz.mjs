@@ -1,4 +1,4 @@
-//! stanz - v8.1.27 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.28 https://github.com/kirakiray/stanz  (c) 2018-2024 YAO
 const getRandomId = () => Math.random().toString(32).slice(2);
 
 const objectToString = Object.prototype.toString;

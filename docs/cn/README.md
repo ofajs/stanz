@@ -34,7 +34,7 @@ npm install stanz
 - **观察** ：使用 `watch` 方法来监视实例属性的变化。 
 <!-- - **路径** ：属性在实例中的位置，可以使用点式键路径来指定。 -->
 
-请打开调试模式后，访问 [stanz的例子](https://github.com/kirakiray/stanz/tree/main/examples) 目录中的对应文件，以便您快速理解stanz的用途。点击进入 [watch](https://kirakiray.github.io/stanz/examples/watch.html) 的在线案例；
+请打开调试模式后，访问 [stanz的例子](https://github.com/ofajs/stanz/tree/main/examples) 目录中的对应文件，以便您快速理解stanz的用途。点击进入 [watch](https://kirakiray.github.io/stanz/examples/watch.html) 的在线案例；
 
 ## 创建实例
 

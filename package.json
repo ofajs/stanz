@@ -1,6 +1,6 @@
 {
   "name": "stanz",
-  "version": "8.1.27",
+  "version": "8.1.28",
   "description": "javascript library for listening to data changes of child objects",
   "main": "dist/stanz.js",
   "exports": {
@@ -25,7 +25,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kirakiray/stanz.git"
+    "url": "git+https://github.com/ofajs/stanz.git"
   },
   "author": {
     "name": "YAO",
@@ -34,9 +34,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kirakiray/stanz/issues"
+    "url": "https://github.com/ofajs/stanz/issues"
   },
-  "homepage": "https://github.com/kirakiray/stanz",
+  "homepage": "https://github.com/ofajs/stanz",
   "startyear": "2018",
   "keywords": [
     "stanz",

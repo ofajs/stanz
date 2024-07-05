@@ -1,4 +1,4 @@
-//! stanz - v8.1.28 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.29 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 // const error_origin = "http://127.0.0.1:5793/errors";
 const error_origin = "https://ofajs.github.io/ofa-errors/errors";
 

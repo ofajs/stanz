@@ -1,4 +1,4 @@
-//! stanz - v8.1.28 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.29 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :

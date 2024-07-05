@@ -517,16 +517,17 @@
           },
         });
       } catch (error) {
-        const errArgs = [
+        const err = getErr(
           "failed_to_set_data",
           {
             key,
           },
-        ];
+          error
+        );
 
-        console.log(getErrDesc(...errArgs), key, target, value);
+        console.log(err.message, key, target, value);
 
-        throw getErr(...errArgs, error);
+        throw err;
       }
     },
     deleteProperty(target, key) {
@@ -817,16 +818,17 @@
           try {
             target = target[keys[i]];
           } catch (error) {
-            const errArgs = [
+            const err = getErr(
               "failed_to_get_data",
               {
                 key: keys.slice(0, i).join("."),
               },
-            ];
+              error
+            );
 
-            console.log(getErrDesc(...errArgs), ":", key, this, error);
+            console.log(err.message, ":", key, this, error);
 
-            throw getErr(...errArgs, error);
+            throw err;
           }
         }
 
@@ -844,16 +846,17 @@
           try {
             target = target[keys[i]];
           } catch (error) {
-            const errArgs = [
+            const err = getErr(
               "failed_to_get_data",
               {
                 key: keys.slice(0, i).join("."),
               },
-            ];
+              error
+            );
 
-            console.log(getErrDesc(...errArgs), ":", key, this, error);
+            console.log(err.message, ":", key, this, error);
 
-            throw getErr(...errArgs, error);
+            throw err;
           }
         }
 

@@ -393,6 +393,10 @@ const emitUpdate = ({
 
 var watchFn = {
   watch(callback) {
+    if (!(callback instanceof Function)) {
+      throw getErr("not_func", { name: "watch" });
+    }
+
     const wid = "w-" + getRandomId();
 
     this[WATCHS].set(wid, callback);
@@ -405,6 +409,10 @@ var watchFn = {
   },
 
   watchTick(callback, wait) {
+    if (!(callback instanceof Function)) {
+      throw getErr("not_func", { name: "watchTick" });
+    }
+
     return this.watch(
       debounce((arr) => {
         if (dataRevoked(this)) {

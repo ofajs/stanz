@@ -1,9 +1,109 @@
-//! stanz - v8.1.28 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.29 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.stanz = factory());
 })(this, (function () { 'use strict';
+
+  // const error_origin = "http://127.0.0.1:5793/errors";
+  const error_origin = "https://ofajs.github.io/ofa-errors/errors";
+
+  // 存放错误信息的数据对象
+  const errors = {};
+
+  if (globalThis.navigator && navigator.language) {
+    let langFirst = navigator.language.toLowerCase().split("-")[0];
+
+    if (langFirst === "zh" && navigator.language.toLowerCase() !== "zh-cn") {
+      langFirst = "zhft";
+    }
+
+    (async () => {
+      if (localStorage["ofa-errors"]) {
+        const targetLangErrors = JSON.parse(localStorage["ofa-errors"]);
+        Object.assign(errors, targetLangErrors);
+      }
+
+      const errCacheTime = localStorage["ofa-errors-time"];
+
+      if (!errCacheTime || Date.now() > Number(errCacheTime) + 5 * 60 * 1000) {
+        const targetLangErrors = await fetch(`${error_origin}/${langFirst}.json`)
+          .then((e) => e.json())
+          .catch(() => null);
+
+        if (targetLangErrors) {
+          localStorage["ofa-errors"] = JSON.stringify(targetLangErrors);
+          localStorage["ofa-errors-time"] = Date.now();
+        } else {
+          targetLangErrors = await fetch(`${error_origin}/en.json`)
+            .then((e) => e.json())
+            .catch((error) => {
+              console.error(error);
+              return null;
+            });
+        }
+
+        Object.assign(errors, targetLangErrors);
+      }
+    })();
+  }
+
+  let isSafari = false;
+  if (globalThis.navigator) {
+    isSafari =
+      navigator.userAgent.includes("Safari") &&
+      !navigator.userAgent.includes("Chrome");
+  }
+
+  /**
+   * 根据键、选项和错误对象生成错误对象。
+   *
+   * @param {string} key - 错误描述的键。
+   * @param {Object} [options] - 映射相关值的选项对象。
+   * @param {Error} [error] - 原始错误对象。
+   * @returns {Error} 生成的错误对象。
+   */
+  const getErr = (key, options, error) => {
+    let desc = getErrDesc(key, options);
+
+    let errObj;
+    if (error) {
+      if (isSafari) {
+        desc += `\nCaused by: ${error.toString()}\n  ${error.stack.replace(
+        /\n/g,
+        "\n    "
+      )}`;
+      }
+      errObj = new Error(desc, { cause: error });
+    } else {
+      errObj = new Error(desc);
+    }
+    return errObj;
+  };
+
+  /**
+   * 根据键、选项生成错误描述
+   *
+   * @param {string} key - 错误描述的键。
+   * @param {Object} [options] - 映射相关值的选项对象。
+   * @returns {string} 生成的错误描述。
+   */
+  const getErrDesc = (key, options) => {
+    if (!errors[key]) {
+      return `Error code: "${key}", please go to https://github.com/ofajs/ofa-errors to view the corresponding error information`;
+    }
+
+    let desc = errors[key];
+
+    // 映射相关值
+    if (options) {
+      for (let k in options) {
+        desc = desc.replace(new RegExp(`{${k}}`, "g"), options[k]);
+      }
+    }
+
+    return desc;
+  };
 
   const getRandomId = () => Math.random().toString(32).slice(2);
 
@@ -31,6 +131,8 @@
     }
   }
 
+  const TICKERR = "nexttick_thread_limit";
+
   let asyncsCounter = 0;
   let afterTimer;
   const tickSets = new Set();
@@ -44,12 +146,8 @@
       Promise.resolve().then(() => {
         asyncsCounter++;
         if (asyncsCounter > 100000) {
-          const desc = `nextTick exceeds thread limit`;
-          console.error({
-            desc,
-            lastCall: callback,
-          });
-          throw new Error(desc);
+          console.log(getErrDesc(TICKERR), "lastCall => ", callback);
+          throw getErr(TICKERR);
         }
 
         callback();
@@ -64,12 +162,9 @@
       // console.log("asyncsCounter => ", asyncsCounter);
       if (asyncsCounter > 50000) {
         tickSets.clear();
-        const desc = `nextTick exceeds thread limit`;
-        console.error({
-          desc,
-          lastCall: callback,
-        });
-        throw new Error(desc);
+
+        console.log(getErrDesc(TICKERR), "lastCall => ", callback);
+        throw getErr(TICKERR);
       }
       if (tickSets.has(tickId)) {
         callback();
@@ -308,6 +403,10 @@
 
   var watchFn = {
     watch(callback) {
+      if (!(callback instanceof Function)) {
+        throw getErr("not_func", { name: "watch" });
+      }
+
       const wid = "w-" + getRandomId();
 
       this[WATCHS].set(wid, callback);
@@ -320,6 +419,10 @@
     },
 
     watchTick(callback, wait) {
+      if (!(callback instanceof Function)) {
+        throw getErr("not_func", { name: "watchTick" });
+      }
+
       return this.watch(
         debounce((arr) => {
           if (dataRevoked(this)) {
@@ -458,15 +561,15 @@
           },
         });
       } catch (error) {
-        const err = new Error(`failed to set ${key} \n ${error.stack}`, {
-          cause: error,
-        });
+        const err = getErr(
+          "failed_to_set_data",
+          {
+            key,
+          },
+          error
+        );
 
-        Object.assign(err, {
-          key,
-          value,
-          target: receiver,
-        });
+        console.log(err.message, key, target, value);
 
         throw err;
       }
@@ -759,15 +862,16 @@
           try {
             target = target[keys[i]];
           } catch (error) {
-            const err = new Error(
-              `Failed to get data : ${keys.slice(0, i).join(".")} \n${
-              error.stack
-            }`,
-              { cause: error }
+            const err = getErr(
+              "failed_to_get_data",
+              {
+                key: keys.slice(0, i).join("."),
+              },
+              error
             );
-            Object.assign(err, {
-              target,
-            });
+
+            console.log(err.message, ":", key, this, error);
+
             throw err;
           }
         }
@@ -786,15 +890,16 @@
           try {
             target = target[keys[i]];
           } catch (error) {
-            const err = new Error(
-              `Failed to get data : ${keys.slice(0, i).join(".")} \n${
-              error.stack
-            }`,
-              { cause: error }
+            const err = getErr(
+              "failed_to_get_data",
+              {
+                key: keys.slice(0, i).join("."),
+              },
+              error
             );
-            Object.assign(err, {
-              target,
-            });
+
+            console.log(err.message, ":", key, this, error);
+
             throw err;
           }
         }

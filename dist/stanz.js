@@ -529,7 +529,7 @@
       if (index > -1) {
         val._owner.splice(index, 1);
       } else {
-        const err = getErr("error_data");
+        const err = getErr("error_no_owner");
         console.warn(err, {
           target,
           mismatch: val,

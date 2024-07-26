@@ -1,4 +1,4 @@
-//! stanz - v8.1.29 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.30 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 // const error_origin = "http://127.0.0.1:5793/errors";
 const error_origin = "https://ofajs.github.io/ofa-errors/errors";
 
@@ -72,6 +72,7 @@ const getErr = (key, options, error) => {
   } else {
     errObj = new Error(desc);
   }
+  errObj.code = key;
   return errObj;
 };
 
@@ -140,8 +141,9 @@ function nextTick(callback) {
     Promise.resolve().then(() => {
       asyncsCounter++;
       if (asyncsCounter > 100000) {
-        console.log(getErrDesc(TICKERR), "lastCall => ", callback);
-        throw getErr(TICKERR);
+        const err = getErr(TICKERR);
+        console.warn(err, "lastCall => ", callback);
+        throw err;
       }
 
       callback();
@@ -157,8 +159,9 @@ function nextTick(callback) {
     if (asyncsCounter > 50000) {
       tickSets.clear();
 
-      console.log(getErrDesc(TICKERR), "lastCall => ", callback);
-      throw getErr(TICKERR);
+      const err = getErr(TICKERR);
+      console.warn(err, "lastCall => ", callback);
+      throw err;
     }
     if (tickSets.has(tickId)) {
       callback();
@@ -356,7 +359,14 @@ const emitUpdate = ({
   path = [],
 }) => {
   if (path && path.includes(currentTarget)) {
-    console.warn("Circular references appear");
+    const err = getErr("circular_data");
+
+    console.warn(err, {
+      currentTarget,
+      target,
+      path,
+    });
+
     return;
   }
 
@@ -513,11 +523,12 @@ const clearData = (val, target) => {
     if (index > -1) {
       val._owner.splice(index, 1);
     } else {
-      console.error({
-        desc: "This data is wrong, the owner has no boarding object at the time of deletion",
+      const err = getErr("error_data");
+      console.warn(err, {
         target,
         mismatch: val,
       });
+      console.error(err);
     }
   }
 };
@@ -563,7 +574,7 @@ const handler = {
         error
       );
 
-      console.log(err.message, key, target, value);
+      console.warn(err, { target, value });
 
       throw err;
     }
@@ -864,7 +875,10 @@ class Stanz extends Array {
             error
           );
 
-          console.log(err.message, ":", key, this, error);
+          console.warn(err, {
+            key,
+            self: this,
+          });
 
           throw err;
         }
@@ -892,7 +906,10 @@ class Stanz extends Array {
             error
           );
 
-          console.log(err.message, ":", key, this, error);
+          console.warn(err, {
+            key,
+            self: this,
+          });
 
           throw err;
         }

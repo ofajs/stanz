@@ -1,4 +1,4 @@
-//! stanz - v8.1.29 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.30 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -78,6 +78,7 @@
     } else {
       errObj = new Error(desc);
     }
+    errObj.code = key;
     return errObj;
   };
 
@@ -146,8 +147,9 @@
       Promise.resolve().then(() => {
         asyncsCounter++;
         if (asyncsCounter > 100000) {
-          console.log(getErrDesc(TICKERR), "lastCall => ", callback);
-          throw getErr(TICKERR);
+          const err = getErr(TICKERR);
+          console.warn(err, "lastCall => ", callback);
+          throw err;
         }
 
         callback();
@@ -163,8 +165,9 @@
       if (asyncsCounter > 50000) {
         tickSets.clear();
 
-        console.log(getErrDesc(TICKERR), "lastCall => ", callback);
-        throw getErr(TICKERR);
+        const err = getErr(TICKERR);
+        console.warn(err, "lastCall => ", callback);
+        throw err;
       }
       if (tickSets.has(tickId)) {
         callback();
@@ -362,7 +365,14 @@
     path = [],
   }) => {
     if (path && path.includes(currentTarget)) {
-      console.warn("Circular references appear");
+      const err = getErr("circular_data");
+
+      console.warn(err, {
+        currentTarget,
+        target,
+        path,
+      });
+
       return;
     }
 
@@ -519,11 +529,12 @@
       if (index > -1) {
         val._owner.splice(index, 1);
       } else {
-        console.error({
-          desc: "This data is wrong, the owner has no boarding object at the time of deletion",
+        const err = getErr("error_no_owner");
+        console.warn(err, {
           target,
           mismatch: val,
         });
+        console.error(err);
       }
     }
   };
@@ -569,7 +580,7 @@
           error
         );
 
-        console.log(err.message, key, target, value);
+        console.warn(err, { target, value });
 
         throw err;
       }
@@ -870,7 +881,10 @@
               error
             );
 
-            console.log(err.message, ":", key, this, error);
+            console.warn(err, {
+              key,
+              self: this,
+            });
 
             throw err;
           }
@@ -898,7 +912,10 @@
               error
             );
 
-            console.log(err.message, ":", key, this, error);
+            console.warn(err, {
+              key,
+              self: this,
+            });
 
             throw err;
           }

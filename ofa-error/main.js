@@ -66,9 +66,11 @@ export const getErr = (key, options, error) => {
   let errObj;
   if (error) {
     if (isSafari) {
-      desc += `\nCaused by: ${error.toString()}\n  ${(
-        error.stack || error.toString()
-      ).replace(/\n/g, "\n    ")}`;
+      desc += `\nCaused by: ${error.toString()}\n`;
+
+      if (error.stack) {
+        desc += `  ${error.stack.replace(/\n/g, "\n    ")}`;
+      }
     }
     errObj = new Error(desc, { cause: error });
   } else {

@@ -1,4 +1,4 @@
-//! stanz - v8.1.30 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
+//! stanz - v8.1.31 https://github.com/ofajs/stanz  (c) 2018-2024 YAO
 // const error_origin = "http://127.0.0.1:5793/errors";
 const error_origin = "https://ofajs.github.io/ofa-errors/errors";
 
@@ -67,9 +67,11 @@ const getErr = (key, options, error) => {
   let errObj;
   if (error) {
     if (isSafari) {
-      desc += `\nCaused by: ${error.toString()}\n  ${(
-        error.stack || error.toString()
-      ).replace(/\n/g, "\n    ")}`;
+      desc += `\nCaused by: ${error.toString()}\n`;
+
+      if (error.stack) {
+        desc += `  ${error.stack.replace(/\n/g, "\n    ")}`;
+      }
     }
     errObj = new Error(desc, { cause: error });
   } else {

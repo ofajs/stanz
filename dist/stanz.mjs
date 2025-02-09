@@ -461,17 +461,19 @@ var watchFn = {
   watchUntil(func, outTime = 30000) {
     return new Promise((resolve, reject) => {
       let f;
+      let timer;
       const tid = this.watch(
         (f = () => {
           const bool = func();
           if (bool) {
+            clearTimeout(timer);
             this.unwatch(tid);
             resolve(this);
           }
         })
       );
 
-      setTimeout(() => {
+      timer = setTimeout(() => {
         this.unwatch(tid);
         const err = getErr("watchuntil_timeout");
         console.warn(err, func, this);

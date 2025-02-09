@@ -211,6 +211,7 @@ export default {
         (f = () => {
           const bool = func();
           if (bool) {
+            clearTimeout(timer);
             this.unwatch(tid);
             resolve(this);
           }

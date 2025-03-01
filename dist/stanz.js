@@ -1,4 +1,4 @@
-//! stanz - v8.1.32 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
+//! stanz - v8.1.33 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -505,7 +505,10 @@
     } else if (isObject(value)) {
       const desc = Object.getOwnPropertyDescriptor(target, key);
       if (!desc || desc.hasOwnProperty("value")) {
-        data = new (target.__OriginStanz || Stanz)(value);
+        data = new (target.__OriginStanz || Stanz)(value, {
+          owner: receiver,
+        });
+
         data._owner.push(receiver);
       }
     }
@@ -789,7 +792,8 @@
   }
 
   class Stanz extends Array {
-    constructor(data) {
+    constructor(data, options) {
+      // options是被继承的类库使用的参数，当前stanz不需要使用
       super();
 
       return constructor.call(this, data);

@@ -1,9 +1,9 @@
-//! stanz - v8.1.33 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
+//! stanz - v8.2.1 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.stanz = factory());
-})(this, (function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.stanz = {}));
+})(this, (function (exports) { 'use strict';
 
   // const error_origin = "http://127.0.0.1:5793/errors";
   const error_origin = "https://ofajs.github.io/ofa-errors/errors";
@@ -536,6 +536,7 @@
     return reval;
   };
 
+  // 当数据被移除时，清除 owner 数据
   const clearOwner = (targetData, owner) => {
     if (isxdata(targetData)) {
       const index = targetData._owner.indexOf(owner);
@@ -955,6 +956,10 @@
 
   Object.assign(stanz, { is: isxdata });
 
-  return stanz;
+  exports.Stanz = Stanz;
+  exports.default = stanz;
+  exports.stanz = stanz;
+
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

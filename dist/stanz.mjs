@@ -1,4 +1,4 @@
-//! stanz - v8.1.33 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
+//! stanz - v8.2.1 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
 // const error_origin = "http://127.0.0.1:5793/errors";
 const error_origin = "https://ofajs.github.io/ofa-errors/errors";
 
@@ -530,6 +530,7 @@ const setData = ({ target, key, value, receiver, type, succeed }) => {
   return reval;
 };
 
+// 当数据被移除时，清除 owner 数据
 const clearOwner = (targetData, owner) => {
   if (isxdata(targetData)) {
     const index = targetData._owner.indexOf(owner);
@@ -949,4 +950,4 @@ const stanz = (data) => {
 
 Object.assign(stanz, { is: isxdata });
 
-export { stanz as default };
+export { Stanz, stanz as default, stanz };

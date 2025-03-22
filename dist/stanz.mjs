@@ -530,6 +530,7 @@ const setData = ({ target, key, value, receiver, type, succeed }) => {
   return reval;
 };
 
+// 当数据被移除时，清除 owner 数据
 const clearOwner = (targetData, owner) => {
   if (isxdata(targetData)) {
     const index = targetData._owner.indexOf(owner);
@@ -949,4 +950,4 @@ const stanz = (data) => {
 
 Object.assign(stanz, { is: isxdata });
 
-export { stanz as default };
+export { Stanz, stanz as default };

@@ -7,3 +7,5 @@ const stanz = (data) => {
 Object.assign(stanz, { is: isxdata });
 
 export default stanz;
+
+export { Stanz };

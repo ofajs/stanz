@@ -1,4 +1,4 @@
-//! stanz - v8.1.33 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
+//! stanz - v8.1.34 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -958,6 +958,7 @@
 
   exports.Stanz = Stanz;
   exports.default = stanz;
+  exports.stanz = stanz;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

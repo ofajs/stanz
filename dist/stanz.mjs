@@ -1,4 +1,4 @@
-//! stanz - v8.2.1 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
+//! stanz - v8.2.2 https://github.com/ofajs/stanz  (c) 2018-2025 YAO
 // const error_origin = "http://127.0.0.1:5793/errors";
 const error_origin = "https://ofajs.github.io/ofa-errors/errors";
 
@@ -119,61 +119,59 @@ const isObject = (obj) => {
   return type === "array" || type === "object";
 };
 
-const isDebug = {
-  value: null,
-};
+// export const isDebug = {
+//   value: null,
+// };
 
-if (typeof document !== "undefined") {
-  if (document.currentScript) {
-    isDebug.value = document.currentScript.attributes.hasOwnProperty("debug");
-  } else {
-    isDebug.value = true;
-  }
-}
+// try {
+//   const fileUrl = import.meta.url;
+//   isDebug.value = fileUrl.includes("#debug");
+// } catch (err) {
+//   isDebug.value = false;
+// }
 
-const TICKERR = "nexttick_thread_limit";
+// const TICKERR = "nexttick_thread_limit";
 
 let asyncsCounter = 0;
 let afterTimer;
-const tickSets = new Set();
 function nextTick(callback) {
   clearTimeout(afterTimer);
   afterTimer = setTimeout(() => {
     asyncsCounter = 0;
   });
 
-  if (isDebug.value) {
-    Promise.resolve().then(() => {
-      asyncsCounter++;
-      if (asyncsCounter > 100000) {
-        const err = getErr(TICKERR);
-        console.warn(err, "lastCall => ", callback);
-        throw err;
-      }
-
-      callback();
-    });
-    return;
-  }
-
-  const tickId = `t-${getRandomId()}`;
-  tickSets.add(tickId);
+  // if (isDebug.value) {
   Promise.resolve().then(() => {
     asyncsCounter++;
-    // console.log("asyncsCounter => ", asyncsCounter);
-    if (asyncsCounter > 50000) {
-      tickSets.clear();
-
-      const err = getErr(TICKERR);
+    if (asyncsCounter > 100000) {
+      const err = getErr("nexttick_thread_limit");
       console.warn(err, "lastCall => ", callback);
       throw err;
     }
-    if (tickSets.has(tickId)) {
-      callback();
-      tickSets.delete(tickId);
-    }
+
+    callback();
   });
-  return tickId;
+  return;
+  // }
+
+  // const tickId = `t-${getRandomId()}`;
+  // tickSets.add(tickId);
+  // Promise.resolve().then(() => {
+  //   asyncsCounter++;
+  //   // console.log("asyncsCounter => ", asyncsCounter);
+  //   if (asyncsCounter > 50000) {
+  //     tickSets.clear();
+
+  //     const err = getErr(TICKERR);
+  //     console.warn(err, "lastCall => ", callback);
+  //     throw err;
+  //   }
+  //   if (tickSets.has(tickId)) {
+  //     callback();
+  //     tickSets.delete(tickId);
+  //   }
+  // });
+  // return tickId;
 }
 
 // export const clearTick = (id) => tickSets.delete(id);

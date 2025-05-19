@@ -771,6 +771,9 @@
       _revoke: {
         value: revoke,
       },
+      __init_is_array: {
+        value: Array.isArray(data),
+      },
     });
 
     Object.keys(data).forEach((key) => {
@@ -836,6 +839,8 @@
       let isPureArray = true;
       let maxId = -1;
 
+      const initIsArray = this.__init_is_array;
+
       Object.keys(this).forEach((k) => {
         let val = this[k];
 
@@ -858,8 +863,12 @@
       if (isPureArray) {
         obj.length = maxId + 1;
         obj = Array.from(obj);
-      }
 
+        if (!obj.length && !initIsArray) {
+          // 初始化不是数组，就是对象
+          obj = {};
+        }
+      }
       const xid = this.xid;
       defineProperties(obj, {
         xid: {

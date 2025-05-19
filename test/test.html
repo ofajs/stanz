@@ -12,28 +12,12 @@
 
       const d = stanz({
         obj: {
-          o2: {},
+          o1: {},
+          o2: [],
         },
       });
 
-      window.count = 0;
-
-      d.watch((e) => {
-        console.log("watch: ", e);
-      });
-
-      d.watchTick(() => {
-        count++;
-        if (count === 1) {
-          d.val = "change val";
-        } else if (count > 1) {
-          console.log("ok");
-        }
-      });
-
-      d.val = "add val";
-
-      window.d = d;
+      console.log(d, d.toJSON());
     </script>
   </head>
   <body>

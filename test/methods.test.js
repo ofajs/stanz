@@ -57,3 +57,15 @@ describe("Test the methods owned by the Stanz instance", () => {
     expect(d.a).toBe(201);
   });
 });
+
+test("to JSON empty object", () => {
+  const d = stanz({
+    obj: {
+      o1: {},
+      o2: [],
+    },
+  });
+
+  expect(d.obj.o1.toJSON()).toEqual({});
+  expect(d.obj.o2.toJSON()).toEqual([]);
+});

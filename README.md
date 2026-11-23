@@ -1,5 +1,14 @@
 # Stanz 8
 
+> **This repository is frozen. Stanz is now developed in the [ofa.js monorepo](https://github.com/ofajs/ofa.js) and will only be updated there.**
+>
+> 本仓库已冻结。Stanz 现在随 [ofa.js monorepo](https://github.com/ofajs/ofa.js) 同仓维护，**以后只更新到 monorepo**——代码、文档、示例和发版都不再进入本仓库。
+>
+> - Active source: [`packages/stanz`](https://github.com/ofajs/ofa.js/tree/main/packages/stanz)
+> - Up-to-date API: [`packages/stanz/README.md`](https://github.com/ofajs/ofa.js/blob/main/packages/stanz/README.md)
+> - Issues / pull requests: [ofajs/ofa.js](https://github.com/ofajs/ofa.js/issues)
+> - The text below documents the standalone **8.x** line. The monorepo ships **9.x**, which is not API-compatible with 8.x (see the current README for the differences).
+
 ## Using the documentation
 
 - [简体中文](./docs/cn/README.md)
